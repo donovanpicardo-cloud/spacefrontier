@@ -73,6 +73,7 @@ import { sources, solarArchive } from "./data/science/sources";
 import "./styles.css";
 import "./play.css";
 import "./expedition.css";
+import "./field-guide.css";
 import type { RepairKind } from "./game/RepairPlan";
 import type { RepairInfo } from "./game/WorldRepairs";
 import type { VehicleInfo, VehicleSave } from "./game/Vehicle";
@@ -1261,7 +1262,7 @@ function App() {
   return (
     <div
       className={
-        "app " +
+        "app edition-" + destination + " " +
         (playing ? "in-game" : "in-menu") +
         (inFlight ? " in-flight" : "") +
         (junior ? " junior" : "") +

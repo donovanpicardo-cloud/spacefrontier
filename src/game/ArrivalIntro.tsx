@@ -76,12 +76,8 @@ export function ArrivalIntro(props: Props) {
             <span className="arrival-kicker">
               THE FRONTIER EXPEDITIONS / 01
             </span>
-            <h1>
-              Which world will
-              <br />
-              <em>be your next frontier?</em>
-            </h1>
-            <p>Two extraordinary worlds. One journey that begins with you.</p>
+            <h1>The surface atlas.</h1>
+            <p>Choose a world to begin your expedition.</p>
           </div>
           <div className="arrival-choices">
             {(["moon", "mars"] as const).map((destination, index) => (
@@ -108,11 +104,11 @@ export function ArrivalIntro(props: Props) {
                 </strong>
                 <span className="arrival-world-description">
                   {destination === "moon"
-                    ? "Silver horizons. Endless possibility."
-                    : "A rust-red wilderness. A new beginning."}
+                    ? "Surface gravity　1.62 m/s²"
+                    : "Surface gravity　3.71 m/s²"}
                 </span>
                 <span className="arrival-world-cta">
-                  Explore this world <span aria-hidden="true">→</span>
+                  Visit surface <span aria-hidden="true">→</span>
                 </span>
               </button>
             ))}
