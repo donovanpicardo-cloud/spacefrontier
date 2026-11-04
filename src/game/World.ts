@@ -1,3 +1,4 @@
+import { CrashLanding } from "./CrashLanding";
 import { groundMeshHeight } from "./VehicleTerrain";
 import { RocketScene } from "./RocketScene";
 import { rocketPad } from "./Rocket";
@@ -212,6 +213,19 @@ export class World {
   dust: T.Points;
   surfaceDust: SurfaceDust;
   disposed = false;
+  wreck: CrashLanding;
+  private landingCamera = false;
+  private landingLabels: T.Object3D[] = [];
+  async filmLanding(quiet: boolean, show: () => void, finish: () => void) {
+    await this.wreck.ready;
+    if (this.disposed) return;
+    this.landingLabels = [...this.resources.labels.values(), ...this.adventure.labels, this.guide].filter(o => o.visible);
+    this.landingLabels.forEach(o => { o.visible = false; });
+    this.landingCamera = true;
+    show();
+    if (quiet) finish();
+    else this.wreck.start(finish);
+  }
   transit: { from: T.Vector3; to: T.Vector3; t: number } | null = null;
   doors: T.Mesh[] = [];
   target = new T.Vector3();
@@ -342,6 +356,7 @@ export class World {
       this.groundHeight(x, z),
     );
     this.physics.collect(this.scene, this.doors);
+    this.wreck = new CrashLanding(this.scene, d, (x,z) => this.drivingSurface(x,z), box => this.physics.add(box));
     this.resources.batch();
     this.repairs.devices.forEach((d) => {
       const detail = d.root.children.find((o) => o.userData.serviceDetail);
@@ -1126,6 +1141,18 @@ export class World {
           : 0;
     if (!this.framePacer.ready(frameAt, frameBudget)) return;
     const realDt = this.clock.getDelta();
+    if (this.landingCamera && !this.state.playing) {
+      this.player.root.visible = this.contactShadow.visible = false;
+      this.wreck.frame(realDt, this.camera);
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
+    if (this.landingCamera) {
+      this.landingCamera = false;
+      this.landingLabels.forEach(o => { o.visible = true; });
+      this.landingLabels = [];
+      this.contactShadow.visible = true;
+    }
     this.frameCount++;
     this.frameTime += realDt;
     if (this.frameTime >= 1) {
@@ -1813,6 +1840,7 @@ export class World {
   }
   dispose() {
     this.disposed = true;
+    this.wreck.dispose();
     cancelAnimationFrame(this.raf);
     this.resize.disconnect();
     window.removeEventListener("keydown", this.keydown);

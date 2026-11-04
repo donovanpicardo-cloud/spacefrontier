@@ -1,3 +1,4 @@
+import { survivorPosition } from "./game/CrashLanding";
 import { ArrivalIntro } from "./game/ArrivalIntro";
 import { RocketPanel } from "./game/RocketPanel";
 import {
@@ -732,7 +733,7 @@ function App() {
 
     toast(message);
   }
-  function beginMission() {
+  function beginMission(atWreck = false) {
     rocketLive.current = initialRocket();
     setRocket(rocketLive.current);
     inFlightLive.current = false;
@@ -756,7 +757,7 @@ function App() {
     setPanel(null);
     setRepairing(false);
     setFlashlight(false);
-    world.current?.resetPlayer();
+    world.current?.resetPlayer(atWreck ? survivorPosition : undefined);
     world.current?.lock();
     toast(
       "WASD to move. Click the terrain for mouse look. Escape pauses.",
@@ -1290,7 +1291,7 @@ function App() {
         </div>
       </header>
       {!playing && <ArrivalIntro
-        destination={destination}
+        onFilm={(quiet, show, finish) => { void world.current?.filmLanding(quiet, show, finish); }}
         ready={graphicsReady && modelStatus !== "loading"}
         saved={saved}
         reducedMotion={reducedMotion}
@@ -1301,7 +1302,7 @@ function App() {
           setDestination(next);
           setPanel(null);
         }}
-        onStart={beginMission}
+        onStart={() => beginMission(true)}
         onContinue={load}
       />}
       {playing && (

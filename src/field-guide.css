@@ -203,3 +203,8 @@
 @media (prefers-reduced-motion: reduce) {
   .arrival-landed::after, .app.in-game::after { animation-duration: .01s; }
 }
+
+.app:has(.arrival:not(.arrival-select)) > :is(header,.vignette,.model-status,.notification) { visibility: hidden; }
+.arrival-flight, .arrival-landed { background: transparent; pointer-events: none; }
+.arrival-flight .arrival-shade, .arrival-landed .arrival-shade { display: none; }
+.arrival-preparing { background: #040507; }
