@@ -132,7 +132,6 @@ function App() {
     [quality, setQuality] = useState("Medium"),
     [speed, setSpeed] = useState(1),
     [saved, setSaved] = useState(() => !!parseSave(readLocal("frontier-save")));
-  const [mode, setMode] = useState<"junior" | "specialist">("junior");
   const [tutorialActive, setTutorialActive] = useState(false);
   const [tutorial, dispatchTutorial] = useReducer(
     tutorialReducer,
@@ -164,10 +163,8 @@ function App() {
   const pendingVehicle = useRef<VehicleSave | undefined>(undefined);
   const practiceReturn = useRef<Save | null>(null);
   const practiceReplay = useRef(false);
-  const recovery = useRef<Save | null>(null);
   const pendingPosition = useRef<number[] | null>(null);
   const guideStep = tutorialSteps[tutorial.index];
-  const junior = mode === "junior";
   const tutorialLive = useRef({ active: tutorialActive, id: guideStep.id });
   tutorialLive.current = { active: tutorialActive, id: guideStep.id };
   function lessonEvent(e: TutorialEvent) {
@@ -370,14 +367,11 @@ function App() {
           time: sim.time,
           history: sim.history,
         },
-        junior,
         tutorial: tutorialActive,
         autoCamera,
         guideTarget: tutorialActive
           ? tutorialTarget(guideStep.id)
-          : junior && playing && !done.includes(4)
-            ? list[Math.min(mission, 4)].target
-            : null,
+          : null,
         onAction: lessonEvent,
         restored: {
           solar: sim.repaired,
@@ -401,7 +395,6 @@ function App() {
     sim,
     tutorialActive,
     tutorial.index,
-    mode,
     autoCamera,
     destination,
     mission,
@@ -423,9 +416,7 @@ function App() {
         simulationRuns(v.playing, v.panel, tutorialLive.current.active)
       )
         setSim((s) => {
-          if (mode === "junior" && s.time % 3 !== 0)
-            return { ...s, time: s.time + 1 };
-          const next = tick(
+          return tick(
             s,
             v.allocation,
             destination,
@@ -433,20 +424,10 @@ function App() {
             adventureLive.current.upgrades,
             world.current?.inRecoveryRoom() ?? false,
           );
-          return mode === "junior"
-            ? {
-                ...next,
-                suit: Math.max(30, next.suit),
-                health: Math.max(25, next.health),
-                battery: Math.max(20, next.battery),
-                oxygen: Math.max(25, next.oxygen),
-                water: Math.max(20, next.water),
-              }
-            : next;
         });
     }, 1000 / speed);
     return () => clearInterval(id);
-  }, [destination, speed, mode]);
+  }, [destination, speed]);
   useEffect(() => {
     if (sim.health <= 0 && playing) {
       setRepairing(false);
@@ -700,8 +681,7 @@ function App() {
         return;
       }
       setSim((s) => reinforceShelter(s) ?? s);
-      if (mode === "junior")
-        setAllocation((a) => ({ ...a, greenhouse: false, backup: true }));
+
       toast(
         "Shelter reinforced · 1 part + 6% power used. Shielding reduces exposure.",
       );
@@ -749,8 +729,7 @@ function App() {
     open(null);
     if (id === "solar" && mission === 1) complete(1);
     if (id === "life" && mission === 3) complete(3);
-    if (mode === "junior" && id === "greenhouse")
-      setAllocation((a) => ({ ...a, greenhouse: true }));
+
     toast(message);
   }
   function beginMission() {
@@ -780,7 +759,7 @@ function App() {
     world.current?.resetPlayer();
     world.current?.lock();
     toast(
-      "Move your mouse to look. Follow the stars to your space home. Escape pauses.",
+      "WASD to move. Click the terrain for mouse look. Escape pauses.",
     );
   }
   function start() {
@@ -790,8 +769,7 @@ function App() {
       );
       return;
     }
-    if (readLocal("frontier-tutorial-complete") !== "1") beginTutorial(false);
-    else beginMission();
+    beginMission();
   }
   function snapshot(): Save {
     return {
@@ -803,7 +781,6 @@ function App() {
       done,
       position: world.current?.getPosition() || [0, 0.12, 4],
       inside,
-      mode,
       vehicle: world.current?.getVehicleState(),
       collectedResources: world.current?.getResourceSave(),
       adventure: adventureLive.current,
@@ -838,7 +815,6 @@ function App() {
     setMission(v.mission);
     setDone(v.done);
     setInside(v.inside);
-    setMode(v.mode || "specialist");
     setRepairing(false);
     setPanel(
       v.rocket?.arrived ? "homecoming" : v.done.includes(4) ? "debrief" : null,
@@ -971,7 +947,6 @@ function App() {
   useEffect(() => {
     if (!playing || tutorialActive || done.includes(4)) return;
     const checkpoint = snapshot();
-    recovery.current = checkpoint;
     const key = window.setTimeout(() => {
       if (writeLocal("frontier-save", JSON.stringify(checkpoint)))
         setSaved(true);
@@ -1265,7 +1240,6 @@ function App() {
         "app edition-" + destination + " " +
         (playing ? "in-game" : "in-menu") +
         (inFlight ? " in-flight" : "") +
-        (junior ? " junior" : "") +
         (tutorialActive ? " learning" : "") +
         (repairing ? " repairing" : "") +
         (gatherInfo ? " gathering" : "") +
@@ -1321,16 +1295,14 @@ function App() {
         saved={saved}
         reducedMotion={reducedMotion}
         onChoose={next => {
-          setWorldEnabled(false);
+          setWorldEnabled(true);
           setGraphicsReady(false);
           setModelStatus("loading");
           setDestination(next);
           setPanel(null);
         }}
-        onLanded={() => setWorldEnabled(true)}
-        onStart={start}
+        onStart={beginMission}
         onContinue={load}
-        onBriefing={() => open("briefing")}
       />}
       {playing && (
         <>
@@ -1358,9 +1330,7 @@ function App() {
                     `${supplyGoal}. Follow the trail. Each rig has its own controls. H returns to your mission.`
                   : done.includes(4)
                     ? "You helped everyone! Explore your space home or start a new adventure."
-                    : junior
-                      ? juniorGoal(mission, destination)
-                      : objective.task}
+                    : objective.task}
               {mission === 4 &&
                 !done.includes(4) &&
                 sim.stormSince !== null && (
@@ -1371,9 +1341,7 @@ function App() {
                 )}
             </p>
             {!panel &&
-              (tutorialActive
-                ? tutorialTarget(guideStep.id)
-                : junior && !done.includes(4)) && (
+              tutorialActive && tutorialTarget(guideStep.id) && (
                 <small className="goal-distance">
                   ✦ {distanceToGoal} m to next stop
                 </small>
@@ -1798,36 +1766,8 @@ function App() {
             )}
             {panel === "briefing" && (
               <>
-                <h2>
-                  {junior
-                    ? "Your space adventure starts here!"
-                    : "Your outpost. Your responsibility."}
-                </h2>
-                <p>
-                  {junior
-                    ? "Explore a new world, help the plants and fix your space home. Mission Control will show you what to do. You can always ask for help or try again."
-                    : "Reach the airlock, restore power, grow food, and protect your crew through an environmental emergency. Supplies are finite. Every decision has a cost."}
-                </p>
-                <fieldset className="mode-choice">
-                  <legend>Choose your adventure</legend>
-                  <button
-                    aria-pressed={junior}
-                    onClick={() => setMode("junior")}
-                  >
-                    <strong>✦ Junior Explorer</strong>
-                    <span>
-                      Helpful trails, safe retries and extra supplies. A great
-                      first adventure.
-                    </span>
-                  </button>
-                  <button
-                    aria-pressed={!junior}
-                    onClick={() => setMode("specialist")}
-                  >
-                    <strong>Mission Specialist</strong>
-                    <span>Manage power, water and air yourself.</span>
-                  </button>
-                </fieldset>
+                <h2>Your outpost. Your responsibility.</h2>
+                <p>Reach the airlock, restore power, grow food, and protect your crew through an environmental emergency.</p>
                 <div className="brief-grid">
                   {[
                     ["W A S D", "Move relative to camera"],
@@ -2026,17 +1966,6 @@ function App() {
                     onChange={(e) => setNarration(e.target.checked)}
                   />
                 </label>
-                <button
-                  className="secondary"
-                  onClick={() => {
-                    writeLocal("frontier-tutorial-complete", "0");
-                    toast(
-                      "The lesson will play at the start of your next new game.",
-                    );
-                  }}
-                >
-                  Reset tutorial completion
-                </button>
                 <label className="setting">
                   Graphics preset
                   <select
@@ -2494,16 +2423,6 @@ function App() {
                   >
                     Reset camera · R
                   </button>
-                  {junior && !tutorialActive && recovery.current && (
-                    <button
-                      className="secondary"
-                      onClick={() => {
-                        if (recovery.current) restore(recovery.current);
-                      }}
-                    >
-                      Try again from checkpoint
-                    </button>
-                  )}
                   {!tutorialActive && (
                     <button
                       className="secondary"

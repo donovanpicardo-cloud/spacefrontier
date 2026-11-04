@@ -10,18 +10,15 @@ type Props = {
   saved: boolean;
   reducedMotion: boolean;
   onChoose: (destination: Destination) => void;
-  onLanded: () => void;
   onStart: () => void;
   onContinue: () => void;
-  onBriefing: () => void;
 };
 export function ArrivalIntro(props: Props) {
   const mount = useRef<HTMLDivElement>(null);
   const scene = useRef<ArrivalScene | null>(null);
   const [phase, setPhase] = useState<"select" | "flight" | "landed">("select");
   const [elapsed, setElapsed] = useState(0);
-  const [spread, setSpread] = useState<Destination>("mars");
-  const lunar = spread === "moon";
+  const [fallback, setFallback] = useState(false);
   const [quiet, setQuiet] = useState(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
@@ -29,23 +26,31 @@ export function ArrivalIntro(props: Props) {
   callbacks.current = props;
   const finish = () => {
     setPhase("landed");
-    callbacks.current.onLanded();
+
   };
-  useEffect(() => () => scene.current?.dispose(), []);
+  useEffect(() => {
+    if (!mount.current) return;
+    try {
+      scene.current = new ArrivalScene(mount.current,
+        seconds => setElapsed(Math.floor(seconds * 4) / 4), finish);
+    } catch {
+      setFallback(true);
+    }
+    return () => scene.current?.dispose();
+  }, []);
+  useEffect(() => {
+    if (scene.current) scene.current.reduced = quiet || props.reducedMotion;
+  }, [quiet, props.reducedMotion]);
+  useEffect(() => {
+    if (phase !== "landed" || !props.ready) return;
+    const timer = window.setTimeout(() => callbacks.current.onStart(), quiet || props.reducedMotion ? 0 : 650);
+    return () => clearTimeout(timer);
+  }, [phase, props.ready, quiet, props.reducedMotion]);
   const choose = (destination: Destination) => {
     props.onChoose(destination);
     setPhase("flight");
-    try {
-      if (!mount.current) return finish();
-      scene.current = new ArrivalScene(
-        mount.current,
-        (seconds) => setElapsed(Math.floor(seconds * 4) / 4),
-        finish,
-      );
-      scene.current.choose(destination, quiet || props.reducedMotion);
-    } catch {
-      finish();
-    }
+    if (scene.current) scene.current.choose(destination, quiet || props.reducedMotion);
+    else finish();
   };
   const beat = arrivalBeat(elapsed, props.destination);
   return (
@@ -57,29 +62,23 @@ export function ArrivalIntro(props: Props) {
       <div className="arrival-shade" />
       {phase === "select" ? (
         <>
-          <div key={spread} className={`atlas-photo atlas-photo-${spread}`} aria-hidden="true" />
-          <div className="atlas-spread">
-            <div className="atlas-byline">Frontier <span>/ Surface studies</span></div>
-            <div className="atlas-selector" aria-label="Choose a destination">
-              {(["mars", "moon"] as const).map(world => (
-                <button key={world} aria-pressed={spread === world} onClick={() => setSpread(world)}>
-                  {world === "mars" ? "Mars" : "Moon"}
-                </button>
-              ))}
-            </div>
-            <h1 key={spread}>{lunar ? "Footprints outlast the people who made them." : "A dust storm can cover an entire planet."}</h1>
-            <div className="atlas-visit">
-              <p>{lunar ? "The Moon" : "Mars"}<small>{lunar ? "Earth’s natural satellite" : "Fourth planet from the Sun"}</small></p>
-              <button aria-label={`Visit ${lunar ? "the Moon" : "Mars"}`} onClick={() => choose(spread)}>Visit <span aria-hidden="true">→</span></button>
-            </div>
-            <div className="atlas-record">
-              <p>{lunar ? "Eugene Cernan beside the lunar rover. Apollo 17, 1972." : "Jezero crater, seen by Perseverance’s Mastcam-Z. 2021."}</p>
-              <dl>
-                <div><dt>Surface gravity</dt><dd>{lunar ? "1.62" : "3.71"} m/s²</dd></div>
-                <div><dt>Atmosphere</dt><dd>{lunar ? "Trace exosphere" : "Mostly carbon dioxide"}</dd></div>
-                <div><dt>Expedition</dt><dd>{lunar ? "Lunar outpost" : "Martian colony"}</dd></div>
-              </dl>
-            </div>
+          <div className="arrival-heading">
+            <span className="arrival-kicker">Frontier / Surface studies</span>
+            <h1>Choose your world.</h1>
+          </div>
+          <div className="arrival-choices">
+            {(["moon", "mars"] as const).map((world, index) => (
+              <button key={world} className={"arrival-world arrival-world-" + world}
+                aria-label={"Visit " + (world === "moon" ? "the Moon" : "Mars")}
+                onClick={() => choose(world)}>
+                <span className="arrival-world-visual" aria-hidden="true">
+                  {fallback && <span className={"arrival-backup " + world} />}
+                </span>
+                <span className="arrival-kicker">0{index + 1} / {world === "moon" ? "Earth’s satellite" : "Terrestrial planet"}</span>
+                <strong>{world === "moon" ? "The Moon" : "Mars"} <span aria-hidden="true">↗</span></strong>
+                <span className="arrival-world-description">Surface gravity · {world === "moon" ? "1.62" : "3.71"} m/s²</span>
+              </button>
+            ))}
           </div>
           <div className="arrival-bottom">
             <label>
@@ -91,7 +90,7 @@ export function ArrivalIntro(props: Props) {
               />{" "}
               Reduced motion
             </label>
-            <span>{lunar ? "Plate 02 / 02" : "Plate 01 / 02"}</span>
+            <span>Planetary atlas / 01–02</span>
             {props.saved && (
               <button onClick={props.onContinue}>
                 Continue saved mission <span aria-hidden="true">→</span>
@@ -132,26 +131,7 @@ export function ArrivalIntro(props: Props) {
             <span className="arrival-kicker">{beat.chapter}</span>
             <h2>{beat.title}</h2>
             <p>{beat.text}</p>
-            {phase === "landed" && (
-              <>
-                <p className="arrival-recovery">
-                  You survived the landing. Find shelter, restore the outpost,
-                  and build your way home.
-                </p>
-                <button
-                  className="arrival-enter"
-                  onClick={props.onStart}
-                  disabled={!props.ready}
-                >
-                  {props.ready
-                    ? "Begin surface mission →"
-                    : "Preparing your surface mission…"}
-                </button>
-                <button className="arrival-options" onClick={props.onBriefing}>
-                  Mission options & controls
-                </button>
-              </>
-            )}
+            {phase === "landed" && !props.ready && <small>Preparing surface…</small>}
           </div>
           <div
             className="arrival-progress"

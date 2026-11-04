@@ -1,4 +1,5 @@
 import * as T from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import type { Destination } from "../simulation/engine";
 
 // Local, deterministic assets: no network requests, model downloads, or postprocessing.
@@ -8,60 +9,18 @@ function random(seed: number) {
     return (seed >>> 0) / 4294967296;
   };
 }
-function surfaceTexture(mars: boolean) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 512;
-  const ctx = canvas.getContext("2d")!;
-  const rng = random(mars ? 42 : 99);
-  ctx.fillStyle = mars ? "#a85935" : "#8a8c8d";
-  ctx.fillRect(0, 0, 1024, 512);
-  // Periodic layered noise keeps the longitude seam invisible.
-  const pixels = ctx.getImageData(0, 0, 1024, 512);
-  for (let y = 0; y < 512; y++)
-    for (let x = 0; x < 1024; x++) {
-      const u = (x / 1024) * Math.PI * 2,
-        v = (y / 512) * Math.PI;
-      const n =
-        Math.sin(u * 3 + Math.sin(v * 5)) * 0.4 +
-        Math.sin(u * 9 - Math.cos(v * 11)) * 0.18 +
-        Math.sin(u * 23 + v * 17) * 0.08 +
-        (rng() - 0.5) * 0.13;
-      const tone = n * 55;
-      const i = (y * 1024 + x) * 4;
-      pixels.data[i] = (mars ? 168 : 141) + tone;
-      pixels.data[i + 1] = (mars ? 88 : 143) + tone * (mars ? 0.65 : 1);
-      pixels.data[i + 2] = (mars ? 54 : 145) + tone * (mars ? 0.4 : 1);
+function releaseModel(root: T.Object3D) {
+  root.traverse(object => {
+    if (!(object instanceof T.Mesh || object instanceof T.Points)) return;
+    object.geometry.dispose();
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    for (const material of materials) {
+      for (const value of Object.values(material))
+        if (value instanceof T.Texture) value.dispose();
+      material.dispose();
     }
-  ctx.putImageData(pixels, 0, 0);
-  for (let i = 0; i < (mars ? 130 : 620); i++) {
-    const x = rng() * 1024,
-      y = 20 + rng() * 472,
-      r = 1 + rng() ** 4 * (mars ? 18 : 27);
-    for (const offset of [-1024, 0, 1024]) {
-      const px = x + offset;
-      ctx.beginPath();
-      ctx.ellipse(px, y, r, r * 0.75, 0, 0, Math.PI * 2);
-      ctx.fillStyle = mars ? "rgba(71,33,19,.13)" : "rgba(46,49,54,.24)";
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(px - r * 0.07, y - r * 0.08, r, r * 0.75, 0, 0.2, Math.PI);
-      ctx.strokeStyle = mars ? "rgba(239,161,106,.16)" : "rgba(225,226,222,.3)";
-      ctx.lineWidth = Math.max(0.5, r * 0.12);
-      ctx.stroke();
-    }
-  }
-  if (mars) {
-    ctx.fillStyle = "#e3d4bf";
-    ctx.beginPath();
-    ctx.ellipse(512, 0, 512, 19, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  const texture = new T.CanvasTexture(canvas);
-  texture.colorSpace = T.SRGBColorSpace;
-  return texture;
+  });
 }
-
 function spacecraft() {
   const ship = new T.Group();
   const white = new T.MeshStandardMaterial({
@@ -189,7 +148,7 @@ export class ArrivalScene {
   private frame = 0;
   private last = 0;
   private observer: ResizeObserver;
-  private textures: T.Texture[] = [];
+  private disposed = false;
   private selectionLayout: { x: number; y: number; scale: number }[] = [];
   private surfaceBackground = new T.Color();
   private surfaceFog = new T.FogExp2(0x05080d, 0.012);
@@ -230,17 +189,20 @@ export class ArrivalScene {
       ),
     );
     for (const mars of [false, true]) {
-      const texture = surfaceTexture(mars);
-      this.textures.push(texture);
-      const planet = new T.Mesh(
-        new T.SphereGeometry(1.7, 64, 40),
-        new T.MeshStandardMaterial({
-          map: texture,
-          bumpMap: texture,
-          bumpScale: mars ? 0.05 : 0.09,
-          roughness: 1,
-        }),
-      );
+      const material = new T.MeshStandardMaterial({ color: mars ? 0xae6440 : 0xffffff, roughness: 1 });
+      const planet = new T.Mesh(new T.SphereGeometry(1.7, 128, 80), material);
+      if (mars) {
+        this.loadModel("/models/mars-globe.glb", 3.4, model => {
+          material.visible = false;
+          planet.add(model);
+        });
+      } else {
+        const loader = new T.TextureLoader();
+        material.map = loader.load("/materials/lro-moon.jpg");
+        material.map.colorSpace = T.SRGBColorSpace;
+        material.bumpMap = loader.load("/materials/lro-relief.jpg");
+        material.bumpScale = 0.025;
+      }
       planet.position.set(mars ? 2.65 : -2.65, 0.2, 0);
       planet.rotation.z = mars ? 0.25 : -0.12;
       this.planets.push(planet);
@@ -332,7 +294,26 @@ export class ArrivalScene {
       };
     });
   }
+  private loadModel(url: string, width: number, attach: (root: T.Group) => void) {
+    new GLTFLoader().load(url, ({ scene }) => {
+      if (this.disposed) return releaseModel(scene);
+      const box = new T.Box3().setFromObject(scene);
+      const size = box.getSize(new T.Vector3());
+      const scale = width / Math.max(size.x, size.y, size.z);
+      scene.scale.multiplyScalar(scale);
+      scene.position.sub(box.getCenter(new T.Vector3()).multiplyScalar(scale));
+      attach(scene);
+    }, undefined, () => { /* The local fallback stays visible. */ });
+  }
   choose(destination: Destination, reduced: boolean) {
+    if (!reduced) {
+      const file = destination === "moon" ? "apollo-lunar-module" : "insight";
+      this.loadModel("/models/" + file + ".glb", 6.5, model => {
+        const { ship, flame, fire } = this.craft;
+        for (const part of ship.children) part.visible = part === flame || part === fire;
+        ship.add(model);
+      });
+    }
     this.destination = destination;
     this.elapsed = 0;
     this.reduced = reduced;
@@ -431,16 +412,8 @@ export class ArrivalScene {
   dispose() {
     cancelAnimationFrame(this.frame);
     this.observer.disconnect();
-    this.scene.traverse((object) => {
-      const mesh = object as T.Mesh;
-      mesh.geometry?.dispose();
-      if (mesh.material)
-        for (const m of Array.isArray(mesh.material)
-          ? mesh.material
-          : [mesh.material])
-          m.dispose();
-    });
-    this.textures.forEach((t) => t.dispose());
+    this.disposed = true;
+    releaseModel(this.scene);
     this.renderer.dispose();
     this.renderer.domElement.remove();
   }
