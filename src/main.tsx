@@ -1723,6 +1723,7 @@ function App() {
           }}
         >
           <section className={"panel panel-" + panel}>
+            <div className="panel-plate" aria-hidden="true"><span>{destination === "moon" ? "02 / Lunar surface" : "01 / Martian surface"}</span></div>
             <div className="panel-top">
               <span className="eyebrow">
                 FRONTIER /{" "}

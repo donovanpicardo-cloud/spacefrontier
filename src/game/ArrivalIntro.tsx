@@ -20,7 +20,8 @@ export function ArrivalIntro(props: Props) {
   const scene = useRef<ArrivalScene | null>(null);
   const [phase, setPhase] = useState<"select" | "flight" | "landed">("select");
   const [elapsed, setElapsed] = useState(0);
-  const [failed, setFailed] = useState(false);
+  const [spread, setSpread] = useState<Destination>("mars");
+  const lunar = spread === "moon";
   const [quiet, setQuiet] = useState(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
@@ -30,37 +31,21 @@ export function ArrivalIntro(props: Props) {
     setPhase("landed");
     callbacks.current.onLanded();
   };
-  useEffect(() => {
-    if (!mount.current) return;
+  useEffect(() => () => scene.current?.dispose(), []);
+  const choose = (destination: Destination) => {
+    props.onChoose(destination);
+    setPhase("flight");
     try {
-      const view = new ArrivalScene(
+      if (!mount.current) return finish();
+      scene.current = new ArrivalScene(
         mount.current,
         (seconds) => setElapsed(Math.floor(seconds * 4) / 4),
         finish,
       );
-      scene.current = view;
-      view.reduced = quiet || callbacks.current.reducedMotion;
-      return () => {
-        view.dispose();
-        scene.current = null;
-      };
-    } catch {
-      setFailed(true);
-    }
-  }, []);
-  useEffect(() => {
-    if (scene.current) {
-      scene.current.reduced = quiet || props.reducedMotion;
-      if (scene.current.reduced && scene.current.destination)
-        scene.current.finish();
-    }
-  }, [quiet, props.reducedMotion]);
-  const choose = (destination: Destination) => {
-    props.onChoose(destination);
-    setPhase("flight");
-    if (scene.current)
       scene.current.choose(destination, quiet || props.reducedMotion);
-    else finish();
+    } catch {
+      finish();
+    }
   };
   const beat = arrivalBeat(elapsed, props.destination);
   return (
@@ -72,46 +57,29 @@ export function ArrivalIntro(props: Props) {
       <div className="arrival-shade" />
       {phase === "select" ? (
         <>
-          <div className="arrival-heading">
-            <span className="arrival-kicker">
-              THE FRONTIER EXPEDITIONS / 01
-            </span>
-            <h1>The surface atlas.</h1>
-            <p>Choose a world to begin your expedition.</p>
-          </div>
-          <div className="arrival-choices">
-            {(["moon", "mars"] as const).map((destination, index) => (
-              <button
-                key={destination}
-                className={`arrival-world arrival-world-${destination}`}
-                onClick={() => choose(destination)}
-                aria-label={`Explore ${destination === "moon" ? "the Moon" : "Mars"}`}
-              >
-                <span className="arrival-world-visual" aria-hidden="true">
-                  {failed && (
-                    <span className={`arrival-backup ${destination}`} />
-                  )}
-                </span>
-                <span className="arrival-kicker">
-                  0{index + 1} /{" "}
-                  {destination === "moon"
-                    ? "OUR CELESTIAL NEIGHBOUR"
-                    : "THE RED PLANET"}
-                </span>
-                <strong>
-                  {destination === "moon" ? "The Moon" : "Mars"}
-                  <span aria-hidden="true">↗</span>
-                </strong>
-                <span className="arrival-world-description">
-                  {destination === "moon"
-                    ? "Surface gravity　1.62 m/s²"
-                    : "Surface gravity　3.71 m/s²"}
-                </span>
-                <span className="arrival-world-cta">
-                  Visit surface <span aria-hidden="true">→</span>
-                </span>
-              </button>
-            ))}
+          <div key={spread} className={`atlas-photo atlas-photo-${spread}`} aria-hidden="true" />
+          <div className="atlas-spread">
+            <div className="atlas-byline">Frontier <span>/ Surface studies</span></div>
+            <div className="atlas-selector" aria-label="Choose a destination">
+              {(["mars", "moon"] as const).map(world => (
+                <button key={world} aria-pressed={spread === world} onClick={() => setSpread(world)}>
+                  {world === "mars" ? "Mars" : "Moon"}
+                </button>
+              ))}
+            </div>
+            <h1 key={spread}>{lunar ? "Footprints outlast the people who made them." : "A dust storm can cover an entire planet."}</h1>
+            <div className="atlas-visit">
+              <p>{lunar ? "The Moon" : "Mars"}<small>{lunar ? "Earth’s natural satellite" : "Fourth planet from the Sun"}</small></p>
+              <button aria-label={`Visit ${lunar ? "the Moon" : "Mars"}`} onClick={() => choose(spread)}>Visit <span aria-hidden="true">→</span></button>
+            </div>
+            <div className="atlas-record">
+              <p>{lunar ? "Eugene Cernan beside the lunar rover. Apollo 17, 1972." : "Jezero crater, seen by Perseverance’s Mastcam-Z. 2021."}</p>
+              <dl>
+                <div><dt>Surface gravity</dt><dd>{lunar ? "1.62" : "3.71"} m/s²</dd></div>
+                <div><dt>Atmosphere</dt><dd>{lunar ? "Trace exosphere" : "Mostly carbon dioxide"}</dd></div>
+                <div><dt>Expedition</dt><dd>{lunar ? "Lunar outpost" : "Martian colony"}</dd></div>
+              </dl>
+            </div>
           </div>
           <div className="arrival-bottom">
             <label>
@@ -123,7 +91,7 @@ export function ArrivalIntro(props: Props) {
               />{" "}
               Reduced motion
             </label>
-            <span>A SHORT CINEMATIC BEGINS YOUR EXPEDITION</span>
+            <span>{lunar ? "Plate 02 / 02" : "Plate 01 / 02"}</span>
             {props.saved && (
               <button onClick={props.onContinue}>
                 Continue saved mission <span aria-hidden="true">→</span>

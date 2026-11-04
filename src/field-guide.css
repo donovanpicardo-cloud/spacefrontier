@@ -80,3 +80,109 @@
 @media (max-height: 580px) {
   .app .arrival-heading h1 { font-size: 30px; }
 }
+
+/* A photographic spread occupies the viewport; navigation sits on its rules. */
+.app {
+  --plate: url("/plates/moon.jpg");
+  --gutter: clamp(20px, 5vw, 84px);
+}
+.app.edition-mars { --plate: url("/plates/mars.jpg"); }
+.app.in-menu > header { height: 56px; padding: 0 var(--gutter); border: 0; pointer-events: none; }
+.app.in-menu > header :is(.brand, nav) { display: none; }
+.app.in-menu > header .header-actions { margin-left: auto; pointer-events: auto; }
+.app:has(.overlay) > header { visibility: hidden; }
+.atlas-photo {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  animation: plate-reveal .65s ease-out both;
+}
+.atlas-photo-mars {
+  background-image: linear-gradient(90deg,#260e0994,transparent 80%),
+    linear-gradient(0deg,#1f0909cf,transparent 58%), url("/plates/mars.jpg");
+  background-color: #aa6241;
+  background-blend-mode: normal, normal, soft-light;
+  background-size: cover, cover, auto max(150vh, 64vw);
+}
+.atlas-photo-moon {
+  background-image: linear-gradient(90deg,#08090cc4,transparent 82%),
+    linear-gradient(0deg,#090a0ccf,transparent 60%), url("/plates/moon.jpg");
+  background-position: center, center, center 48%;
+  filter: grayscale(1);
+}
+@keyframes plate-reveal { from { opacity: .45; transform: scale(1.025); } }
+.atlas-spread {
+  position: absolute;
+  inset: 0 var(--gutter) 65px;
+  display: grid;
+  grid-template-rows: 56px auto 1fr auto;
+  align-content: stretch;
+  color: white;
+  text-shadow: 0 1px 12px #0005;
+}
+.atlas-byline { align-self: center; font-size: 16px; font-weight: 600; letter-spacing: -.045em; }
+.atlas-byline span { font-size: 12px; font-weight: 400; margin-left: 6px; }
+.atlas-selector { position: absolute; top: 75px; right: 0; display: flex; gap: 12px; }
+.atlas-spread button { background: transparent; color: white; border: 0; border-radius: 0; font: inherit; }
+.atlas-selector button { font-size: 14px; padding: 6px 2px; }
+.atlas-selector button[aria-pressed=true] { border-bottom: 2px solid currentColor; }
+.atlas-spread h1 {
+  font: 500 clamp(44px, 6.6vw, 112px)/.96 "DM Sans", Arial, sans-serif;
+  letter-spacing: -.07em;
+  max-width: 9.4em;
+  margin: clamp(22px,5vh,70px) 0 0;
+}
+.atlas-visit {
+  align-self: center;
+  border-top: 1px solid #ffffff82;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+.atlas-visit p { font-size: clamp(20px,2vw,34px); margin: 0; line-height: 1.1; letter-spacing: -.045em; }
+.atlas-visit small { display: block; font-size: 13px; letter-spacing: 0; margin-top: 5px; }
+.atlas-visit button { font-size: clamp(20px,2vw,34px); padding: 0 0 10px 18px; }
+.atlas-visit button:hover span { display: inline-block; transform: translateX(4px); }
+.atlas-record { width: min(420px,100%); }
+.atlas-record p { font-size: 12px; max-width: 28ch; margin: 0 0 12px; }
+.atlas-record dl { margin: 0; }
+.atlas-record dl div { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #ffffff80; padding: 4px 0; font-size: 14px; }
+.atlas-record dd { margin: 0; }
+.app .arrival-bottom { left: var(--gutter); right: var(--gutter); bottom: 12px; color: white; font-size: 11px; border-top: 1px solid #fff6; padding-top: 8px; }
+.app .arrival-bottom button { color: white; }
+.app .panel { position: relative; isolation: isolate; }
+.panel-plate { position: relative; height: clamp(75px,16vh,165px); background: linear-gradient(0deg,#0009,transparent),var(--plate) center 47% / cover; margin-bottom: 14px; }
+.panel-plate span { position: absolute; left: 12px; bottom: 8px; color: white; font-size: 12px; }
+@media (min-width: 900px) {
+  .app .overlay { justify-content: flex-end; padding: 0; backdrop-filter: none; background: linear-gradient(90deg,transparent,#09090a85); }
+  .app .panel { width: clamp(620px, 61vw, 1060px); height: 100dvh; max-height: 100dvh; padding: 0 clamp(26px,4vw,70px) 38px; border: 0; }
+  .app .panel-plate { margin-inline: calc(-1 * clamp(26px,4vw,70px)); }
+  .panel-plate span { left: clamp(26px,4vw,70px); }
+}
+.app.in-game .objective,.app.in-game .suit {
+  background: linear-gradient(90deg,#080809a8,transparent); border: 0;
+  border-top: 1px solid #fff9; border-radius: 0; padding: 8px 8px 10px 0;
+  text-shadow: 0 1px 4px black;
+}
+.app.in-game .objective .eyebrow { display: block; margin-bottom: 7px; color: white; }
+.app.in-game .objective h2 { font: 500 clamp(23px,2.5vw,37px)/1 "DM Sans",sans-serif; letter-spacing: -.055em; }
+.app.in-game .explorer-tools button { border: 1px solid #fff9; background: #1413129e; color: white; }
+.app.in-game .interact { border-radius: 0; border: 0; border-top: 1px solid #fff9; background: #151413df; }
+@media(max-width: 650px) {
+  .atlas-selector { top: 61px; }
+  .atlas-spread h1 { margin-top: 50px; font-size: clamp(40px,10vw,60px); }
+  .atlas-spread { bottom: 65px; }
+  .app .arrival-bottom > span { display: inline; }
+  .atlas-record dl div { padding: 3px 0; }
+}
+@media(max-height: 520px) {
+  .atlas-spread { inset-block: 0 45px; grid-template-rows: 40px auto 1fr auto; }
+  .atlas-selector { top: 46px; }
+  .atlas-spread h1 { font-size: 32px; margin: 4px 0; }
+  .atlas-record { justify-self: end; }
+  .atlas-record p { margin-bottom: 3px; }
+  .atlas-record dl div { font-size: 11px; padding: 1px 0; }
+}
+@media(prefers-reduced-motion: reduce) { .atlas-photo { animation: none; } }

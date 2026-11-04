@@ -51,3 +51,5 @@ The new walk-in recovery room and interior furniture are authored 3D geometry: p
 ## Return-to-Earth globe and spacecraft
 
 Earth texture: NASA Earth Observatory / Reto Stöckli, Blue Marble: Next Generation, January 2004 global base map. Source https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/ ; original JPEG https://assets.science.nasa.gov/content/dam/science/esd/eo/images/bmng/bmng-base/january/world.200401.3x5400x2700.jpg . Locally resized from 5400×2700 to 2048×1024, JPEG quality 85 (259,608 bytes), in public/materials/earth-nasa.jpg. Attribution: NASA Earth Observatory. NASA acknowledgement does not imply endorsement. The rocket, pad, atmospheric rim shader and staged flight sequence are authored game artwork; the spacecraft, fuel processor and compressed trajectory are fictional.
+
+Surface photographs are served locally. The Mars plate uses [PIA23727, Perseverance Mastcam-Z panorama](https://images.nasa.gov/details/PIA23727), NASA/JPL-Caltech/MSSS/ASU. The lunar plate uses [AS17-134-20476, Eugene Cernan beside the rover](https://images.nasa.gov/details/as17-134-20476), NASA.
