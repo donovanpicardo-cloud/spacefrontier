@@ -16,6 +16,16 @@ npm run preview
 
 Open the Local URL printed by Vite. For deployment, run `npm run build` and deploy `dist/` to Netlify or Vercel (framework: Vite). The app uses only the root route; no server functions are needed.
 
+## Live game and automatic deployment
+
+Play at https://nasa-space-game.vercel.app.
+
+Source: https://github.com/donovanpicardo-cloud/nasa-space-game (private).
+
+Vercel is connected to this repository. Pushing a commit to `main` automatically builds and publishes the game. Local file saves become live after they are committed and pushed. Codex should run `npm test` and `npm run build`, then commit and push completed changes as described in `AGENTS.md`. Ask to keep work local when you do not want it published.
+
+The opening screen lets players select a rotating 3D Moon or Mars. Selection begins a 24-second spacecraft approach, engine failure, and crash landing, followed by the surface mission. Skip and reduced-motion options are available.
+
 ## Play
 
 ### Junior Explorer and first-time tutorial
