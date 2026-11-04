@@ -1,0 +1,228 @@
+/* Focused exploration HUD: one goal, suit air, and contextual interaction. */
+.in-game header,
+.in-game .model-status,
+.in-game .telemetry,
+.in-game .controls,
+.in-game .compass,
+.in-game .reticle,
+.in-game .mission-dots {
+  display: none;
+}
+.in-game .objective {
+  top: 24px;
+  left: 24px;
+  width: 280px;
+  max-width: calc(100vw - 160px);
+  padding: 16px 18px;
+  background: #10252bea;
+  border: 1px solid #93b6b13b;
+  border-radius: 15px;
+}
+.in-game .objective .eyebrow {
+  display: none;
+}
+.in-game .objective h2,
+.junior.in-game .objective h2 {
+  font-size: 25px;
+  margin: 0 0 7px;
+  line-height: 1.1;
+}
+.in-game .objective p,
+.junior.in-game .objective p {
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0;
+  color: #e3ece5;
+}
+.goal-distance {
+  display: block;
+  margin-top: 10px;
+  color: #f2d48a;
+  font-size: 13px;
+}
+.in-game .suit {
+  left: 24px;
+  bottom: 24px;
+  width: 165px;
+  background: #10252bea;
+  border: 1px solid #93b6b13b;
+  border-radius: 12px;
+  padding: 12px 15px;
+}
+.in-game .suit > .eyebrow {
+  display: none;
+}
+.in-game .suit-row {
+  margin: 0;
+}
+.in-game .suit-row > span {
+  font-size: 13px;
+  letter-spacing: 0;
+  color: #dce9e0;
+}
+.in-game .suit-row strong {
+  font-size: 19px;
+}
+.in-game .explorer-tools {
+  left: auto;
+  right: 24px;
+  top: 24px;
+  transform: none;
+  gap: 8px;
+}
+.in-game .explorer-tools button {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 21px;
+  font-weight: bold;
+  background: #10252bea;
+}
+.in-game .interact {
+  bottom: 28px;
+  font-size: 16px;
+  padding: 13px 18px;
+  border-radius: 12px;
+  background: #152e34f2;
+}
+.in-game .notification {
+  top: 24px;
+  bottom: auto;
+  max-width: 440px;
+  font-size: 13px;
+  padding: 12px 16px;
+  border-radius: 12px;
+}
+.in-game .tutorial-card {
+  top: auto;
+  bottom: 24px;
+  right: 24px;
+  width: 330px;
+  max-height: calc(100dvh - 90px);
+  padding: 20px;
+}
+.learning .objective {
+  display: none;
+}
+.highlight-objective.learning .objective {
+  display: block;
+}
+.learning .notification {
+  top: 24px;
+  max-width: 440px;
+}
+.in-game .panel-repair {
+  width: 490px;
+  max-height: calc(100dvh - 40px);
+  padding: 24px;
+  border-radius: 18px;
+}
+.in-game .repair-overlay {
+  padding: 20px;
+}
+.hands-on-repair h2 {
+  font-size: 31px;
+  margin: 0 0 12px;
+}
+.hands-on-repair > p {
+  font-size: 17px;
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+.hands-on-repair svg {
+  width: 100%;
+  display: block;
+  touch-action: none;
+  user-select: none;
+}
+.hands-on-repair svg [tabindex] {
+  cursor: grab;
+  outline: none;
+}
+.hands-on-repair svg [tabindex]:active {
+  cursor: grabbing;
+}
+.hands-on-repair svg [tabindex]:focus-visible {
+  filter: drop-shadow(0 0 5px #fff1b0);
+}
+.repair-feedback {
+  font-size: 15px;
+  min-height: 44px;
+  margin-top: 14px;
+  color: #e4d397;
+  line-height: 1.5;
+}
+.in-game .world canvas {
+  cursor: none;
+}
+.in-game.track-repair .world canvas {
+  cursor: grab;
+}
+.in-game.track-repair .world canvas:active {
+  cursor: grabbing;
+}
+@media (max-width: 900px) {
+  .in-game .objective {
+    width: 230px;
+  }
+  .in-game .notification {
+    top: 86px;
+    max-width: 330px;
+  }
+  .in-game .tutorial-card {
+    width: 300px;
+    padding: 16px;
+  }
+  .in-game .panel-repair {
+    width: 420px;
+  }
+}
+@media (max-width: 650px) {
+  .in-game .objective {
+    top: 15px;
+    left: 15px;
+    width: 210px;
+    max-width: calc(100vw - 120px);
+    padding: 12px;
+  }
+  .in-game .explorer-tools {
+    top: 15px;
+    right: 15px;
+    gap: 5px;
+  }
+  .in-game .explorer-tools button {
+    width: 36px;
+    height: 36px;
+  }
+  .in-game .suit {
+    left: 15px;
+    bottom: 15px;
+    width: 135px;
+  }
+  .in-game .tutorial-card {
+    right: 12px;
+    left: 12px;
+    bottom: 12px;
+    width: auto;
+    max-height: 42dvh;
+  }
+  .learning .suit {
+    display: block;
+    top: 76px;
+    bottom: auto;
+  }
+  .in-game .panel-repair {
+    width: 100%;
+    max-height: 65dvh;
+    padding: 18px;
+    align-self: flex-end;
+  }
+  .in-game .repair-overlay {
+    padding: 10px;
+  }
+  .in-game .notification {
+    top: 155px;
+    max-width: 85vw;
+  }
+}

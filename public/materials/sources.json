@@ -1,0 +1,29 @@
+[
+  {
+    "file": "terrain_red_01_color.jpg",
+    "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/terrain_red_01/terrain_red_01_diff_2k.jpg",
+    "asset": "https://polyhaven.com/a/terrain_red_01",
+    "license": "CC0",
+    "author": "Rob Tuytel",
+    "bytes": 1862559,
+    "md5": "fd5fec2d1bd8676dd8e686d1661b82c4"
+  },
+  {
+    "file": "terrain_red_01_normal.jpg",
+    "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/terrain_red_01/terrain_red_01_nor_gl_1k.jpg",
+    "asset": "https://polyhaven.com/a/terrain_red_01",
+    "license": "CC0",
+    "author": "Rob Tuytel",
+    "bytes": 756034,
+    "md5": "f180accfd2dd92fd19235d6e94d4154e"
+  },
+  {
+    "file": "terrain_red_01_roughness.jpg",
+    "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/terrain_red_01/terrain_red_01_rough_1k.jpg",
+    "asset": "https://polyhaven.com/a/terrain_red_01",
+    "license": "CC0",
+    "author": "Rob Tuytel",
+    "bytes": 546786,
+    "md5": "7adbb5cb1ad33f0e45445e920b46754d"
+  }
+]

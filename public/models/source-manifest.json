@@ -1,0 +1,51 @@
+{
+ "slug": "astronaut-in-spacesuit",
+ "triangles": 800000,
+ "texture_px": 4096,
+ "triangles_light": 400000,
+ "texture_px_light": 1024,
+ "files": {
+  "glb": {
+   "name": "astronaut-in-spacesuit.glb",
+   "bytes": 28341576
+  },
+  "blend": {
+   "name": "astronaut-in-spacesuit.blend",
+   "bytes": 34895125
+  },
+  "fbx": {
+   "name": "astronaut-in-spacesuit.fbx",
+   "bytes": 50057884
+  },
+  "obj": {
+   "name": "astronaut-in-spacesuit-obj.zip",
+   "bytes": 21428358
+  },
+  "usdz": {
+   "name": "astronaut-in-spacesuit.usdz",
+   "bytes": 44563698
+  },
+  "glb_light": {
+   "name": "astronaut-in-spacesuit-light.glb",
+   "bytes": 12413096
+  },
+  "fbx_light": {
+   "name": "astronaut-in-spacesuit-light.fbx",
+   "bytes": 24490876
+  }
+ },
+ "extras": {
+  "license": "CC0-1.0",
+  "source": "grab3d.com",
+  "dimensions_m": "1.223 x 0.597 x 1.900",
+  "triangles": 800000,
+  "variant": "download",
+  "generator": "Created by grab3d",
+  "created": "2026-10-29"
+ },
+ "origin": {
+  "method": "ai-assisted",
+  "detail": "Base mesh and textures generated with an AI image-to-3D tool (Meshy), then cleaned up, scaled, textured and checked in Blender.",
+  "ai_content": true
+ }
+}

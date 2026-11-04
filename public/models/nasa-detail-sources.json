@@ -1,0 +1,26 @@
+[
+  {
+    "title": "Habitat Demonstration Unit",
+    "creator": "NASA / LaRC / Advanced Concepts Lab",
+    "source": "https://science.nasa.gov/3d-resources/habitat-demonstration-unit/",
+    "download": "https://assets.science.nasa.gov/content/dam/science/cds/3d/resources/model/habitat-demonstration-unit/Habitat%20Demonstration%20Unit%20%28part%201%29.glb",
+    "usage": "NASA educational media guidelines; no endorsement",
+    "originalBytes": 516748,
+    "optimizedBytes": 103576,
+    "triangles": 2264,
+    "sha256": "9f36e7d25e01a8dfa130d94a75d90e8f8ba73cb2b027d2402b127b04679ff50a",
+    "modifications": "Simplified geometry, WebP textures at most 1024px, removed Draco; SEV normalized and wheel modules separated for animation."
+  },
+  {
+    "title": "Space Exploration Vehicle",
+    "creator": "NASA / LaRC / Advanced Concepts Lab",
+    "source": "https://science.nasa.gov/3d-resources/space-exploration-vehicle/",
+    "download": "https://assets.science.nasa.gov/content/dam/science/cds/3d/resources/model/space-exploration-vehicle/Space%20Exploration%20Vehicle.glb",
+    "usage": "NASA educational media guidelines; no endorsement",
+    "originalBytes": 22431576,
+    "optimizedBytes": 4609336,
+    "triangles": 83713,
+    "sha256": "bde18e8c982cd091d789207a1183a6562eb006e53c460d423636989c91a3a50d",
+    "modifications": "Simplified geometry, WebP textures at most 1024px, removed Draco; SEV normalized and wheel modules separated for animation."
+  }
+]

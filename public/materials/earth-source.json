@@ -1,0 +1,10 @@
+{
+  "asset": "earth-nasa.jpg",
+  "source": "https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/",
+  "original": "https://assets.science.nasa.gov/content/dam/science/esd/eo/images/bmng/bmng-base/january/world.200401.3x5400x2700.jpg",
+  "credit": "NASA Earth Observatory / Reto Stöckli",
+  "originalDimensions": [5400,2700],
+  "localDimensions": [2048,1024],
+  "modification": "Resized, JPEG quality 85; locally bundled for the fictional return-to-Earth ending",
+  "bytes": 259608
+}
