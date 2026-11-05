@@ -10,6 +10,7 @@ import { TerrainStream } from "./environments/TerrainStream";
 import { RenderBudget, renderRatio } from "./RenderBudget";
 import { suitMovement } from "./MovementTuning";
 import * as T from "three";
+import { HabitatLighting } from "./HabitatLighting";
 import { horizontalStep, ballisticStep } from "./AstronautMotion";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import type { Destination } from "../simulation/engine";
@@ -209,6 +210,7 @@ export class World {
   contactShadow: T.Mesh;
   screenSampleAt = -1;
   interiorLights: T.PointLight[] = [];
+  habitatLighting!: HabitatLighting;
   plants: T.Mesh[] = [];
   dust: T.Points;
   surfaceDust: SurfaceDust;
@@ -455,7 +457,7 @@ export class World {
     this.renderer.domElement.addEventListener("wheel", this.wheel, {
       passive: false,
     });
-    this.interiorLights.forEach((l) => (l.visible = false));
+    this.habitatLighting = new HabitatLighting(this.scene, this.interiorLights);
     this.applyQuality();
     this.prepareGraphics();
     this.animate();
@@ -685,7 +687,7 @@ export class World {
     // Objective guidance is visual only; never change the player’s viewing angle.
     this.lastGuide = "";
   }
-  resetPlayer(position: number[] = [0, 0.12, 4]) {
+  resetPlayer(position: number[] = [0, 0.12, 0]) {
     this.rocket.stop();
     this.adventure.cancel();
     this.workReturn = null;
@@ -1706,28 +1708,15 @@ export class World {
     this.camera.updateProjectionMatrix();
     this.camera.lookAt(this.look);
     this.diagnostics.mark("Camera");
-    const closeLights = this.interiorLights
-      .filter(
-        (l) => l.parent?.visible && l.position.distanceTo(p.position) < 18,
-      )
-      .sort(
-        (a, b) =>
-          a.position.distanceToSquared(p.position) -
-          b.position.distanceToSquared(p.position),
-      );
     const lightLimit =
       this.state.quality === "Low"
         ? 1
         : this.state.quality === "School computer"
           ? 2
           : 4;
-    this.interiorLights.forEach((l) => {
-      l.visible =
-        interior &&
-        closeLights.indexOf(l) >= 0 &&
-        closeLights.indexOf(l) < lightLimit;
-      l.intensity = 8 + this.state.power * 0.24;
-    });
+    this.habitatLighting.update(
+      p.position, interior, this.state.power, lightLimit, dt,
+    );
     this.ambient.intensity = T.MathUtils.damp(
       this.ambient.intensity,
       interior ? 0.5 : this.destination === "moon" ? 0.8 : 1.1,

@@ -75,6 +75,7 @@ import "./styles.css";
 import "./play.css";
 import "./expedition.css";
 import "./field-guide.css";
+import "./mission-ui.css";
 import type { RepairKind } from "./game/RepairPlan";
 import type { RepairInfo } from "./game/WorldRepairs";
 import type { VehicleInfo, VehicleSave } from "./game/Vehicle";
@@ -845,9 +846,10 @@ function App() {
     setPanel(null);
     setPlaying(true);
     tutorialLive.current.active = true;
+    tutorialLive.current.id = "move";
     setTutorialActive(true);
     setStrongerHint(false);
-    world.current?.resetPlayer();
+    world.current?.resetPlayer([6, 0.12, 0]);
     world.current?.releaseLook();
     toast("Welcome, explorer! Let’s learn together. Your supplies are safe.");
   }

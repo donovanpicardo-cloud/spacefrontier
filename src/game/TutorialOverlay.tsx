@@ -32,7 +32,7 @@ export function TutorialOverlay(p: {
       </div>
       <div
         className="lesson-progress"
-        aria-label={`Step ${Math.min(7, p.state.index < 2 ? p.state.index + 1 : p.state.index < 4 ? p.state.index : p.state.index < 7 ? p.state.index : 7)} of 7`}
+        aria-label={`Step ${p.state.index + 1} of ${tutorialSteps.length}`}
       >
         {tutorialSteps.map((s, i) => (
           <i key={s.id} className={i <= p.state.index ? "learned" : ""} />

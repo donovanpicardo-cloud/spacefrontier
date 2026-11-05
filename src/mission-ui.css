@@ -1,0 +1,195 @@
+/* Continue the destination atlas: quiet space, fine rules, pale sage, clear type. */
+.app.in-game {
+  --paper: 7 14 22;
+  --ink: #ecede8;
+  --accent: #c5dfd6;
+  --line: #c5dfd638;
+}
+.app.in-game
+  :is(
+    .objective,
+    .suit,
+    .tutorial-card,
+    .vehicle-hud,
+    .world-repair-hud,
+    .radio-status,
+    .notification
+  ) {
+  background: linear-gradient(125deg, #07101af2, #0c1924e8);
+  border: 1px solid var(--line);
+  border-top-color: #c5dfd672;
+  border-radius: 4px;
+  color: var(--ink);
+  text-shadow: none;
+}
+.app.in-game :is(.objective, .tutorial-card) h2 {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 1.12;
+}
+.app.in-game .objective {
+  padding: 17px 19px;
+}
+.app.in-game .objective h2 {
+  font-size: clamp(24px, 2.2vw, 32px);
+}
+.app.in-game .objective :is(p, .goal-distance) {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.app.in-game .objective .eyebrow {
+  color: var(--accent);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+}
+.app.in-game .suit {
+  padding: 13px 16px;
+}
+.app.in-game .explorer-tools button {
+  background: #07101aeb;
+  border: 1px solid var(--line);
+  color: var(--accent);
+  border-radius: 4px;
+  font-weight: 400;
+}
+.app.in-game .interact {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #07101aef;
+}
+.app.in-game .overlay {
+  background: #03070e70;
+}
+.app.in-game .panel {
+  background: linear-gradient(140deg, #07101afb, #101d29f7);
+  color: var(--ink);
+  border-color: var(--line);
+}
+.app.in-game .panel h2 {
+  font-weight: 400;
+  font-size: clamp(30px, 4vw, 54px);
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+}
+.app.in-game .panel-plate {
+  opacity: 0.75;
+}
+.app.in-game :is(.eyebrow, .guide-identity, .practice-badge) {
+  color: var(--accent);
+}
+.app.in-game .guide-avatar {
+  background: #c5dfd61a;
+  color: var(--accent);
+  border: 1px solid var(--line);
+}
+.app.in-game .primary {
+  background: var(--accent);
+  color: #10221b;
+  border-radius: 4px;
+}
+.app.in-game .secondary {
+  color: #d4dedf;
+  border-radius: 4px;
+}
+.app.in-game
+  :is(
+    .setting,
+    .science-note,
+    .brief-grid > div,
+    .project-card,
+    .rescue-card,
+    .sample-card,
+    .rocket-section,
+    .radio-card
+  ) {
+  border-color: var(--line);
+  color: #c7d1d8;
+}
+.app.in-game :is(.lesson-keys kbd, .brief-grid kbd) {
+  background: #c5dfd612;
+  color: #e2ece5;
+  border-color: #c5dfd645;
+}
+.app.in-game .lesson-progress i {
+  background: #c5dfd61a;
+}
+.app.in-game .lesson-progress i.learned {
+  background: var(--accent);
+}
+.app.in-game .lesson-actions button {
+  color: var(--accent);
+  border-color: var(--line);
+}
+.app.in-game .tutorial-card > small {
+  color: #a7b9c3;
+}
+.app.in-game button:hover:not(:disabled) {
+  border-color: #c5dfd680;
+}
+.app.in-game button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.app .arrival-letterbox {
+  background: #000;
+  height: clamp(32px, 9vh, 110px);
+  z-index: 2;
+}
+.app .arrival-flight-meta {
+  top: max(11vh, 45px);
+  font-size: 9px;
+  color: #c5dfd6;
+}
+.arrival-film-caption {
+  position: absolute;
+  bottom: max(12vh, 50px);
+  left: 6%;
+  right: 6%;
+  text-align: center;
+  color: #ecede8;
+  text-shadow:
+    0 2px 8px #000,
+    0 2px 24px #000;
+}
+.arrival-film-caption > span {
+  font-size: clamp(17px, 2vw, 26px);
+  letter-spacing: -0.025em;
+}
+.arrival-film-caption p {
+  font-size: clamp(10px, 1.1vw, 13px);
+  line-height: 1.6;
+  margin: 8px auto 0;
+  max-width: 650px;
+}
+.arrival-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8%;
+}
+.arrival-preparing .arrival-canvas {
+  visibility: hidden;
+}
+.arrival-loading h2 {
+  font-size: clamp(30px, 5vw, 64px);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  margin: 18px 0;
+}
+.arrival-loading p {
+  color: #98a7b3;
+  font-size: 13px;
+  line-height: 1.7;
+}
+@media (max-width: 650px) {
+  .app.in-game .objective {
+    padding: 12px;
+  }
+  .app .arrival-flight-meta {
+    gap: 12px;
+    font-size: 7px;
+  }
+}

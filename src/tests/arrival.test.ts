@@ -6,7 +6,7 @@ describe("opening cinematic", () => {
     "takes the %s expedition through approach, failure, descent, impact and recovery",
     (destination) => {
       expect(
-        [0, 6, 11, 18, 21].map((t) => arrivalBeat(t, destination).chapter),
+        [0, 2, 6, 13, 16].map((t) => arrivalBeat(t, destination).chapter),
       ).toEqual([
         "01 / APPROACH",
         "02 / SYSTEM FAILURE",
@@ -20,7 +20,7 @@ describe("opening cinematic", () => {
     },
   );
   it("uses a thruster landing on the Moon and atmospheric entry on Mars", () => {
-    expect(arrivalBeat(12, "moon").text).toContain("No atmosphere");
-    expect(arrivalBeat(12, "mars").text).toContain("Entry trajectory");
+    expect(arrivalBeat(8, "moon").text).toContain("No atmosphere");
+    expect(arrivalBeat(8, "mars").text).toContain("Entry trajectory");
   });
 });
