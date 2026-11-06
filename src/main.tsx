@@ -445,7 +445,8 @@ function App() {
       if (
         !inFlightLive.current &&
         !rocketLive.current.arrived &&
-        simulationRuns(v.playing, v.panel, tutorialLive.current.active)
+        simulationRuns(v.playing, v.panel, tutorialLive.current.active,
+          !!world.current && !world.current.warming)
       )
         setSim((s) => {
           return tick(
@@ -702,7 +703,7 @@ function App() {
       setRepairing(true);
     } else if (id === "shelter") {
       if (live.current.sim.shielded) {
-        toast("Shielding is already reinforced.");
+        toast("Shelter protection is active. Stay here while the emergency passes.");
         return;
       }
       if (live.current.sim.parts < 1 || live.current.sim.battery < 6) {
@@ -1554,7 +1555,7 @@ function App() {
                                       : near === "airlock"
                                         ? "Cycle airlock"
                                         : near === "shelter"
-                                          ? "Reinforce shelter · 1 part + 6% power"
+                                          ? sim.shielded ? "Shelter protected · stay here" : "Reinforce shelter · 1 part + 6% power"
                                           : "Inspect " +
                                             stations.find((s) => s.id === near)
                                               ?.name}

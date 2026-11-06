@@ -155,3 +155,7 @@ The frame limiter now retains fractional refresh time; invisible source meshes a
 ## Soundscape and smoother materials
 
 Game audio now covers movement, tools, vehicles, habitats, radio, the crash and rocket flight. Use the header sound button or Settings to mute; Settings also includes a persistent volume control. Terrain uses softer distance-aware normal detail and blended texture scales, and painted metal has a more restrained finish. Medium adds lightweight edge smoothing while School/Low retain their rendering budgets. See docs/AUDIO_POLISH_QA.md for verification and limits.
+
+## Campaign control recovery
+
+Graphics warm-up now tolerates materials replaced during model loading and cannot hold movement, driving or repairs indefinitely. Resources wait for the world to be ready. Both five-objective Moon and Mars campaigns were replayed through their A-grade debriefs, including normal buggy controls and every campaign repair. See docs/CAMPAIGN_PLAYTHROUGH_QA.md for the reproduced fault, fixes and verification scope. Reload an older open game tab to receive updates; browser saves are retained.

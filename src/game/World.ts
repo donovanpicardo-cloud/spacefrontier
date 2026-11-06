@@ -1,4 +1,5 @@
 import { CrashLanding } from "./CrashLanding";
+import { warmGraphics } from "./GraphicsWarmup";
 import { sprintHeld, updateMovementInput } from "./MovementInput";
 import { gameAudio } from "./GameAudio";
 import type { AudioFrame } from "./AudioDirector";
@@ -474,9 +475,8 @@ export class World {
     this.warming = true;
     // Compile while the title/loading UI is visible, before accepting gameplay.
     // KHR_parallel_shader_compile is used by Three when the driver supports it.
-    void this.renderer
-      .compileAsync(this.scene, this.camera)
-      .catch(() => {})
+    void warmGraphics(this.renderer, this.scene, this.camera,
+      () => this.disposed || generation !== this.warmGeneration)
       .finally(() => {
         if (this.disposed || generation !== this.warmGeneration) return;
         this.warming = false;

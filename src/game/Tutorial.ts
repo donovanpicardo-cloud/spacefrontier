@@ -109,8 +109,9 @@ export function simulationRuns(
   playing: boolean,
   panel: string | null,
   tutorial: boolean,
+  worldReady = true,
 ) {
-  return playing && !tutorial && (panel === null || panel === "repair");
+  return playing && worldReady && !tutorial && (panel === null || panel === "repair");
 }
 export const juniorGoals = [
   "Follow the trail to your space home. Press E at the door.",

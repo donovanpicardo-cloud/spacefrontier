@@ -61,6 +61,8 @@ describe("a first astronaut lesson", () => {
     expect(simulationRuns(true, null, false)).toBe(true);
     expect(simulationRuns(true, "repair", false)).toBe(true);
     expect(simulationRuns(true, "pause", false)).toBe(false);
+    expect(simulationRuns(true, null, false, false)).toBe(false);
+    expect(simulationRuns(true, "repair", false, false)).toBe(false);
   });
   it("only points at equipment needed for the current practice step", () => {
     expect(tutorialTarget("jump")).toBeNull();
