@@ -1,0 +1,9 @@
+{
+  "source": "https://science.nasa.gov/resource/insight-3d-model/",
+  "creator": "NASA/JPL-Caltech",
+  "originalBytes": 22357936,
+  "optimizedBytes": 10444284,
+  "sha256": "5670caae8cbb0a69921665ffa7de4e40a5b3f049793d3e8fdfd6318bd2e3c340",
+  "modifications": "Duplicate textures shared; lossless WebP with maximum 1024px dimensions; lossless Meshopt geometry compression. No mesh simplification or vertex quantization.",
+  "verification": "Round-trip decoding preserves every vertex attribute, triangle topology and winding, node name, hierarchy and transform."
+}

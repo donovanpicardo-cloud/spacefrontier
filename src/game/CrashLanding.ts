@@ -1,11 +1,12 @@
 import * as T from "three";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "meshoptimizer/decoder";
 import type { Destination } from "../simulation/engine";
 import { ARRIVAL_DURATION, ARRIVAL_IMPACT } from "./ArrivalTimeline";
 
 const site = { x: 0, z: 7 };
-export const survivorPosition = [2.8, 0.12, 12];
+export { survivorPosition } from "./CrashSite";
 const impact = ARRIVAL_IMPACT;
 const end = ARRIVAL_DURATION;
 const strike = new T.Vector3(site.x - 1.4, 0, site.z + 1.6);
@@ -123,6 +124,7 @@ export class CrashLanding {
     this.exhaust.visible = false;
     const file = destination === "moon" ? "apollo-lunar-module" : "insight";
     this.ready = new GLTFLoader()
+      .setMeshoptDecoder(MeshoptDecoder)
       .loadAsync("/models/" + file + ".glb")
       .then((gltf) => gltf.scene as T.Object3D)
       .catch(

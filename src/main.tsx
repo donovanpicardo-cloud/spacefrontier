@@ -1,4 +1,4 @@
-import { survivorPosition } from "./game/CrashLanding";
+import { survivorPosition } from "./game/CrashSite";
 import { ArrivalIntro } from "./game/ArrivalIntro";
 import { RocketPanel } from "./game/RocketPanel";
 import {
@@ -37,7 +37,8 @@ import {
   Sun,
   MoveUpRight,
 } from "lucide-react";
-import { World, stations, type WorldState } from "./game/World";
+import type { World, WorldState } from "./game/World";
+import { stations } from "./game/Stations";
 import {
   resourceSites,
   resourceReward,
@@ -111,6 +112,17 @@ function App() {
     world = useRef<World | null>(null),
     audio = useRef<AudioContext | null>(null);
   const [worldEnabled, setWorldEnabled] = useState(false);
+  const [worldModule, setWorldModule] = useState<typeof import("./game/World") | null>(null);
+  const [worldLoadError, setWorldLoadError] = useState(false);
+  useEffect(() => {
+    if (!worldEnabled || worldModule) return;
+    let cancelled = false;
+    void import("./game/World").then(
+      module => { if (!cancelled) setWorldModule(module); },
+      () => { if (!cancelled) setWorldLoadError(true); },
+    );
+    return () => { cancelled = true; };
+  }, [worldEnabled, worldModule]);
   const [destination, setDestination] = useState<Destination>("moon"),
     [playing, setPlaying] = useState(false),
     [panel, setPanel] = useState<Panel>(null),
@@ -262,7 +274,7 @@ function App() {
       world.current?.lock();
   }
   useEffect(() => {
-    if (!mount.current || !worldEnabled) return;
+    if (!mount.current || !worldEnabled || !worldModule) return;
     setGraphicsReady(false);
     setModelStatus("loading");
     const ws: WorldState = {
@@ -333,7 +345,7 @@ function App() {
         );
       },
     };
-    world.current = new World(mount.current, destination, ws);
+    world.current = new worldModule.World(mount.current, destination, ws);
     world.current.state.onModel = setModelStatus;
     if (pendingPosition.current) {
       world.current.resetPlayer(pendingPosition.current);
@@ -347,7 +359,7 @@ function App() {
       world.current?.dispose();
       world.current = null;
     };
-  }, [destination, worldEnabled]);
+  }, [destination, worldEnabled, worldModule]);
   useEffect(() => {
     if (world.current)
       Object.assign(world.current.state, {
@@ -401,6 +413,7 @@ function App() {
     destination,
     mission,
     done,
+    worldModule,
   ]);
   useEffect(() => {
     if (world.current) {
@@ -1253,6 +1266,13 @@ function App() {
       }
     >
       <div className="world" ref={mount} />
+      {worldLoadError && (
+        <div className="surface-load-error" role="alert">
+          <h2>The surface could not load.</h2>
+          <p>Check your connection and reload to try again.</p>
+          <button onClick={() => window.location.reload()}>Reload game</button>
+        </div>
+      )}
       <div className="vignette" />
       <div className={"model-status " + modelStatus} role="status">
         {!graphicsReady

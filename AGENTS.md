@@ -9,4 +9,4 @@ The user wants completed Codex changes automatically reflected on the live game.
 - Respect any request to keep a change local, use another branch, or skip deployment.
 - Include the live URL and any deployment failure in the final response.
 
-Production: https://nasa-space-game.vercel.app
+Production: https://spacefrontier.vercel.app

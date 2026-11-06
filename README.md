@@ -4,7 +4,7 @@ A browser-based third-person astronaut adventure and educational outpost simulat
 
 ## Run
 
-Requires Node.js 22.12 or newer.
+Requires Node.js 22.12 or newer within Node 22.x, matching the Vercel build runtime pinned in `package.json`.
 
 ```sh
 npm install
@@ -18,11 +18,11 @@ Open the Local URL printed by Vite. For deployment, run `npm run build` and depl
 
 ## Live game and automatic deployment
 
-Play at https://nasa-space-game.vercel.app.
+Play at https://spacefrontier.vercel.app.
 
 Source: https://github.com/donovanpicardo-cloud/nasa-space-game (private).
 
-Vercel is connected to this repository. Pushing a commit to `main` automatically builds and publishes the game. Local file saves become live after they are committed and pushed. Codex should run `npm test` and `npm run build`, then commit and push completed changes as described in `AGENTS.md`. Ask to keep work local when you do not want it published.
+Vercel is connected to this repository. Pushing a commit to `main` automatically runs the test suite and production build before publishing the game. Either check failing prevents publication. Local file saves become live after they are committed and pushed. Codex should run `npm test` and `npm run build`, then commit and push completed changes as described in `AGENTS.md`. Ask to keep work local when you do not want it published.
 
 The opening screen lets players select a rotating 3D Moon or Mars. Selection begins a 24-second spacecraft approach, engine failure, and crash landing, followed by the surface mission. Skip and reduced-motion options are available.
 
