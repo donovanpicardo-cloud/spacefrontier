@@ -31,6 +31,10 @@ describe("survivable cinematic crash", () => {
       const crash = new CrashLanding(scene, destination, () => 0, register);
       await crash.ready;
       expect(register).toHaveBeenCalledOnce();
+      const [bounds, geometry, matrix] = register.mock.calls[0];
+      expect(bounds.min.y).toBeGreaterThanOrEqual(-1e-6);
+      expect(geometry).toBeInstanceOf(T.BufferGeometry);
+      expect(matrix).toBeInstanceOf(T.Matrix4);
       const camera = new T.PerspectiveCamera();
       crash.start(finish);
       crash.frame(1 / 60, camera);
@@ -59,4 +63,22 @@ describe("survivable cinematic crash", () => {
       expect(scene.children.length).toBe(objects);
     },
   );
+});
+
+it("registers separate final-pose hull pieces instead of a solid box across empty space", async () => {
+  const model = new T.Group();
+  for (const x of [-3, 3]) {
+    const mesh = new T.Mesh(new T.BoxGeometry(0.5, 1, 0.5), new T.MeshStandardMaterial());
+    mesh.position.x = x;
+    model.add(mesh);
+  }
+  vi.spyOn(GLTFLoader.prototype, "loadAsync").mockResolvedValue({ scene: model } as unknown as GLTF);
+  const register = vi.fn();
+  const crash = new CrashLanding(new T.Scene(), "moon", () => 0, register);
+  await crash.ready;
+  expect(register).toHaveBeenCalledTimes(2);
+  const boxes = register.mock.calls.map(([box]) => box as T.Box3);
+  const center = new T.Box3().union(boxes[0]).union(boxes[1]).getCenter(new T.Vector3());
+  expect(boxes.every(box => !box.containsPoint(center))).toBe(true);
+  expect(boxes.every(box => box.min.y >= -1e-6)).toBe(true);
 });

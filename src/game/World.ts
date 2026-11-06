@@ -1,4 +1,5 @@
 import { CrashLanding } from "./CrashLanding";
+import { sprintHeld, updateMovementInput } from "./MovementInput";
 import { gameAudio } from "./GameAudio";
 import type { AudioFrame } from "./AudioDirector";
 import { groundMeshHeight } from "./VehicleTerrain";
@@ -361,7 +362,10 @@ export class World {
       this.groundHeight(x, z),
     );
     this.physics.collect(this.scene, this.doors);
-    this.wreck = new CrashLanding(this.scene, d, (x,z) => this.drivingSurface(x,z), box => this.physics.add(box));
+    this.wreck = new CrashLanding(this.scene, d, (x,z) => this.drivingSurface(x,z), (box, geometry, matrix) => {
+      this.physics.add(box);
+      if (geometry && matrix) this.physics.shape(box, geometry, matrix, "Crashed spacecraft");
+    });
     this.resources.batch();
     this.repairs.devices.forEach((d) => {
       const detail = d.root.children.find((o) => o.userData.serviceDetail);
@@ -991,7 +995,7 @@ export class World {
       e.preventDefault();
     if (this.resources.gather.active && !this.state.paused && !e.repeat)
       this.resources.key(e.code);
-    this.keys.add(e.code);
+    updateMovementInput(this.keys, e, true);
     if (
       e.code === "Space" &&
       !e.repeat &&
@@ -1003,7 +1007,7 @@ export class World {
     if (e.code === "KeyR" && this.state.playing && !this.state.paused)
       this.resetCamera();
   };
-  keyup = (e: KeyboardEvent) => this.keys.delete(e.code);
+  keyup = (e: KeyboardEvent) => updateMovementInput(this.keys, e, false);
   blur = () => {
     this.jumpRequestedUntil = 0;
     this.keys.clear();
@@ -1328,7 +1332,7 @@ export class World {
           this.yaw,
           onGround,
           enabled,
-          this.keys.has("ShiftLeft"),
+          sprintHeld(this.keys),
           dt,
         );
         this.horizontalVelocity = { x: motion.x, z: motion.z };

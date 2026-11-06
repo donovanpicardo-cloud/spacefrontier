@@ -65,7 +65,7 @@ export class CrashLanding {
     private scene: T.Scene,
     destination: Destination,
     private ground: (x: number, z: number) => number,
-    register: (box: T.Box3) => void,
+    register: (box: T.Box3, geometry?: T.BufferGeometry, matrix?: T.Matrix4) => void,
   ) {
     this.root.visible = false;
     scene.add(this.root);
@@ -242,12 +242,15 @@ export class CrashLanding {
         this.restY = terrainLift(this.root, ground);
         this.root.position.y = this.restY;
         this.root.visible = true;
-        const collision = new T.Box3();
+        // Freeze collision at the final resting pose, not at the pre-lift transform.
+        // Separate mesh bounds leave the empty space around struts and panels clear.
+        this.root.updateMatrixWorld(true);
         this.root.traverse((object) => {
-          if (object instanceof T.Mesh && !object.userData.noContact)
-            collision.expandByObject(object, true);
+          if (!(object instanceof T.Mesh) || object.userData.noContact) return;
+          object.geometry.computeBoundingBox();
+          const collision = object.geometry.boundingBox!.clone().applyMatrix4(object.matrixWorld);
+          register(collision, object.geometry, object.matrixWorld.clone());
         });
-        register(collision);
       });
   }
   private rotateFragment(piece: Fragment, progress: number) {

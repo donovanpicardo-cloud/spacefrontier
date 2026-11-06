@@ -269,8 +269,9 @@ export class ExplorerVehicle {
   reset() {
     this.driving = false;
     this.transition = null;
-    const facing = Math.PI + Math.PI / 6;
-    const safe = this.clearParking(this.spawn.x, this.spawn.z, facing);
+    const preferred = Math.PI + Math.PI / 6;
+    const safe = this.clearParking(this.spawn.x, this.spawn.z, preferred);
+    const facing = this.departureFacing(safe.x, safe.y, preferred);
     this.state = { x: safe.x, z: safe.y, yaw: facing, speed: 0 };
     this.root.position.set(safe.x, this.ground(safe.x, safe.y), safe.y);
     this.root.rotation.set(0, facing, 0);
@@ -494,6 +495,21 @@ export class ExplorerVehicle {
         if (this.clearAt(px, pz, yaw)) return new T.Vector2(px, pz);
       }
     return new T.Vector2(x, z);
+  }
+  departureFacing(x: number, z: number, preferred: number) {
+    // A newly parked buggy should face a usable route, including after the wreck loads.
+    for (const turn of [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6]) {
+      const yaw = preferred + turn * Math.PI / 6;
+      let fromX = x, fromZ = z, clear = true;
+      for (let distance = 0; distance <= 6; distance += 0.5) {
+        const nextX = x - Math.sin(yaw) * distance;
+        const nextZ = z - Math.cos(yaw) * distance;
+        if (!this.canMove(nextX, nextZ, yaw, fromX, fromZ)) { clear = false; break; }
+        fromX = nextX; fromZ = nextZ;
+      }
+      if (clear) return yaw;
+    }
+    return preferred;
   }
   update(dt: number, input: DriveInput, player: T.Object3D) {
     this.lastEmit += dt;
