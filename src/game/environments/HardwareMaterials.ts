@@ -31,7 +31,9 @@ export function industrialSurface(
           t.wrapS = t.wrapT = T.RepeatWrapping;
           t.repeat.set(u, v);
           t.colorSpace = i === 0 ? T.SRGBColorSpace : T.NoColorSpace;
-          t.anisotropy = 4;
+          t.anisotropy = 8;
+          t.minFilter = T.LinearMipmapLinearFilter;
+          t.magFilter = T.LinearFilter;
           t.needsUpdate = true;
           return t;
         }),
@@ -55,14 +57,14 @@ export function industrialSurface(
       material.map = maps[0];
       material.normalMap = maps[1];
       material.roughnessMap = maps[2];
-      material.normalScale.setScalar(kind === "tread" ? 0.7 : 0.32);
+      material.normalScale.setScalar(kind === "tread" ? 0.36 : 0.16);
       material.onBeforeCompile = (shader) => {
         shader.fragmentShader = shader.fragmentShader.replace(
           "#include <map_fragment>",
-          `vec3 hardwarePaint=diffuseColor.rgb;\n#include <map_fragment>\nfloat hardwareWear=dot(texture2D(map,vMapUv).rgb,vec3(0.2126,0.7152,0.0722));\ndiffuseColor.rgb=hardwarePaint*(0.5+pow(max(hardwareWear,0.0),0.35)*1.2);`,
+          `vec3 hardwarePaint=diffuseColor.rgb;\n#include <map_fragment>\nfloat hardwareWear=dot(texture2D(map,vMapUv).rgb,vec3(0.2126,0.7152,0.0722));\ndiffuseColor.rgb=hardwarePaint*mix(0.84,1.08,smoothstep(0.08,0.85,hardwareWear));`,
         );
       };
-      material.customProgramCacheKey = () => `frontier-hardware-${kind}`;
+      material.customProgramCacheKey = () => `frontier-hardware-polish-v2-${kind}`;
       material.needsUpdate = true;
     })
     .catch(() => {

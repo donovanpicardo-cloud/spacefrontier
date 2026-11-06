@@ -32,6 +32,9 @@ export function photographedSurface(
         t.wrapS = t.wrapT = T.RepeatWrapping;
         t.repeat.set(repeat, repeat);
         t.anisotropy = 8;
+        t.minFilter = T.LinearMipmapLinearFilter;
+        t.magFilter = T.LinearFilter;
+        t.generateMipmaps = true;
         t.colorSpace = i === 0 ? T.SRGBColorSpace : T.NoColorSpace;
         t.needsUpdate = true;
         return t;
@@ -45,16 +48,27 @@ export function photographedSurface(
       material.vertexColors = false;
       material.color.setHex(0xffffff);
       material.roughness = 0.96;
-      material.normalScale.setScalar(rock ? 0.4 : 0.8);
-      if (destination === "moon") {
-        material.onBeforeCompile = (shader) => {
-          shader.fragmentShader = shader.fragmentShader.replace(
-            "#include <map_fragment>",
-            "#include <map_fragment>\nfloat lunarLuma=dot(diffuseColor.rgb,vec3(0.2126,0.7152,0.0722));diffuseColor.rgb=vec3(lunarLuma)*vec3(1.0,1.01,1.02);",
-          );
-        };
-        material.customProgramCacheKey = () => "frontier-lunar-photographic-v1";
-      }
+      material.normalScale.setScalar(rock ? 0.24 : 0.36);
+      material.onBeforeCompile = (shader) => {
+        // Blend two texture scales to soften obvious repetition without more geometry.
+        shader.fragmentShader = shader.fragmentShader.replace(
+          "#include <map_fragment>",
+          `#include <map_fragment>
+          #ifdef USE_MAP
+            vec3 broadColor = texture2D(map, vMapUv * 0.173 + vec2(0.31, 0.67)).rgb;
+            diffuseColor.rgb = mix(diffuseColor.rgb, broadColor * diffuse, ${rock ? "0.12" : "0.32"});
+          #endif
+          ${destination === "moon"
+            ? "float lunarLuma=dot(diffuseColor.rgb,vec3(0.2126,0.7152,0.0722));diffuseColor.rgb=vec3(lunarLuma)*vec3(0.96,0.985,1.02);"
+            : "diffuseColor.rgb *= vec3(1.04,0.97,0.90);"}`,
+        ).replace(
+          "#include <normal_fragment_maps>",
+          `#include <normal_fragment_maps>
+          float surfaceDetail = mix(0.9, 0.18, smoothstep(10.0, 85.0, length(vViewPosition)));
+          normal = normalize(mix(nonPerturbedNormal, normal, surfaceDetail));`,
+        );
+      };
+      material.customProgramCacheKey = () => `frontier-surface-polish-v2-${destination}-${rock}`;
       material.needsUpdate = true;
       previousMap?.dispose();
       previousNormal?.dispose();

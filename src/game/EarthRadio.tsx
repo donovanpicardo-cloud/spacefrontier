@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { gameAudio } from "./GameAudio";
 import type { Allocation, Destination, Sim } from "../simulation/engine";
 export const radioDelay = (d: Destination) => (d === "moon" ? 3 : 24);
 export function useEarthRadio(time: number, destination: Destination) {
@@ -12,6 +13,14 @@ export function useEarthRadio(time: number, destination: Destination) {
   }, [time, sent]);
   const left =
     sent === null ? 0 : Math.max(0, sent + radioDelay(destination) - time);
+  const heard = useRef<number | null>(null);
+  useEffect(() => {
+    if (sent !== null && left === 0 && !used && heard.current !== sent) {
+      heard.current = sent;
+      gameAudio.cue("radio");
+    }
+    if (sent === null) heard.current = null;
+  }, [sent, left, used]);
 
   return {
     sent,
@@ -58,6 +67,7 @@ export function EarthRadio(p: {
             p.sim.battery < 5 || (used && p.sim.time < (sent ?? 0) + 60)
           }
           onClick={() => {
+            gameAudio.cue("radio");
             p.charge();
             setSent(p.sim.time);
             setUsed(false);

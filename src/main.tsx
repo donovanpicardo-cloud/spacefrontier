@@ -1,4 +1,5 @@
 import { survivorPosition } from "./game/CrashSite";
+import { gameAudio } from "./game/GameAudio";
 import { ArrivalIntro } from "./game/ArrivalIntro";
 import { RocketPanel } from "./game/RocketPanel";
 import {
@@ -109,8 +110,7 @@ type Panel =
   | null;
 function App() {
   const mount = useRef<HTMLDivElement>(null),
-    world = useRef<World | null>(null),
-    audio = useRef<AudioContext | null>(null);
+    world = useRef<World | null>(null);
   const [worldEnabled, setWorldEnabled] = useState(false);
   const [worldModule, setWorldModule] = useState<typeof import("./game/World") | null>(null);
   const [worldLoadError, setWorldLoadError] = useState(false);
@@ -140,13 +140,43 @@ function App() {
     [done, setDone] = useState<number[]>([]),
     [notification, setNotification] = useState(""),
     [repairing, setRepairing] = useState(false),
-    [muted, setMuted] = useState(true),
+    [muted, setMuted] = useState(() => readLocal("frontier-audio-muted") === "true"),
     [sensitivity, setSensitivity] = useState(1),
     [reducedMotion, setReducedMotion] = useState(false),
     [quality, setQuality] = useState("Medium"),
     [speed, setSpeed] = useState(1),
     [saved, setSaved] = useState(() => !!parseSave(readLocal("frontier-save")));
   const [tutorialActive, setTutorialActive] = useState(false);
+  const [volume, setVolume] = useState(() => {
+    const stored = readLocal("frontier-audio-volume");
+    const value = stored === null ? 0.65 : Number(stored);
+    return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.65;
+  });
+  useEffect(() => {
+    gameAudio.configure(muted, volume);
+    writeLocal("frontier-audio-muted", String(muted));
+    writeLocal("frontier-audio-volume", String(volume));
+  }, [muted, volume]);
+  useEffect(() => {
+    const unlock = () => gameAudio.unlock();
+    const interfaceClick = (event: MouseEvent) => {
+      if (event.target instanceof Element && event.target.closest("button, select, input[type='checkbox']"))
+        gameAudio.cue("click");
+    };
+    const visibility = () => gameAudio.setHidden(document.hidden);
+    document.addEventListener("pointerdown", unlock, true);
+    document.addEventListener("keydown", unlock, true);
+    document.addEventListener("click", interfaceClick, true);
+    document.addEventListener("visibilitychange", visibility);
+    visibility();
+    return () => {
+      document.removeEventListener("pointerdown", unlock, true);
+      document.removeEventListener("keydown", unlock, true);
+      document.removeEventListener("click", interfaceClick, true);
+      document.removeEventListener("visibilitychange", visibility);
+      gameAudio.silence();
+    };
+  }, []);
   const [tutorial, dispatchTutorial] = useReducer(
     tutorialReducer,
     initialTutorial,
@@ -242,22 +272,6 @@ function App() {
     setNotification(s);
     window.setTimeout(() => setNotification(""), 6000);
   }
-  function sound() {
-    if (muted) return;
-    const ctx = audio.current ?? new AudioContext();
-    audio.current = ctx;
-    void ctx.resume();
-    const o = ctx.createOscillator(),
-      g = ctx.createGain();
-    o.type = "sine";
-    o.frequency.setValueAtTime(420, ctx.currentTime);
-    o.frequency.exponentialRampToValueAtTime(620, ctx.currentTime + 0.1);
-    g.gain.setValueAtTime(0.025, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
-    o.connect(g).connect(ctx.destination);
-    o.start();
-    o.stop(ctx.currentTime + 0.2);
-  }
   function open(p: Panel) {
     if (inFlightLive.current && p !== null && p !== "pause") return;
     if (rocketLive.current.arrived && playing && p === null) {
@@ -266,7 +280,6 @@ function App() {
     }
     if (p !== null) world.current?.adventure.cancel();
     if (p !== null) world.current?.resources.cancel();
-    sound();
     setPanel(p);
     if (p !== "repair") world.current?.cancelRepair();
     if (p !== null) world.current?.releaseLook();
@@ -304,6 +317,7 @@ function App() {
       onModel: setModelStatus,
       onRepair: setRepairInfo,
       onRepairComplete: () => {
+        gameAudio.cue("success");
         repairReady.current = true;
         finishRepairRef.current?.();
       },
@@ -323,6 +337,7 @@ function App() {
       onFieldAction: (action) => fieldActionRef.current(action),
       onAirlock: setAirlockInfo,
       onAirlockComplete: () => {
+        gameAudio.cue("airlock");
         setRepairing(false);
         const a = adventureLive.current;
         commitAdventure({
@@ -333,6 +348,7 @@ function App() {
       },
       onGather: setGatherInfo,
       onGatherComplete: (site) => {
+        gameAudio.cue("success");
         setSim((s) => resourceReward(s, site));
         setSupplyGoal(null);
         resumeTowGuide();
@@ -377,6 +393,7 @@ function App() {
         crop: sim.crop,
         telemetry: {
           oxygen: sim.oxygen,
+          suitAir: sim.suit,
           water: sim.water,
           time: sim.time,
           history: sim.history,
@@ -545,6 +562,7 @@ function App() {
   function complete(n: number) {
     if (tutorialLive.current.active) return;
     if (done.includes(n)) return;
+    gameAudio.cue("success");
     setDone((d) => (d.includes(n) ? d : [...d, n]));
     toast(
       [
@@ -562,7 +580,6 @@ function App() {
       setMission(n + 1);
       if (n === 3) setSim((s) => ({ ...s, storm: true, stormSince: s.time }));
     }
-    sound();
   }
   function interact(id: string) {
     if (tutorialLive.current.active) {
@@ -577,7 +594,6 @@ function App() {
         return;
       }
     }
-    sound();
     const cooldown = remainingCooldown(
       adventureLive.current,
       id,
@@ -1053,6 +1069,7 @@ function App() {
     toast(text);
   }
   function fieldAction(action: FieldAction) {
+    gameAudio.cue("click");
     const a = adventureLive.current,
       w = world.current;
     if (action.type === "sample") {
@@ -1304,7 +1321,7 @@ function App() {
           <span className="edition">VOL. 01 — BEYOND EARTH</span>
         </nav>
         <div className="header-actions">
-          <button aria-label="Toggle sound" onClick={() => setMuted((m) => !m)}>
+          <button aria-label={muted ? "Unmute game audio" : "Mute game audio"} aria-pressed={!muted} onClick={() => setMuted((m) => !m)}>
             {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>
           <button aria-label="Settings" onClick={() => open("settings")}>
@@ -2024,13 +2041,20 @@ function App() {
                   />
                 </label>
                 <label className="setting">
-                  Interface audio
+                  Game audio
                   <input
                     type="checkbox"
                     checked={!muted}
                     onChange={(e) => setMuted(!e.target.checked)}
                   />
                 </label>
+                <label className="setting">
+                  Audio volume
+                  <input type="range" min="0" max="1" step="0.05" value={volume}
+                    onChange={(e) => setVolume(Number(e.target.value))} />
+                  <span>{Math.round(volume * 100)}%</span>
+                </label>
+                <p className="science-note">Original music, footsteps, machinery and flight effects. Moon exterior sounds represent vibrations heard through your suit.</p>
                 <label className="setting">
                   Simulation speed
                   <select

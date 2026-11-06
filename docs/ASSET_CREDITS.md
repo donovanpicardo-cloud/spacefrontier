@@ -55,3 +55,7 @@ Earth texture: NASA Earth Observatory / Reto Stöckli, Blue Marble: Next Generat
 Surface photographs are served locally. The Mars plate uses [PIA23727, Perseverance Mastcam-Z panorama](https://images.nasa.gov/details/PIA23727), NASA/JPL-Caltech/MSSS/ASU. The lunar plate uses [AS17-134-20476, Eugene Cernan beside the rover](https://images.nasa.gov/details/as17-134-20476), NASA.
 
 Arrival uses the [NASA/JPL Mars globe](https://science.nasa.gov/resource/planet-mars-3d-model/) with its embedded normal map and [NASA SVS lunar color and displacement maps](https://svs.gsfc.nasa.gov/4720/) derived from LRO observations. The fictional crash uses the [Apollo Lunar Module](https://science.nasa.gov/3d-resources/apollo-lunar-module/) on the Moon and the [NASA/JPL-Caltech InSight lander](https://science.nasa.gov/resource/insight-3d-model/) on Mars. InSight is optimized from 22.36 MB to 10.44 MB with lossless Meshopt geometry compression, shared duplicate textures and lossless WebP textures resized to at most 1024px. All vertex attributes, triangle topology/winding, names, hierarchy and transforms are verified unchanged after decoding; the breakaway assemblies remain intact. Reproduce with `npm run optimize:insight -- path/to/original-insight.glb`; see `public/models/insight-optimization.json` for its checksum.
+
+## Original sound design
+
+Music, footsteps, machinery, radio and cinematic effects are original procedural Web Audio synthesis authored for this game. No third-party audio recordings, remote audio services or generated audio files are bundled.

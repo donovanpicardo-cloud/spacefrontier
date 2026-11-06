@@ -49,6 +49,7 @@ export class CrashLanding {
   private separated = false;
   private impactRotation = new T.Quaternion().setFromEuler(wreckAngle);
   private elapsed = end;
+  get time() { return this.elapsed; }
   private finished?: () => void;
   private disposed = false;
   private dust: T.Points;

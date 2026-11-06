@@ -1,4 +1,6 @@
 import { CrashLanding } from "./CrashLanding";
+import { gameAudio } from "./GameAudio";
+import type { AudioFrame } from "./AudioDirector";
 import { groundMeshHeight } from "./VehicleTerrain";
 import { RocketScene } from "./RocketScene";
 import { rocketPad } from "./Rocket";
@@ -32,6 +34,8 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { SSAOPass } from "three/addons/postprocessing/SSAOPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
+import { FXAAShader } from "three/addons/shaders/FXAAShader.js";
 import { outpostDetail } from "./environments/OutpostDetail";
 import { navigationTarget } from "./Navigation";
 import { CollisionWorld } from "./CollisionWorld";
@@ -67,6 +71,7 @@ export type WorldState = {
   crop: number;
   telemetry: {
     oxygen: number;
+    suitAir?: number;
     water: number;
     time: number;
     history: number[][];
@@ -211,6 +216,7 @@ export class World {
   disposed = false;
   wreck: CrashLanding;
   private landingCamera = false;
+  private cinematicAudio = false;
   private landingLabels: T.Object3D[] = [];
   async filmLanding(quiet: boolean, show: () => void, finish: () => void) {
     await this.wreck.ready;
@@ -218,6 +224,7 @@ export class World {
     this.landingLabels = [...this.resources.labels.values(), ...this.adventure.labels, this.guide].filter(o => o.visible);
     this.landingLabels.forEach(o => { o.visible = false; });
     this.landingCamera = true;
+    this.cinematicAudio = !quiet;
     show();
     if (quiet) finish();
     else this.wreck.start(finish);
@@ -240,6 +247,8 @@ export class World {
   orbitPitch = 0.23;
   online!: OnlineAstronaut;
   composer?: EffectComposer;
+  smoothing?: EffectComposer;
+  edgeSmoothing?: ShaderPass;
   ao?: SSAOPass;
   appliedQuality = "";
   lastLook = 0;
@@ -618,6 +627,20 @@ export class World {
     this.composer.addPass(this.ao);
     this.composer.addPass(new OutputPass());
   }
+  ensureSmoothing() {
+    if (this.smoothing) return;
+    // Medium gets inexpensive edge smoothing; School/Low retain their direct render path.
+    this.smoothing = new EffectComposer(this.renderer, new T.WebGLRenderTarget(1, 1));
+    this.smoothing.addPass(new RenderPass(this.scene, this.camera));
+    this.smoothing.addPass(new OutputPass());
+    this.edgeSmoothing = new ShaderPass(FXAAShader);
+    this.smoothing.addPass(this.edgeSmoothing);
+  }
+  private renderScene() {
+    if (this.ao?.enabled && this.composer) this.composer.render();
+    else if (this.state.quality === "Medium" && this.smoothing) this.smoothing.render();
+    else this.renderer.render(this.scene, this.camera);
+  }
   inRecoveryRoom() {
     return this.recoveryRoom.contains(this.player.root.position);
   }
@@ -637,6 +660,12 @@ export class World {
     this.camera.updateProjectionMatrix();
     this.composer?.setPixelRatio(this.renderer.getPixelRatio());
     this.composer?.setSize(w, h);
+    this.smoothing?.setPixelRatio(this.renderer.getPixelRatio());
+    this.smoothing?.setSize(w, h);
+    this.edgeSmoothing?.uniforms.resolution.value.set(
+      1 / Math.max(1, w * this.renderer.getPixelRatio()),
+      1 / Math.max(1, h * this.renderer.getPixelRatio()),
+    );
     this.ao?.setSize(Math.ceil(w * 0.65), Math.ceil(h * 0.65));
   }
   applyQuality() {
@@ -644,6 +673,13 @@ export class World {
     if (q === this.appliedQuality) return;
     this.appliedQuality = q;
     setTerrainQuality(this.terrainSurface, this.destination, q);
+    if (q === "Medium") this.ensureSmoothing();
+    else if (this.smoothing) {
+      this.smoothing.passes.forEach(pass => pass.dispose());
+      this.smoothing.dispose();
+      this.smoothing = undefined;
+      this.edgeSmoothing = undefined;
+    }
     if (q === "High" || q === "Ultra") this.ensurePostProcessing();
     this.renderer.shadowMap.enabled = q !== "Low" && q !== "School computer";
     const resolution = q === "Ultra" ? 4096 : q === "High" ? 2048 : 1024;
@@ -1120,11 +1156,25 @@ export class World {
     );
   };
   framePacer = new FramePacer();
+  private audioGrounded = true;
+  private updateAudio(mode: AudioFrame["mode"], dt: number, elapsed = 0) {
+    gameAudio.update({
+      mode, elapsed, destination: this.destination,
+      paused: this.state.paused || (mode === "surface" && !this.state.playing),
+      inside: this.state.inside, speed: this.speed,
+      grounded: this.audioGrounded,
+      driving: this.vehicle.driving, vehicleSpeed: this.vehicle.state.speed,
+      working: (!!this.repairs.active && this.repairs.held) || !!this.resources.gather.active || !!this.adventure.hold,
+      airlock: !!this.transit, storm: this.state.storm,
+      oxygen: Math.min(this.state.telemetry.oxygen, this.state.telemetry.suitAir ?? 100),
+    }, dt);
+  }
   animate = () => {
     if (this.disposed) return;
     this.raf = requestAnimationFrame(this.animate);
     const frameAt = performance.now();
     if (document.hidden || this.warming) {
+      gameAudio.silence();
       this.clock.getDelta();
       return;
     }
@@ -1140,7 +1190,8 @@ export class World {
     if (this.landingCamera && !this.state.playing) {
       this.player.root.visible = this.contactShadow.visible = false;
       this.wreck.frame(realDt, this.camera);
-      this.renderer.render(this.scene, this.camera);
+      this.updateAudio(this.cinematicAudio ? "crash" : "surface", realDt, this.wreck.time);
+      this.renderScene();
       return;
     }
     if (this.landingCamera) {
@@ -1176,6 +1227,7 @@ export class World {
         this.state.paused,
         this.state.reducedMotion,
       );
+      this.updateAudio("rocket", dt, this.rocket.flight?.elapsed ?? 36);
       this.diagnostics.endGPU();
       this.diagnostics.mark("Flight render");
       this.diagnostics.finish();
@@ -1471,6 +1523,8 @@ export class World {
         repair: !!this.repairs.active && !this.repairApproach,
         reducedMotion: this.state.reducedMotion,
       });
+      // Use the collision result even when vertical speed is zero at the jump apex.
+      this.audioGrounded = grounded;
       this.online.update(
         dt,
         this.speed,
@@ -1777,10 +1831,10 @@ export class World {
     this.diagnostics.mark("Lights and interface");
     this.renderer.info.reset();
     this.diagnostics.beginGPU();
-    if (this.ao?.enabled && this.composer) this.composer.render();
-    else this.renderer.render(this.scene, this.camera);
+    this.renderScene();
     this.diagnostics.endGPU();
     this.diagnostics.mark("Render submission");
+    this.updateAudio("surface", dt);
     this.diagnostics.finish();
     this.diagnostics.publish({
       version: "r9-optimized",
@@ -1822,6 +1876,7 @@ export class World {
       this.player.root.position.fromArray(p);
   }
   dispose() {
+    gameAudio.menu();
     this.disposed = true;
     this.wreck.dispose();
     cancelAnimationFrame(this.raf);
@@ -1858,6 +1913,8 @@ export class World {
     this.online.dispose();
     this.composer?.passes.forEach((p) => p.dispose());
     this.composer?.dispose();
+    this.smoothing?.passes.forEach(pass => pass.dispose());
+    this.smoothing?.dispose();
     this.sun.shadow.map?.dispose();
     this.renderer.domElement.removeEventListener("wheel", this.wheel);
     this.scene.traverse((o) => {
