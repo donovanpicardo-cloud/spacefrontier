@@ -46,7 +46,6 @@ import { CollisionWorld } from "./CollisionWorld";
 import { WorldRepairs, type RepairInfo } from "./WorldRepairs";
 import type { RepairKind } from "./RepairPlan";
 import { ExplorerVehicle, type VehicleInfo, type VehicleSave } from "./Vehicle";
-import { loadNasaLander } from "./environments/NasaLandmark";
 import { batchStatic, disposeBatchSources } from "./environments/StaticBatch";
 import { WorldResources, type GatherInfo } from "./WorldResources";
 import {

@@ -1,13 +1,7 @@
 import * as T from "three";
-import { terrainHeight } from "./Terrain";
 export function outpostDetail(scene: T.Scene, mars: boolean) {
   const root = new T.Group();
   scene.add(root);
-  const hull = new T.MeshStandardMaterial({
-    color: 0xe2dfce,
-    metalness: 0.35,
-    roughness: 0.57,
-  });
   const metal = new T.MeshStandardMaterial({
     color: 0x293e47,
     metalness: 0.75,
@@ -95,62 +89,5 @@ export function outpostDetail(scene: T.Scene, mars: boolean) {
     new T.Vector3(12, 0.18, -5),
   ]);
   root.add(new T.Mesh(new T.TubeGeometry(curve, 32, 0.045, 6, false), gold));
-  // A compact lander creates a recognizable navigational landmark west of the outpost.
-  const lander = new T.Group();
-  lander.position.set(
-    -20,
-    terrainHeight(-20, -17, mars ? "mars" : "moon"),
-    -17,
-  );
-  lander.userData.asyncLander = !mars;
-  lander.userData.noCollision = !mars;
-  lander.userData.noBatch = !mars;
-  root.add(lander);
-  const body = add(new T.CylinderGeometry(1.55, 1.9, 2.4, 8), hull, 0, 0, 0);
-  root.remove(body);
-  lander.add(body);
-  body.position.set(0, 3.2, 0);
-  const foil = add(new T.CylinderGeometry(1.9, 2.1, 0.75, 8), gold, 0, 0, 0);
-  root.remove(foil);
-  lander.add(foil);
-  foil.position.set(0, 1.65, 0);
-  const top = add(new T.ConeGeometry(1.55, 1.2, 8), hull, 0, 0, 0);
-  root.remove(top);
-  lander.add(top);
-  top.position.set(0, 5, 0);
-  for (let i = 0; i < 4; i++) {
-    const angle = (i * Math.PI) / 2 + Math.PI / 4;
-    const from = new T.Vector3(
-      Math.cos(angle) * 1.2,
-      2.4,
-      Math.sin(angle) * 1.2,
-    );
-    const to = new T.Vector3(Math.cos(angle) * 3, 0.22, Math.sin(angle) * 3);
-    const leg = new T.Mesh(
-      new T.CylinderGeometry(0.09, 0.13, from.distanceTo(to), 8),
-      metal,
-    );
-    leg.position.copy(from).lerp(to, 0.5);
-    leg.quaternion.setFromUnitVectors(
-      new T.Vector3(0, 1, 0),
-      to.clone().sub(from).normalize(),
-    );
-    leg.castShadow = true;
-    lander.add(leg);
-    const pad = new T.Mesh(new T.CylinderGeometry(0.5, 0.6, 0.16, 12), metal);
-    pad.position.copy(to);
-    pad.receiveShadow = pad.castShadow = true;
-    lander.add(pad);
-  }
-  const window = new T.Mesh(
-    new T.CircleGeometry(0.52, 6),
-    new T.MeshStandardMaterial({
-      color: 0x204453,
-      metalness: 0.65,
-      roughness: 0.12,
-    }),
-  );
-  window.position.set(0, 3.55, 1.67);
-  lander.add(window);
   return root;
 }

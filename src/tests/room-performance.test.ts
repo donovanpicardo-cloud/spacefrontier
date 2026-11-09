@@ -25,7 +25,10 @@ import { navigationTarget } from "../game/Navigation";
 const canvas = () => ({
   width: 0,
   height: 0,
-  getContext: () => new Proxy({}, { get: () => () => {} }),
+  getContext: () => new Proxy(
+    { createLinearGradient: () => ({ addColorStop() {} }) },
+    { get: (ctx, key) => Reflect.get(ctx, key) ?? (() => {}) },
+  ),
 });
 describe("recovery-room expansion and useful servicing", () => {
   it("keeps the fully dressed doorway clear from the live-playtest approach", () => {

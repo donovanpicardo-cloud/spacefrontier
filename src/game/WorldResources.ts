@@ -1,3 +1,4 @@
+import { drawFieldLabel, fieldLabel, type FieldLabel } from "./FieldLabel";
 import * as T from "three";
 import type { Destination } from "../simulation/engine";
 import { Gathering, resourceSites, resourceTitles, type ResourceSite } from "./Resources";
@@ -19,7 +20,7 @@ export class WorldResources {
   extraction: Extraction | null = null;
   rigs = new Map<string, ResourceRig>();
   roots = new Map<string, T.Group>();
-  labels = new Map<string, T.Mesh<T.PlaneGeometry, T.MeshBasicMaterial>>();
+  labels = new Map<string, FieldLabel>();
   tool = new T.Group();
   buttonHeld = false;
   lastProgress = "";
@@ -38,17 +39,7 @@ export class WorldResources {
       scene.add(rig.root);
       this.rigs.set(site.id, rig);
       this.roots.set(site.id, rig.root);
-      const canvas = document.createElement("canvas");
-      canvas.width = 512;
-      canvas.height = 128;
-      const ctx = canvas.getContext("2d")!;
-      const label = new T.Mesh(
-        new T.PlaneGeometry(1.72, 0.43),
-        new T.MeshBasicMaterial({
-          map: new T.CanvasTexture(canvas),
-          side: T.DoubleSide,
-        }),
-      );
+      const label = fieldLabel(2.2);
       label.position.set(0, 1.7, 0);
       label.userData.noCollision = true;
       rig.root.add(label);
@@ -133,20 +124,9 @@ export class WorldResources {
   }
   paint(id: string) {
     this.resetVisual(id);
-    const texture = this.labels.get(id)!.material.map!,
-      ctx = (texture.image as HTMLCanvasElement).getContext("2d")!;
     const site = this.sites.find((s) => s.id === id)!;
     const recovered = this.gather.collected.has(id);
-    ctx.fillStyle = "#272622";
-    ctx.fillRect(0, 0, 512, 128);
-    ctx.fillStyle = recovered ? "#938e83" : "#c79857";
-    ctx.fillRect(14, 15, 5, 98);
-    ctx.font = "600 19px monospace";
-    ctx.fillText("FRONTIER / " + (recovered ? "RECOVERY COMPLETE" : "FIELD OPERATIONS"), 36, 44);
-    ctx.fillStyle = recovered ? "#b6aea0" : "#f2e6d0";
-    ctx.font = "600 33px sans-serif";
-    ctx.fillText(resourceTitles[site.kind], 36, 92, 442);
-    texture.needsUpdate = true;
+    drawFieldLabel(this.labels.get(id)!, resourceTitles[site.kind], recovered ? "Recovery complete" : "Field operations", recovered ? "#95cbb0" : undefined);
   }
   emit() {
     if (!this.extraction || !this.gather.active) return;

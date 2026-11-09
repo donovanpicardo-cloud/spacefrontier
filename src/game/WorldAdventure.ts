@@ -1,3 +1,4 @@
+import { drawFieldLabel, fieldLabel, type FieldLabel } from "./FieldLabel";
 import { RobotTrack } from "./RobotTrack";
 import * as T from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
@@ -85,26 +86,8 @@ export class WorldAdventure {
       return g;
     };
     const label = (g: T.Group, text: string, y = 1.8) => {
-      const c = document.createElement("canvas");
-      c.width = 512;
-      c.height = 128;
-      const cx = c.getContext("2d")!;
-      cx.fillStyle = "#272622";
-      cx.fillRect(0, 0, 512, 128);
-      cx.fillStyle = "#c79857";
-      cx.fillRect(14, 15, 5, 98);
-      cx.font = "600 19px monospace";
-      cx.fillText("FRONTIER / FIELD OPERATIONS", 36, 44);
-      cx.fillStyle = "#f2e6d0";
-      cx.font = "600 32px sans-serif";
-      cx.fillText(text, 36, 92, 442);
-      const m = new T.Mesh(
-        new T.PlaneGeometry(1.6, 0.4),
-        new T.MeshBasicMaterial({
-          map: new T.CanvasTexture(c),
-          side: T.DoubleSide,
-        }),
-      );
+      const m = fieldLabel(2.16);
+      drawFieldLabel(m, text, "Outpost services");
       m.position.y = y;
       g.add(m);
       this.labels.push(m);
@@ -132,7 +115,7 @@ export class WorldAdventure {
         0.58,
       );
       this.sampleRocks.set(site.id, rock);
-      label(g, "RESEARCH SAMPLE", 1.4);
+      label(g, "Research sample", 1.4);
     }
     for (const [i, site] of this.robots.entries()) {
       const g = group(site.x, site.z);
@@ -186,20 +169,20 @@ export class WorldAdventure {
         0.2,
         true,
       );
-      label(g, site.name.toUpperCase() + " / SOS", 1.8);
+      label(g, site.name, 1.8);
     }
     const bay = group(recoveryBay.x, recoveryBay.z);
-    mesh(bay, new T.CylinderGeometry(2.1, 2.2, 0.05, 32), 0x32474c, 0, 0.03);
+    mesh(bay, new T.CylinderGeometry(2.1, 2.2, 0.16, 64), 0x4d4c47, 0, 0.018);
     mesh(
       bay,
-      new T.TorusGeometry(1.9, 0.035, 8, 48),
-      0x7cd8ca,
+      new T.TorusGeometry(1.9, 0.023, 8, 64),
+      0xd9bc83,
       0,
-      0.08,
+      0.102,
       0,
       true,
     ).rotation.x = Math.PI / 2;
-    label(bay, "ROBOT RECOVERY", 2.5);
+    label(bay, "Robot recovery", 2.5);
     const terminal = group(3, -15);
     this.solidMeshes.push(box(terminal, 1, 0.9, 0.65, 0x304952, 0, 0.45));
     box(terminal, 0.9, 0.5, 0.08, 0x80c8b5, 0, 1.12, -0.1);
@@ -227,7 +210,7 @@ export class WorldAdventure {
           box(panel, 0.018, 0.02, 2.85, 0x789caf, x, 0.12);
         for (let z = -1.3; z <= 1.4; z += 0.43)
           box(panel, 4.5, 0.02, 0.018, 0x789caf, 0, 0.12, z);
-        label(g, "HELIOS / SOLAR", 3.5);
+        label(g, "Solar expansion", 3.5);
       } else if (kind === "recycler") {
         for (const z of [-1, 1]) {
           this.solidMeshes.push(
@@ -251,7 +234,7 @@ export class WorldAdventure {
             ).rotation.x = Math.PI / 2;
           box(g, 0.25, 1.1, 0.15, 0x79c6bc, 0.6, 1.1, z);
         }
-        label(g, "WATER RECOVERY", 2.8);
+        label(g, "Water recovery", 2.8);
       } else {
         this.solidMeshes.push(box(g, 2.4, 0.8, 1, 0x3d5960, 0, 0.4));
         box(g, 2.6, 0.1, 1.15, 0xc6c3ad, 0, 0.86);
@@ -262,7 +245,7 @@ export class WorldAdventure {
         box(g, 2.5, 0.13, 0.15, 0x98c8bd, 0, 2.45, 0.45);
         for (let i = 0; i < 5; i++)
           box(g, 0.15, 0.38, 0.18, 0xd6b580, -0.8 + i * 0.4, 1.12);
-        label(g, "FIELD WORKSHOP", 2.9);
+        label(g, "Field workshop", 2.9);
       }
     }
     box(this.tool, 0.14, 0.1, 0.3, 0xe6bf72);
@@ -298,19 +281,8 @@ export class WorldAdventure {
   stamp(g: T.Group, text: string) {
     if (g.userData.stamp === text) return;
     g.userData.stamp = text;
-    const label = g.userData.label as T.Mesh<
-      T.PlaneGeometry,
-      T.MeshBasicMaterial
-    >;
-    if (!label) return;
-    const texture = label.material.map!,
-      canvas = texture.image as HTMLCanvasElement,
-      ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#122b32";
-    ctx.fillRect(0, 0, 512, 128);
-    ctx.fillStyle = "#bfe7ce";
-    ctx.fillText(text, 256, 76);
-    texture.needsUpdate = true;
+    const label = g.userData.label as FieldLabel | undefined;
+    if (label) drawFieldLabel(label, text, "Field operations");
   }
   nearest(p: T.Vector3) {
     return this.targets()
@@ -357,7 +329,7 @@ export class WorldAdventure {
       rock.scale.setScalar(data.samples.includes(id) ? 0.45 : 1);
       this.stamp(
         this.sampleModels.get(id)!,
-        data.samples.includes(id) ? "SAMPLE RECORDED" : "RESEARCH SAMPLE",
+        data.samples.includes(id) ? "Sample recorded" : "Research sample",
       );
     }
     for (const [i, site] of this.robots.entries()) {

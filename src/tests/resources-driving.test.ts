@@ -22,7 +22,7 @@ describe("surface supply gathering", () => {
         createElement: () => ({
           width: 512,
           height: 128,
-          getContext: () => ({ fillRect() {}, fillText() {} }),
+          getContext: () => new Proxy({ createLinearGradient: () => ({ addColorStop() {} }) }, { get: (ctx, key) => Reflect.get(ctx, key) ?? (() => {}) }),
         }),
       });
       const scene = new T.Scene(),
@@ -56,7 +56,7 @@ describe("surface supply gathering", () => {
       createElement: () => ({
         width: 512,
         height: 128,
-        getContext: () => ({ fillRect() {}, fillText() {} }),
+        getContext: () => new Proxy({ createLinearGradient: () => ({ addColorStop() {} }) }, { get: (ctx, key) => Reflect.get(ctx, key) ?? (() => {}) }),
       }),
     });
     const done = vi.fn(),

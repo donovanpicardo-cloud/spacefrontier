@@ -62,6 +62,7 @@ function baseTerrainHeight(x: number, z: number, d: Destination) {
       array,
       path,
       Math.max(Math.abs(x - 12) - 6, Math.abs(z + 23) - 6),
+      Math.hypot(x - recoveryBay.x, z - recoveryBay.z) - 2.6,
       launchLaneDistance(x, z, d) - 3,
     ),
     0,

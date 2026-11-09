@@ -1,3 +1,4 @@
+import { drawFieldLabel, fieldLabel } from "../FieldLabel";
 import * as T from "three";
 import { industrialSurface } from "../environments/HardwareMaterials";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
@@ -122,22 +123,13 @@ export function buildHabitat(scene: T.Scene, moon = false) {
     z: number,
     w = 2.1,
     h = 0.38,
-    color = "#b9e1db",
+    color = "#d8ad75",
   ) => {
-    const c = document.createElement("canvas");
-    c.width = 768;
-    c.height = 160;
-    const ctx = c.getContext("2d")!;
-    ctx.fillStyle = moon ? "#322a22" : "#142a33";
-    ctx.fillRect(0, 0, 768, 160);
-    ctx.fillStyle = color;
-    ctx.font = "600 43px monospace";
-    ctx.fillText(content, 25, 66);
-    ctx.font = "20px monospace";
-    ctx.fillStyle = "#7daba8";
-    ctx.fillText("FRONTIER  /  OUTPOST SYSTEMS", 25, 116);
-    const m = new T.MeshBasicMaterial({ map: new T.CanvasTexture(c) });
-    return box(x, y, z, w, h, 0.025, m);
+    const sign = fieldLabel(w, h);
+    drawFieldLabel(sign, content, "Habitat systems", color);
+    sign.position.set(x, y, z);
+    root.add(sign);
+    return sign;
   };
   const screen = (
     x: number,
