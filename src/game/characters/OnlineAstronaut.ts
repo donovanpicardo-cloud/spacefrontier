@@ -1,4 +1,5 @@
 import * as T from "three";
+import { modelClarity } from "../ModelClarity";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { jumpPhase } from "../Jump";
 import { reachArm } from "../ArmIK";
@@ -21,6 +22,7 @@ export class OnlineAstronaut {
           return;
         }
         const model = gltf.scene;
+        modelClarity(model);
         this.mixer = new T.AnimationMixer(model);
         for (const clip of gltf.animations) {
           const raw = clip.name.split("|").pop()!;

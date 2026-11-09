@@ -2,7 +2,7 @@ import * as T from "three";
 import { industrialSurface } from "../environments/HardwareMaterials";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 
-export function buildHabitat(scene: T.Scene) {
+export function buildHabitat(scene: T.Scene, moon = false) {
   const root = new T.Group();
   scene.add(root);
   const colliders: T.Mesh[] = [],
@@ -13,25 +13,25 @@ export function buildHabitat(scene: T.Scene) {
     fans: T.Group[] = [],
     screens: T.Mesh[] = [];
   const hull = new T.MeshStandardMaterial({
-    color: 0xbac2bc,
+    color: moon ? 0xd7cab3 : 0xbac2bc,
     metalness: 0.35,
     roughness: 0.48,
   });
   industrialSurface(hull, "paint", 0.25, 0.25);
   const panel = new T.MeshStandardMaterial({
-    color: 0x798d8e,
+    color: moon ? 0x918477 : 0x798d8e,
     metalness: 0.5,
     roughness: 0.57,
   });
   const dark = new T.MeshStandardMaterial({
-    color: 0x24363e,
+    color: moon ? 0x3e3c36 : 0x24363e,
     metalness: 0.5,
     roughness: 0.68,
   });
   const surface = document.createElement("canvas");
   surface.width = surface.height = 256;
   const ctx = surface.getContext("2d")!;
-  ctx.fillStyle = "#a3b0ad";
+  ctx.fillStyle = moon ? "#b2a593" : "#a3b0ad";
   ctx.fillRect(0, 0, 256, 256);
   for (let i = 0; i < 2300; i++) {
     const n = Math.sin(i * 157.31) * 43758.3,
@@ -56,7 +56,7 @@ export function buildHabitat(scene: T.Scene) {
     map: floorTexture,
     bumpMap: floorTexture,
     bumpScale: 0.012,
-    color: 0x526268,
+    color: moon ? 0x736759 : 0x526268,
     metalness: 0.45,
     roughness: 0.65,
   });
@@ -66,8 +66,8 @@ export function buildHabitat(scene: T.Scene) {
     roughness: 0.6,
   });
   const trim = new T.MeshStandardMaterial({
-    color: 0xbbeee2,
-    emissive: 0x81c9bc,
+    color: moon ? 0xffdbac : 0xbbeee2,
+    emissive: moon ? 0xd9a664 : 0x81c9bc,
     emissiveIntensity: 1.7,
   });
   const warm = new T.MeshStandardMaterial({
@@ -128,7 +128,7 @@ export function buildHabitat(scene: T.Scene) {
     c.width = 768;
     c.height = 160;
     const ctx = c.getContext("2d")!;
-    ctx.fillStyle = "#142a33";
+    ctx.fillStyle = moon ? "#322a22" : "#142a33";
     ctx.fillRect(0, 0, 768, 160);
     ctx.fillStyle = color;
     ctx.font = "600 43px monospace";
@@ -295,7 +295,7 @@ export function buildHabitat(scene: T.Scene) {
     }
   }
   for (const z of [-15, -21.5, -28, -32]) {
-    const l = new T.PointLight(z === -15 ? 0xffdfba : 0xc9eee6, 30, 15, 1.6);
+    const l = new T.PointLight(z === -15 || moon ? 0xffdfba : 0xc9eee6, 30, 15, 1.6);
     l.position.set(0, 3.6, z);
     root.add(l);
     lights.push(l);

@@ -1,4 +1,5 @@
 import { AudioDirector, type AudioCue, type AudioFrame } from "./AudioDirector";
+import { audioLevel, motorMix } from "./AudioMix";
 
 type Voice = {
   gain: GainNode;
@@ -6,7 +7,7 @@ type Voice = {
   source: AudioScheduledSourceNode;
 };
 
-/** Original procedural audio with shared noise and a fixed pool of ambient voices. */
+/** Recorded foley over quiet, bounded atmospheric and musical beds. */
 class GameAudio {
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
@@ -15,6 +16,10 @@ class GameAudio {
   private director = new AudioDirector();
   private muted = false;
   private volume = 0.65;
+  private musicVolume = 0.25;
+  private music: GainNode | null = null;
+  private recordings = new Map<string, AudioBuffer>();
+  private sampleStep = 0;
   private hidden = false;
   private lastMix = -1;
   private stepSide = 1;
@@ -32,11 +37,12 @@ class GameAudio {
       /* Gameplay remains available on browsers without Web Audio. */
     }
   }
-  configure(muted: boolean, volume: number) {
+  configure(muted: boolean, volume: number, musicVolume = 0.25) {
     this.muted = muted;
-    this.volume = Number.isFinite(volume)
-      ? Math.max(0, Math.min(1, volume))
-      : 0.65;
+    this.volume = audioLevel(volume);
+    this.musicVolume = audioLevel(musicVolume, 0.25);
+    if (this.music && this.context)
+      this.music.gain.setTargetAtTime(this.musicVolume, this.context.currentTime, 0.1);
     if (this.context && this.master)
       this.master.gain.setTargetAtTime(
         muted || this.hidden ? 0 : this.volume * 0.55,
@@ -46,7 +52,7 @@ class GameAudio {
   }
   setHidden(hidden: boolean) {
     this.hidden = hidden;
-    this.configure(this.muted, this.volume);
+    this.configure(this.muted, this.volume, this.musicVolume);
     if (hidden) {
       this.silence();
       if (this.context?.state === "running")
@@ -67,6 +73,9 @@ class GameAudio {
     limiter.knee.value = 16;
     limiter.ratio.value = 5;
     master.connect(limiter).connect(context.destination);
+    this.music = context.createGain();
+    this.music.connect(master);
+    void this.loadRecordings(context);
     const noise = context.createBuffer(
       1,
       context.sampleRate * 2,
@@ -86,7 +95,7 @@ class GameAudio {
       ["motor", 76, false],
       ["tool", 145, true],
       ["engine", 90, true],
-      ["room", 95, false],
+      ["room", 350, true],
       ["scoreLow", 110, false],
       ["scoreHigh", 164.81, false],
       ["scoreAir", 220, false],
@@ -106,11 +115,11 @@ class GameAudio {
         source.type = name === "motor" ? "triangle" : "sine";
         source.frequency.value = frequency;
       }
-      source.connect(filter).connect(gain).connect(master);
+      source.connect(filter).connect(gain).connect(name.startsWith("score") ? this.music : master);
       source.start();
       this.voices.set(name, { gain, filter, source });
     }
-    this.configure(this.muted, this.volume);
+    this.configure(this.muted, this.volume, this.musicVolume);
     this.menu();
     // Three sustained voices evolve slowly; no timers or note sources accumulate.
     window.setInterval(() => {
@@ -118,11 +127,57 @@ class GameAudio {
       const chord = [110, 130.81, 98, 146.83][
         Math.floor(context.currentTime / 24) % 4
       ];
-      const breathe = 0.8 + 0.2 * Math.sin(context.currentTime * 0.25);
+      const breathe = 0.8 + 0.2 * Math.sin(context.currentTime * 0.12);
       this.mix("scoreLow", 0.035 * this.scoreLevel * breathe, chord);
       this.mix("scoreHigh", 0.018 * this.scoreLevel, chord * 1.5);
       this.mix("scoreAir", 0.009 * this.scoreLevel * breathe, chord * 2);
     }, 250);
+  }
+  private async loadRecordings(context: AudioContext) {
+    const names = ["footstep_concrete_000", "footstep_concrete_001", "footstep_concrete_002",
+      "footstep_snow_000", "footstep_snow_001", "footstep_snow_002",
+      "impactMetal_heavy_000", "impactMetal_medium_001", "impactMetal_light_000",
+      "impactPlate_light_000", "doorOpen_000", "engineCircular_000",
+      "spaceEngineLow_000", "explosionCrunch_000"];
+    await Promise.allSettled(names.map(async name => {
+      const response = await fetch(`/audio/${name}.ogg`);
+      if (!response.ok) return;
+      const buffer = await context.decodeAudioData(await response.arrayBuffer());
+      this.recordings.set(name, buffer);
+      const voiceName = name === "engineCircular_000" ? "motor" : name === "spaceEngineLow_000" ? "engine" : null;
+      if (voiceName) {
+        const voice = this.voices.get(voiceName);
+        if (!voice) return;
+        voice.source.stop();
+        voice.source.disconnect();
+        const source = context.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        source.connect(voice.filter);
+        source.start();
+        voice.source = source;
+      }
+    }));
+  }
+  private recorded(name: string, volume: number, rate = 1, pan = 0, delay = 0, cutoff = 3600) {
+    const context = this.context!, buffer = this.recordings.get(name);
+    if (!buffer) return false;
+    const source = context.createBufferSource(), filter = context.createBiquadFilter(),
+      gain = context.createGain(), panner = context.createStereoPanner();
+    source.buffer = buffer;
+    source.playbackRate.value = rate;
+    filter.type = "lowpass";
+    filter.frequency.value = cutoff;
+    const start = context.currentTime + delay, end = start + buffer.duration / rate;
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(volume, start + Math.min(0.008, buffer.duration / 4));
+    gain.gain.setTargetAtTime(0, Math.max(start + 0.01, end - 0.035), 0.012);
+    panner.pan.value = pan;
+    source.connect(filter).connect(gain).connect(panner).connect(this.master!);
+    this.activeShots++;
+    source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); panner.disconnect(); this.activeShots--; };
+    source.start(start);
+    return true;
   }
   private mix(name: string, level: number, frequency?: number) {
     const voice = this.voices.get(name),
@@ -175,17 +230,19 @@ class GameAudio {
       surface ? (wind ? (frame.storm ? 0.14 : 0.045) : 0.009) : 0,
       wind ? 580 : 250,
     );
-    this.mix("room", surface && frame.inside ? 0.018 : 0, 94);
+    this.mix("room", surface && frame.inside ? 0.028 : 0, 350);
+    const motor = motorMix(frame.vehicleSpeed, surface && frame.driving);
     this.mix(
       "motor",
-      surface && frame.driving
-        ? 0.025 + Math.min(0.075, Math.abs(frame.vehicleSpeed) * 0.009)
-        : 0,
-      52 + Math.abs(frame.vehicleSpeed) * 15,
+      motor.gain,
+      this.recordings.has("engineCircular_000") ? 1700 : 52 + Math.abs(frame.vehicleSpeed) * 15,
     );
+    const motorSource = this.voices.get("motor")?.source;
+    if (motorSource && "playbackRate" in motorSource)
+      (motorSource as AudioBufferSourceNode).playbackRate.setTargetAtTime(motor.rate, now, 0.35);
     this.mix(
       "tool",
-      surface && frame.working ? 0.075 : surface && frame.airlock ? 0.1 : 0,
+      surface && frame.working ? 0.035 : surface && frame.airlock ? 0.045 : 0,
       frame.airlock ? 1200 : 650,
     );
     this.mix(
@@ -218,6 +275,23 @@ class GameAudio {
       this.activeShots >= 24
     )
       return;
+    // Small variations prevent a repeated bootstep from sounding like a metronome.
+    const variation = 0.94 + (this.sampleStep++ % 5) * 0.027;
+    if (cue === "step" || cue === "land") {
+      const name = `footstep_${inside ? "concrete" : "snow"}_00${this.sampleStep % 3}`;
+      if (this.recorded(name, cue === "land" ? 0.32 : 0.2, variation * (inside ? 0.92 : 0.82), (this.sampleStep % 2 ? 1 : -1) * 0.12, 0, inside ? 2800 : 1300)) return;
+    }
+    if (cue === "impact" && this.recorded("explosionCrunch_000", 0.65, 0.72, 0, 0, 1900)) {
+      this.recorded("impactMetal_heavy_000", 0.38, 0.7, -0.2, 0.08, 2400);
+      this.shot(false, 44, 1.2, 0.2);
+      return;
+    }
+    if ((cue === "debris" || cue === "separate") && this.recorded("impactMetal_medium_001", 0.24, 0.86, -0.25)) {
+      this.recorded("impactMetal_light_000", 0.15, 0.73, 0.32, 0.24);
+      return;
+    }
+    if (cue === "airlock" && this.recorded("doorOpen_000", 0.22, 0.86, 0, 0, 2000)) return;
+    if (cue === "click" && this.recorded("impactPlate_light_000", 0.075, 1.3, 0, 0, 1600)) return;
     if (cue === "step") {
       this.stepSide *= -1;
       this.shot(
@@ -253,8 +327,8 @@ class GameAudio {
       this.shot(false, 110, 0.5, 0.12);
       this.shot(true, 2100, 0.65, 0.12);
     } else if (cue === "success") {
-      for (const [i, frequency] of [523.25, 659.25, 783.99, 1046.5].entries())
-        this.shot(false, frequency, 0.38, 0.1, 0, i * 0.1);
+      for (const [i, frequency] of [392, 523.25].entries())
+        this.shot(false, frequency, 0.3, 0.045, 0, i * 0.14);
     } else if (cue === "warning") {
       this.shot(false, 530, 0.19, 0.13);
       this.shot(false, 440, 0.19, 0.11, 0, 0.28);
@@ -287,7 +361,7 @@ class GameAudio {
       source.type = "sine";
       source.frequency.setValueAtTime(frequency, start);
       source.frequency.exponentialRampToValueAtTime(
-        Math.max(25, frequency * 0.65),
+        Math.max(25, frequency < 150 ? frequency * 0.65 : frequency),
         end,
       );
     }

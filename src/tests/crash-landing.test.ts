@@ -3,6 +3,7 @@ import * as T from "three";
 import { GLTFLoader, type GLTF } from "three/addons/loaders/GLTFLoader.js";
 import { CrashLanding } from "../game/CrashLanding";
 import { ARRIVAL_DURATION } from "../game/ArrivalTimeline";
+import { crashSite } from "../game/CrashSite";
 
 afterEach(() => vi.restoreAllMocks());
 describe("survivable cinematic crash", () => {
@@ -43,8 +44,8 @@ describe("survivable cinematic crash", () => {
       for (let frame = 0; frame < (ARRIVAL_DURATION + 1) * 60; frame++)
         crash.frame(1 / 60, camera);
       expect(finish).toHaveBeenCalledOnce();
-      expect(crash.root.position.x).toBe(0);
-      expect(crash.root.position.z).toBe(7);
+      expect(crash.root.position.x).toBe(crashSite(destination).x);
+      expect(crash.root.position.z).toBe(crashSite(destination).z);
       scene.updateMatrixWorld(true);
       expect(
         new T.Box3().setFromObject(model, true).min.y,

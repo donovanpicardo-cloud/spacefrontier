@@ -1,4 +1,5 @@
 import * as T from "three";
+import { paintModel } from "./environments/PainterlyMaterials";
 import type { Destination } from "../simulation/engine";
 import { rocketPad, flightPhase, FLIGHT_DURATION } from "./Rocket";
 import { batchStatic, disposeBatchSources } from "./environments/StaticBatch";
@@ -305,6 +306,7 @@ export class RocketScene {
     );
     space.add(stars);
     const ship = rocketModel(this.destination);
+    paintModel(ship.root);
     ship.sections.forEach((s) => (s.visible = true));
     space.add(ship.root);
     this.flight = {

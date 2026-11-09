@@ -193,3 +193,12 @@
     font-size: 7px;
   }
 }
+/* Painted expedition art direction extends to every campaign instrument. */
+.app.in-game { --paper: 34 35 30; --ink: #eee5d4; --accent: #d6b780; --line: #b8aa8a65; }
+.app.in-game :is(.objective,.suit,.tutorial-card,.vehicle-hud,.world-repair-hud,.radio-status,.notification,.panel),
+.app :is(.settings-panel,.modal) {
+  background: linear-gradient(125deg,#292a25f5,#1b1d1af2);
+  border-color: var(--line); border-top-color: #d4c5a580; color: var(--ink);
+}
+.app.in-game .explorer-tools button { background:#252720eb; color:#d6b780; border-color:#b8aa8a65; }
+.app.in-game .panel-plate { filter: grayscale(.8) sepia(.3); }

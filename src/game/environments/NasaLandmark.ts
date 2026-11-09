@@ -1,4 +1,5 @@
 import * as T from "three";
+import { modelClarity } from "../ModelClarity";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import type { CollisionWorld } from "../CollisionWorld";
 import { batchStatic } from "./StaticBatch";
@@ -11,6 +12,7 @@ export function loadNasaLander(
     "/models/apollo-lunar-module.glb",
     (gltf) => {
       const model = gltf.scene;
+      modelClarity(model);
       if (disposed()) {
         model.traverse((o) => {
           if (o instanceof T.Mesh) {

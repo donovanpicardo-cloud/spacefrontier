@@ -93,7 +93,10 @@ export class WorldResources {
     return true;
   }
   key(code: string) {
-    this.extraction?.key(code);
+    // The E event which opens the rig may reach this listener after start().
+    // It must not also trip the relay before the approach/tool has begun.
+    if (this.extraction && (this.extraction.elapsed > 0 || this.extraction.stage > 0))
+      this.extraction.key(code);
   }
   cancel() {
     this.gather.cancel();

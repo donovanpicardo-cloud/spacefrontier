@@ -1,4 +1,6 @@
 import { CrashLanding } from "./CrashLanding";
+import { dressMoonOutpost } from "./environments/MoonArt";
+import { isSharedPaintMap, paintedMap, paintScene } from "./environments/PainterlyMaterials";
 import { warmGraphics } from "./GraphicsWarmup";
 import { sprintHeld, updateMovementInput } from "./MovementInput";
 import { gameAudio } from "./GameAudio";
@@ -164,6 +166,23 @@ function rounded(
     z,
   );
 }
+function bootPrint() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 32;
+  canvas.height = 64;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#514634";
+  ctx.beginPath();
+  ctx.roundRect(3, 3, 26, 31, 6);
+  ctx.roundRect(6, 36, 20, 25, 5);
+  ctx.fill();
+  ctx.clearRect(0, 15, 32, 2);
+  ctx.clearRect(0, 24, 32, 3);
+  ctx.clearRect(0, 47, 32, 3);
+  const map = new T.CanvasTexture(canvas);
+  map.colorSpace = T.SRGBColorSpace;
+  return new T.MeshBasicMaterial({ map, transparent: true, opacity: .42, depthWrite: false });
+}
 function label(text: string) {
   const c = document.createElement("canvas");
   c.width = 512;
@@ -191,8 +210,8 @@ export class World {
   destination: Destination;
   keys = new Set<string>();
   yaw = 0.32;
-  pitch = 0.23;
-  distance = 4.7;
+  pitch = 0.1;
+  distance = 7.2;
   horizontalVelocity = { x: 0, z: 0 };
   velocity = 0;
   speed = 0;
@@ -205,6 +224,9 @@ export class World {
   landing = 0;
   footTimer = 0;
   footprints: T.Mesh[] = [];
+  private footGeometry = new T.PlaneGeometry(.19, .33);
+  private footMaterial = bootPrint();
+  private leftPrint = true;
   resize: ResizeObserver;
   sun: T.DirectionalLight;
   ambient: T.HemisphereLight;
@@ -246,7 +268,7 @@ export class World {
   pointerX = 0;
   pointerY = 0;
   orbitYaw = 0.32;
-  orbitPitch = 0.23;
+  orbitPitch = 0.1;
   online!: OnlineAstronaut;
   composer?: EffectComposer;
   smoothing?: EffectComposer;
@@ -305,16 +327,17 @@ export class World {
     this.renderer.toneMapping = T.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.02;
     container.appendChild(this.renderer.domElement);
-    this.scene.background = new T.Color(d === "moon" ? 0x070c12 : 0x9e7562);
+    this.stopPainting = paintScene(this.scene);
+    this.scene.background = new T.Color(d === "moon" ? 0x211f1e : 0x9e7562);
     this.scene.fog = d === "mars" ? new T.FogExp2(0xb58d72, 0.004) : null;
     this.ambient = new T.HemisphereLight(
-      d === "moon" ? 0xb2cfed : 0xffd8ad,
+      d === "moon" ? 0xd6ccba : 0xffd8ad,
       0x403a30,
       d === "moon" ? 0.62 : 0.9,
     );
     this.scene.add(this.ambient);
-    this.sun = new T.DirectionalLight(d === "moon" ? 0xfff4e5 : 0xffd0a0, 3.5);
-    this.sun.position.set(-40, 30, -32);
+    this.sun = new T.DirectionalLight(d === "moon" ? 0xfff4e5 : 0xffd9b9, 2.4);
+    this.sun.position.set(-40, 35, 32);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
     Object.assign(this.sun.shadow.camera, {
@@ -324,8 +347,8 @@ export class World {
       bottom: -45,
       far: 140,
     });
-    this.sun.shadow.bias = -0.00012;
-    this.sun.shadow.normalBias = 0.016;
+    this.sun.shadow.bias = -0.0005;
+    this.sun.shadow.normalBias = 0.045;
     this.sun.shadow.radius = d === "moon" ? 1.1 : 2.4;
     this.scene.add(this.sun, this.sun.target);
     const pmrem = new T.PMREMGenerator(this.renderer);
@@ -368,6 +391,7 @@ export class World {
       if (geometry && matrix) this.physics.shape(box, geometry, matrix, "Crashed spacecraft");
     });
     this.resources.batch();
+    if (d === "moon") dressMoonOutpost(this.scene, this.doors[0], () => this.disposed);
     this.repairs.devices.forEach((d) => {
       const detail = d.root.children.find((o) => o.userData.serviceDetail);
       if (detail instanceof T.Group) batchStatic(detail);
@@ -500,11 +524,13 @@ export class World {
   }
   staticScenery: T.Group[] = [];
   terrainSurface!: T.Mesh;
+  stopPainting?: () => void;
   terrain() {
     const terrain = buildTerrain(
       this.scene,
       this.destination,
       this.state.quality,
+      () => this.disposed,
     );
     this.terrainSurface = terrain.ground;
     this.terrainStream = new TerrainStream(
@@ -523,7 +549,7 @@ export class World {
     this.solids.push(new T.Box3().setFromObject(o));
   }
   base() {
-    const h = buildHabitat(this.scene);
+    const h = buildHabitat(this.scene, this.destination === "moon");
     this.colliders.push(...h.colliders);
     this.solids.push(...h.solids);
     this.doors = h.doors;
@@ -548,16 +574,29 @@ export class World {
     const root = new T.Group();
     this.scene.add(root);
     this.staticScenery.push(root);
+    const lunar = this.destination === "moon";
+    const panelFrame = lunar ? new T.MeshStandardMaterial({
+      color: 0xc8b99d, roughness: .93, map: paintedMap("panel"),
+    }) : dark;
+    const cells = [0x3c444a, 0x424950, 0x475058].map(color =>
+      new T.MeshStandardMaterial({ color, roughness: .92, emissive: 0x24282a, emissiveIntensity: .24 }),
+    );
     for (let row = 0; row < 3; row++)
       for (let col = 0; col < 3; col++) {
         const x = 12 + col * 3.4,
           z = -3 - row * 4;
-        mesh(new T.CylinderGeometry(0.08, 0.12, 1.4, 8), dark, root, x, 0.7, z);
+        if (lunar) {
+          rounded(root, x, .26, z, .84, .52, .89, panelFrame);
+          rounded(root, x, .94, z, .35, .88, .41, panelFrame);
+          box(root, x, 1.49, z, 2.85, .13, .21, panelFrame);
+        } else {
+          mesh(new T.CylinderGeometry(0.08, 0.12, 1.4, 8), dark, root, x, 0.7, z);
+        }
         const panel = new T.Group();
         panel.position.set(x, 1.65, z);
-        panel.rotation.x = -0.35;
+        panel.rotation.x = lunar ? .56 : -.35;
         root.add(panel);
-        box(panel, 0, 0, 0, 3.1, 0.12, 2.7, dark);
+        box(panel, 0, 0, 0, 3.1, 0.12, 2.7, panelFrame);
         for (let i = 0; i < 6; i++)
           for (let j = 0; j < 4; j++)
             box(
@@ -568,14 +607,19 @@ export class World {
               0.46,
               0.025,
               0.61,
-              new T.MeshStandardMaterial({
-                color: 0x1b3d58,
-                metalness: 0.65,
-                roughness: 0.3,
-              }),
+              cells[lunar ? (i * 5 + j * 7) % cells.length : 0],
             );
         if (row === 0) this.colliders.push(panel.children[0] as T.Mesh);
       }
+    if (lunar) {
+      rounded(root, 8.8, .45, -5, 1.19, .9, .76, panelFrame);
+      box(root, 8.8, .2, -4.59, 1.14, .13, .05, orange);
+      const cable = new T.CatmullRomCurve3([
+        new T.Vector3(9.34, .32, -4.86), new T.Vector3(9.78, .12, -4.46),
+        new T.Vector3(10.77, .08, -4.45), new T.Vector3(12, .18, -3.2),
+      ]);
+      mesh(new T.TubeGeometry(cable, 24, .065, 8), dark, root);
+    } else {
     box(root, 8.8, 0.65, -5, 1.1, 1.3, 0.7, dark);
     box(root, 8.8, 1.35, -4.8, 0.8, 0.25, 0.06, cyan);
     mesh(new T.CylinderGeometry(0.1, 0.16, 8, 10), white, root, -12, 4, -16);
@@ -589,6 +633,7 @@ export class World {
     );
     dish.rotation.z = 0.7;
     dish.rotation.x = 0.7;
+    }
     for (let i = 0; i < 7; i++) {
       box(root, -2.5, 0.38, 1 - i * 1.5, 0.05, 0.75, 0.05, orange);
       box(root, -2.5, 0.79, 1 - i * 1.5, 0.12, 0.06, 0.12, cyan);
@@ -713,8 +758,8 @@ export class World {
   resetCamera() {
     this.lastLook = this.clock.elapsedTime;
     this.orbitYaw = this.player.root.rotation.y;
-    this.orbitPitch = 0.23;
-    this.distance = 4.7;
+    this.orbitPitch = this.destination === "moon" ? 0.035 : 0.1;
+    this.distance = this.destination === "moon" ? 8.2 : 7.2;
     this.state.onAction?.({ type: "reset" });
   }
   focusGuide() {
@@ -1173,6 +1218,7 @@ export class World {
       oxygen: Math.min(this.state.telemetry.oxygen, this.state.telemetry.suitAir ?? 100),
     }, dt);
   }
+  simulationSeconds = 0;
   animate = () => {
     if (this.disposed) return;
     this.raf = requestAnimationFrame(this.animate);
@@ -1214,6 +1260,7 @@ export class World {
     }
     const dt = Math.min(realDt, 0.04);
     const active = this.state.playing && !this.state.paused;
+    if (active && !this.rocket.flight) this.simulationSeconds += dt;
     this.diagnostics.begin(realDt * 1000, active);
     this.applyQuality();
     if (active && this.state.quality === "School computer" && realDt > 0 &&
@@ -1650,31 +1697,22 @@ export class World {
         this.near = near;
         this.state.onNear(near);
       }
-      if (moving && grounded && !inside) {
+      if (moving && grounded && !inside && !riding) {
         this.footTimer += dt;
         if (this.footTimer > 0.35) {
           this.footTimer = 0;
           this.surfaceDust.step(p.position, p.rotation.y);
-          const foot = mesh(
-            new T.PlaneGeometry(0.13, 0.3),
-            new T.MeshBasicMaterial({
-              color: 0x343632,
-              transparent: true,
-              opacity: 0.3,
-            }),
-            this.scene,
-            p.position.x + (this.footprints.length % 2 ? 0.15 : -0.15),
-            ground - 0.1,
-            p.position.z,
-          );
-          foot.rotation.set(-Math.PI / 2, 0, p.rotation.y);
+          const offset = this.leftPrint ? -.13 : .13;
+          this.leftPrint = !this.leftPrint;
+          const x = p.position.x + Math.cos(p.rotation.y) * offset;
+          const z = p.position.z - Math.sin(p.rotation.y) * offset;
+          const foot = this.footprints.length === 100
+            ? this.footprints.shift()!
+            : new T.Mesh(this.footGeometry, this.footMaterial);
+          foot.position.set(x, this.groundHeight(x, z) + .025, z);
+          foot.rotation.set(-Math.PI / 2, 0, -p.rotation.y, "YXZ");
+          if (!foot.parent) this.scene.add(foot);
           this.footprints.push(foot);
-          if (this.footprints.length > 100) {
-            const old = this.footprints.shift()!;
-            this.scene.remove(old);
-            old.geometry.dispose();
-            (old.material as T.Material).dispose();
-          }
         }
       }
     }
@@ -1771,19 +1809,19 @@ export class World {
     );
     this.ambient.intensity = T.MathUtils.damp(
       this.ambient.intensity,
-      interior ? 0.5 : this.destination === "moon" ? 0.8 : 1.1,
+      interior ? 0.5 : this.destination === "moon" ? 0.52 : 0.7,
       3,
       dt,
     );
     this.scene.environmentIntensity = T.MathUtils.damp(
       this.scene.environmentIntensity,
-      interior ? 0.24 : 0.45,
+      interior ? 0.18 : 0.2,
       3,
       dt,
     );
     this.sun.intensity = T.MathUtils.damp(
       this.sun.intensity,
-      interior ? 0.5 : 3.5,
+      interior ? 0.5 : 2.4,
       3,
       dt,
     );
@@ -1823,7 +1861,7 @@ export class World {
     const sx = Math.round(p.position.x / texel) * texel;
     const sz = Math.round((p.position.z - 8) / texel) * texel;
     this.sun.target.position.set(sx, 0, sz);
-    this.sun.position.set(sx - 40, 45, sz - 32);
+    this.sun.position.set(sx - 40, 35, sz + 32);
     this.dust.rotation.y += dt * (this.state.storm ? 0.015 : 0.001);
     (this.dust.material as T.PointsMaterial).opacity =
       this.destination === "mars" ? (this.state.storm ? 0.65 : 0.22) : 0;
@@ -1921,17 +1959,22 @@ export class World {
     this.smoothing?.dispose();
     this.sun.shadow.map?.dispose();
     this.renderer.domElement.removeEventListener("wheel", this.wheel);
+    for (const foot of this.footprints) foot.removeFromParent();
+    this.footGeometry.dispose();
+    this.footMaterial.map?.dispose();
+    this.footMaterial.dispose();
     this.scene.traverse((o) => {
       if (o instanceof T.Mesh || o instanceof T.Points) {
         o.geometry.dispose();
         const mats = Array.isArray(o.material) ? o.material : [o.material];
         mats.forEach((m: T.Material) => {
           for (const v of Object.values(m))
-            if (v instanceof T.Texture) v.dispose();
+            if (v instanceof T.Texture && !isSharedPaintMap(v)) v.dispose();
           m.dispose();
         });
       }
     });
+    this.stopPainting?.();
     this.diagnostics.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();

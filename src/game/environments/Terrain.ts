@@ -3,7 +3,10 @@ import * as T from "three";
 import type { Destination } from "../../simulation/engine";
 import { resourceSites } from "../Resources";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "meshoptimizer/decoder";
 import { photographedSurface } from "./SurfaceMaterials";
+import { paintedMap } from "./PainterlyMaterials";
 import { sampleSites, robotSites, recoveryBay } from "../Adventure";
 export const hash = (n: number) => {
   const v = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -219,7 +222,12 @@ export function setTerrainQuality(
   ground.userData.segments = segments;
   old.dispose();
 }
-export function buildTerrain(scene: T.Scene, d: Destination, quality = "High") {
+export function buildTerrain(
+  scene: T.Scene,
+  d: Destination,
+  quality = "High",
+  disposed = () => false,
+) {
   const segments = terrainSegments(quality),
     g = terrainGeometry(d, segments);
   const ground = new T.Mesh(g, regolith(d));
@@ -313,6 +321,82 @@ export function buildTerrain(scene: T.Scene, d: Destination, quality = "High") {
   largeRocks.count = largeCount;
   largeRocks.instanceMatrix.needsUpdate = true;
   scene.add(rocks, largeRocks);
+  if (d === "moon") {
+    const boulders = [[-11.4, -.5, 2.65, .8], [8.7, 13.3, 3.45, -.62]];
+    const proxies = boulders.map(([x, z, width, yaw]) => {
+      const rock = new T.Mesh(rocky, material);
+      rock.name = "Lunar boulder";
+      rock.position.set(x, terrainHeight(x, z, d) + width * .19, z);
+      rock.scale.set(width * .47, width * .38, width * .4);
+      rock.rotation.y = yaw;
+      rock.castShadow = rock.receiveShadow = true;
+      scene.add(rock);
+      rock.updateMatrixWorld();
+      colliders.push(rock);
+      return rock;
+    });
+    new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load("/models/moon-boulder.glb", ({ scene: model }) => {
+      if (disposed()) {
+        model.traverse(object => {
+          if (!(object instanceof T.Mesh)) return;
+          object.geometry.dispose();
+          object.material.map?.dispose();
+          object.material.dispose();
+        });
+        return;
+      }
+      const bounds = new T.Box3().setFromObject(model);
+      const center = bounds.getCenter(new T.Vector3());
+      const size = bounds.getSize(new T.Vector3());
+      model.position.set(-center.x, -bounds.min.y, -center.z);
+      model.traverse(object => {
+        if (!(object instanceof T.Mesh)) return;
+        object.castShadow = object.receiveShadow = true;
+      });
+      boulders.forEach(([x, z, width, yaw], index) => {
+        const rock = new T.Group();
+        rock.userData.noCollision = true;
+        rock.position.set(x, terrainHeight(x, z, d) - .12, z);
+        rock.scale.setScalar(width / Math.max(size.x, size.z));
+        rock.rotation.y = yaw;
+        rock.add(model.clone());
+        scene.add(rock);
+        proxies[index].visible = false;
+      });
+    }, undefined, () => { /* Keep the procedural boulders on load failure. */ });
+  }
+  {
+    // Distant crater escarpment: a single low-poly ribbon outside the opening routes.
+    // It is scenery only; the original terrain and physics remain authoritative.
+    const positions: number[] = [], uvs: number[] = [], indices: number[] = [];
+    for (let i = 0; i <= 80; i++) {
+      const angle = -3.67 + i / 80 * 2.85;
+      const radius = 103 + noise(i * .12, 4) * 11;
+      const x = Math.sin(angle) * radius, z = Math.cos(angle) * radius - 12;
+      const base = terrainHeight(x, z, d) - 1;
+      const edge = Math.sin(Math.PI * i / 80);
+      const top = base + (18 + noise(i * .14, 8) * 7 + noise(i * .52, 7) * 1.6) * Math.min(1, edge * 5);
+      for (const [r, y] of [[1, base], [1.025, base + 2], [1.045, top], [1.2, top + 1], [1.65, terrainHeight(x * 1.65, (z + 12) * 1.65 - 12, d) - 1]]) {
+        positions.push(x * r, y, (z + 12) * r - 12);
+        uvs.push(i * .13, (y - base) / 16 + (r - 1) * 5);
+      }
+      if (i < 80) for (let row = 0; row < 4; row++) {
+        const a = i * 5 + row;
+        indices.push(a, a + 5, a + 1, a + 1, a + 5, a + 6);
+      }
+    }
+    const cliffGeometry = new T.BufferGeometry();
+    cliffGeometry.setAttribute("position", new T.Float32BufferAttribute(positions, 3));
+    cliffGeometry.setAttribute("uv", new T.Float32BufferAttribute(uvs, 2));
+    cliffGeometry.setIndex(indices); cliffGeometry.computeVertexNormals();
+    const cliff = new T.Mesh(cliffGeometry, new T.MeshStandardMaterial({
+      map: paintedMap("cliff"), color: d === "moon" ? 0xd4c7b3 : 0xc9a086, roughness: 1, flatShading: true, side: T.DoubleSide,
+    }));
+    cliff.name = "Moon distant painted crater wall";
+    cliff.userData.noCollision = true;
+    cliff.receiveShadow = true;
+    scene.add(cliff);
+  }
   // Fine foreground gravel helps the suit and equipment read at a human scale.
   const pebbles = new T.InstancedMesh(rockGeometry(0), material, 1200);
   pebbles.userData.surfaceRock = true;
@@ -340,78 +424,26 @@ export function buildTerrain(scene: T.Scene, d: Destination, quality = "High") {
 }
 export function buildSky(scene: T.Scene, d: Destination) {
   if (d === "mars") return;
-  const c = document.createElement("canvas");
-  c.width = 1024;
-  c.height = 512;
-  const x = c.getContext("2d")!,
-    im = x.createImageData(1024, 512);
-  for (let y = 0; y < 512; y++)
-    for (let u = 0; u < 1024; u++) {
-      const i = (y * 1024 + u) * 4,
-        land =
-          fbm(u * 0.014, y * 0.018) + Math.sin(u * 0.008 + y * 0.01) * 0.25 >
-          0.14,
-        polar = Math.abs(y - 256) > 220,
-        cloud = Math.max(0, fbm(u * 0.037 + 20, y * 0.045));
-      const rgb = polar
-        ? [193, 212, 212]
-        : land
-          ? [61, 101, 78]
-          : [32, 85, 125];
-      for (let k = 0; k < 3; k++)
-        im.data[i + k] = T.MathUtils.lerp(
-          rgb[k],
-          230,
-          Math.max(0, cloud - 0.1) * 1.5,
-        );
-      im.data[i + 3] = 255;
-    }
-  x.putImageData(im, 0, 0);
-  const texture = new T.CanvasTexture(c);
+  const texture = new T.TextureLoader().load("/materials/earth-nasa.jpg");
   texture.colorSpace = T.SRGBColorSpace;
-  const earth = new T.Mesh(
-    new T.SphereGeometry(6.5, 48, 32),
-    new T.MeshStandardMaterial({
-      map: texture,
-      roughness: 0.85,
-      emissive: 0x163452,
-      emissiveIntensity: 0.25,
-    }),
-  );
-  earth.position.set(70, 57, -160);
-  earth.rotation.z = 0.25;
-  scene.add(earth);
-  const glow = new T.Mesh(
-    new T.SphereGeometry(6.65, 40, 24),
-    new T.MeshBasicMaterial({
-      color: 0x5d9bc9,
-      transparent: true,
-      opacity: 0.13,
-      side: T.BackSide,
-    }),
-  );
-  earth.add(glow);
-  const stars = new T.BufferGeometry(),
-    positions = [];
-  for (let i = 0; i < 900; i++) {
-    const a = hash(i) * 6.28,
-      b = hash(i + 1000) * 1.5;
-    positions.push(
-      Math.sin(a) * Math.cos(b) * 290,
-      Math.sin(b) * 290,
-      Math.cos(a) * Math.cos(b) * 290,
+  texture.anisotropy = 4;
+  const material = new T.MeshBasicMaterial({ map: texture, toneMapped: false });
+  material.onBeforeCompile = shader => {
+    shader.vertexShader = "varying vec3 globeNormal;\n" + shader.vertexShader.replace(
+      "#include <begin_vertex>",
+      "#include <begin_vertex>\nglobeNormal = mat3(modelMatrix) * normal;",
     );
-  }
-  stars.setAttribute("position", new T.Float32BufferAttribute(positions, 3));
-  scene.add(
-    new T.Points(
-      stars,
-      new T.PointsMaterial({
-        color: 0xb8c9da,
-        size: 0.13,
-        transparent: true,
-        opacity: 0.65,
-      }),
-    ),
-  );
+    shader.fragmentShader = "varying vec3 globeNormal;\n" + shader.fragmentShader.replace(
+      "#include <map_fragment>",
+      `#include <map_fragment>
+      float phase = dot(normalize(globeNormal), normalize(vec3(-.73, .47, .57)));
+      vec3 pigment = pow(diffuseColor.rgb, vec3(.68)) * vec3(.78, .84, .90);
+      diffuseColor.rgb = pigment * mix(.26, 1., smoothstep(-.07, .28, phase));`,
+    );
+  };
+  const earth = new T.Mesh(new T.SphereGeometry(5.6, 48, 32), material);
+  earth.name = "Earth / NASA Blue Marble";
+  earth.position.set(44, 49, -176);
+  earth.rotation.set(.17, -.55, .34);
+  scene.add(earth);
 }

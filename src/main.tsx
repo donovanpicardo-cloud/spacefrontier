@@ -62,6 +62,8 @@ import { EarthRadio, useEarthRadio } from "./game/EarthRadio";
 import { AdventurePanels } from "./game/AdventurePanels";
 import type { FieldAction, FieldInfo } from "./game/WorldAdventure";
 import "./adventure.css";
+import { SimulationClock } from "./game/SimulationClock";
+import { warmGraphics } from "./game/GraphicsWarmup";
 import {
   initialSim,
   reinforceShelter,
@@ -152,11 +154,17 @@ function App() {
     const value = stored === null ? 0.65 : Number(stored);
     return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.65;
   });
+  const [musicVolume, setMusicVolume] = useState(() => {
+    const stored = readLocal("frontier-music-volume");
+    const value = stored === null ? 0.25 : Number(stored);
+    return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.25;
+  });
   useEffect(() => {
-    gameAudio.configure(muted, volume);
+    gameAudio.configure(muted, volume, musicVolume);
     writeLocal("frontier-audio-muted", String(muted));
     writeLocal("frontier-audio-volume", String(volume));
-  }, [muted, volume]);
+    writeLocal("frontier-music-volume", String(musicVolume));
+  }, [muted, volume, musicVolume]);
   useEffect(() => {
     const unlock = () => gameAudio.unlock();
     const interfaceClick = (event: MouseEvent) => {
@@ -440,16 +448,24 @@ function App() {
     }
   }, [quality, destination]);
   useEffect(() => {
+    const clock = new SimulationClock();
+    let observedWorld = world.current;
+    clock.reset(observedWorld?.simulationSeconds ?? 0);
     const id = setInterval(() => {
       const v = live.current;
-      if (
+      const w = world.current;
+      if (w !== observedWorld) {
+        clock.reset(w?.simulationSeconds ?? 0);
+        observedWorld = w;
+      }
+      const ticks = clock.poll(w?.simulationSeconds ?? 0,
         !inFlightLive.current &&
         !rocketLive.current.arrived &&
         simulationRuns(v.playing, v.panel, tutorialLive.current.active,
-          !!world.current && !world.current.warming)
-      )
+          !!w && !w.warming), speed);
+      if (ticks)
         setSim((s) => {
-          return tick(
+          for (let i = 0; i < ticks; i++) s = tick(
             s,
             v.allocation,
             destination,
@@ -457,8 +473,9 @@ function App() {
             adventureLive.current.upgrades,
             world.current?.inRecoveryRoom() ?? false,
           );
+          return s;
         });
-    }, 1000 / speed);
+    }, 100);
     return () => clearInterval(id);
   }, [destination, speed]);
   useEffect(() => {
@@ -1239,9 +1256,8 @@ function App() {
     )
       return;
     if (w.rocket.flight)
-      void w.renderer
-        .compileAsync(w.rocket.flight.space, w.camera)
-        .catch(() => {});
+      void warmGraphics(w.renderer, w.rocket.flight.space, w.camera,
+        () => w.disposed || !w.rocket.flight);
     inFlightLive.current = true;
     setInFlight(true);
     setNotification("");
@@ -1347,7 +1363,7 @@ function App() {
       />}
       {playing && (
         <>
-          <div className="objective">
+          <div className={"objective" + (done.includes(4) && !supplyGoal ? " expedition-complete" : "")}>
             <div className="eyebrow">
               MISSION {String(Math.min(mission + 1, 5)).padStart(2, "0")} / 05{" "}
               <span> • {inside ? "HABITAT" : "EVA"}</span>
@@ -1360,7 +1376,7 @@ function App() {
                     ? "Field mission"
                     : "Supply run"
                   : done.includes(4)
-                    ? "Mission complete!"
+                    ? "Outpost restored"
                     : objective.name}
             </h2>
             <p>
@@ -1370,7 +1386,7 @@ function App() {
                   ? sideInstruction ||
                     `${supplyGoal}. Follow the trail. Each rig has its own controls. H returns to your mission.`
                   : done.includes(4)
-                    ? "You helped everyone! Explore your space home or start a new adventure."
+                    ? "Explore, recover robots or build your return rocket. J · Journal  /  U · Projects"
                     : objective.task}
               {mission === 4 &&
                 !done.includes(4) &&
@@ -2050,12 +2066,18 @@ function App() {
                   />
                 </label>
                 <label className="setting">
-                  Audio volume
+                  Master volume
                   <input type="range" min="0" max="1" step="0.05" value={volume}
                     onChange={(e) => setVolume(Number(e.target.value))} />
                   <span>{Math.round(volume * 100)}%</span>
                 </label>
-                <p className="science-note">Original music, footsteps, machinery and flight effects. Moon exterior sounds represent vibrations heard through your suit.</p>
+                <label className="setting">
+                  Music volume
+                  <input type="range" min="0" max="1" step="0.05" value={musicVolume}
+                    onChange={(e) => setMusicVolume(Number(e.target.value))} />
+                  <span>{Math.round(musicVolume * 100)}%</span>
+                </label>
+                <p className="science-note">Recorded footsteps and mechanical effects with a quiet ambient score. Moon exterior sounds represent vibrations heard through your suit. Sound recordings: Kenney, CC0.</p>
                 <label className="setting">
                   Simulation speed
                   <select

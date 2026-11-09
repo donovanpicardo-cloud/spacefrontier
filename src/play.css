@@ -1,4 +1,18 @@
 /* Focused exploration HUD: one goal, suit air, and contextual interaction. */
+.in-game .objective.expedition-complete {
+  border-color: #b5dec54d;
+  background: linear-gradient(135deg, #10252bf2, #112024e8);
+}
+.in-game .objective.expedition-complete h2 { font-size: 21px; }
+.in-game .objective.expedition-complete p { font-size: 12px; line-height: 1.6; color: #b8cbc4; }
+button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid #f2d48a;
+  outline-offset: 4px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .vehicle-hud, .world-repair-hud { animation: instrument-arrive 160ms ease-out; }
+  @keyframes instrument-arrive { from { opacity: 0; translate: 0 5px; } to { opacity: 1; translate: 0 0; } }
+}
 .in-game header,
 .in-game .model-status,
 .in-game .telemetry,
@@ -225,4 +239,26 @@
     top: 155px;
     max-width: 85vw;
   }
+}
+/* Expedition field instruments: warm paper, graphite and muted brass. */
+:root { --mint: #d0bd91; --line: #d4c6aa40; }
+.arrival { background: #171817; color: #e5ddcb; }
+.arrival-kicker, .arrival-world-description { color: #bdb5a5; }
+.arrival-world { border-color: #c6b99c45; }
+.in-game .objective, .in-game .suit, .vehicle-hud, .world-repair-hud,
+.tutorial-card, .modal, .settings-panel, .mission-panel, .field-guide,
+.in-game .notification {
+  background: linear-gradient(135deg, #292a25f5, #1b1d1af2);
+  border-color: #b8aa8a65;
+  color: #eee5d4;
+  border-radius: 5px;
+  box-shadow: 0 5px 20px #0003;
+}
+.in-game .objective p, .tutorial-card p { color: #d4cdbe; }
+.in-game .objective h2 { color: #f0e6d0; }
+.goal-distance { color: #d6ae68; }
+.app.in-game :is(.objective,.suit,.vehicle-hud,.world-repair-hud,.notification),
+.app :is(.tutorial-card,.modal,.settings-panel,.mission-panel,.field-guide) {
+  background: linear-gradient(135deg,#292a25f5,#1b1d1af2);
+  border-color: #b8aa8a65; color: #eee5d4; border-radius: 5px;
 }

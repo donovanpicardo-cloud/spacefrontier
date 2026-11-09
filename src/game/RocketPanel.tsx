@@ -38,7 +38,7 @@ export function RocketPanel(p: {
       </div>
       <div className="expedition-reserves">
         <span>
-          PARTS<strong>{p.sim.parts}</strong>
+          PARTS<strong>{p.sim.parts.toFixed(1)}</strong>
         </span>
         <span>
           POWER<strong>{Math.round(p.sim.battery)}%</strong>

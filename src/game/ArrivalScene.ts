@@ -1,4 +1,6 @@
 import * as T from "three";
+import { isSharedPaintMap, paintScene } from "./environments/PainterlyMaterials";
+import { modelClarity } from "./ModelClarity";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 
@@ -16,7 +18,7 @@ function releaseModel(root: T.Object3D) {
     const materials = Array.isArray(object.material) ? object.material : [object.material];
     for (const material of materials) {
       for (const value of Object.values(material))
-        if (value instanceof T.Texture) value.dispose();
+        if (value instanceof T.Texture && !isSharedPaintMap(value)) value.dispose();
       material.dispose();
     }
   });
@@ -31,18 +33,20 @@ export class ArrivalScene {
   private last = 0;
   private observer: ResizeObserver;
   private disposed = false;
+  private stopPainting: () => void;
   private selectionLayout: { x: number; y: number; scale: number }[] = [];
   constructor(private host: HTMLDivElement) {
+    this.stopPainting = paintScene(this.scene);
     this.renderer = new T.WebGLRenderer({
       antialias: window.devicePixelRatio <= 1.5,
       alpha: false,
       powerPreference: "low-power",
     });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-    this.renderer.setClearColor(0x03070e);
+    this.renderer.setClearColor(0x171817);
     this.renderer.outputColorSpace = T.SRGBColorSpace;
     this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.3;
+    this.renderer.toneMappingExposure = 1;
     host.appendChild(this.renderer.domElement);
     this.scene.add(new T.HemisphereLight(0xaec5e1, 0x30221b, 1.5));
     const sunlight = new T.DirectionalLight(0xffe4c6, 4);
@@ -133,6 +137,7 @@ export class ArrivalScene {
     new GLTFLoader().load(url, ({ scene }) => {
       if (this.disposed) return releaseModel(scene);
       const box = new T.Box3().setFromObject(scene);
+      modelClarity(scene);
       const size = box.getSize(new T.Vector3());
       const scale = width / Math.max(size.x, size.y, size.z);
       scene.scale.multiplyScalar(scale);
@@ -160,6 +165,7 @@ export class ArrivalScene {
     this.renderer.render(this.scene, this.camera);
   };
   dispose() {
+    this.stopPainting();
     cancelAnimationFrame(this.frame);
     this.observer.disconnect();
     this.disposed = true;

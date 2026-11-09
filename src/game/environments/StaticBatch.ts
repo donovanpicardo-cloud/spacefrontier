@@ -44,6 +44,8 @@ export function batchStatic(root: T.Group) {
       m.bumpMap?.uuid,
       m.bumpScale,
       m.alphaTest,
+      m.flatShading,
+      m.customProgramCacheKey(),
       o.castShadow,
       o.receiveShadow,
       !!o.geometry.attributes.uv,

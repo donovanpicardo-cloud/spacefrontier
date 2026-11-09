@@ -80,35 +80,12 @@ export function buildLunarVehicle(root: T.Group) {
     box(x, 1.1, 1.287, 0.07, 0.31, 0.025, m.rubber);
     box(x, 1.1, 1.31, 0.11, 0.08, 0.025, m.metal);
   }
-  let wire: T.Texture | null = null;
-  if (typeof window !== "undefined") {
-    const c = document.createElement("canvas");
-    c.width = c.height = 128;
-    const ctx = c.getContext("2d")!;
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, 128, 128);
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 4;
-    for (let i = -128; i < 256; i += 24) {
-      ctx.beginPath();
-      ctx.moveTo(i, 0);
-      ctx.lineTo(i + 128, 128);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(i, 128);
-      ctx.lineTo(i + 128, 0);
-      ctx.stroke();
-    }
-    wire = new T.CanvasTexture(c);
-    wire.wrapS = wire.wrapT = T.RepeatWrapping;
-    wire.repeat.set(5, 2);
-  }
   const tire = new T.MeshStandardMaterial({
-    color: 0x8b9390,
-    metalness: 0.82,
-    roughness: 0.48,
-    alphaMap: wire,
-    alphaTest: wire?.isTexture ? 0.35 : 0,
+    color: 0x30312d,
+    metalness: 0.04,
+    roughness: 1,
+
+
     side: T.DoubleSide,
   });
   for (const x of [-0.98, 0.98])
@@ -194,6 +171,18 @@ export function buildLunarVehicle(root: T.Group) {
       0.028,
       m.orange,
     );
+  }
+  // Broad fenders and a four-post cage establish the concept buggy silhouette.
+  for (const x of [-.85, .85]) {
+    tube(new T.Vector3(x, .87, -.9), new T.Vector3(x, 2.15, -.58), .045, m.metal);
+    tube(new T.Vector3(x, 2.15, -.58), new T.Vector3(x, 2.15, .72), .045, m.metal);
+    tube(new T.Vector3(x, 2.15, .72), new T.Vector3(x, .87, 1), .045, m.metal);
+    for (const z of [-.96, .96]) box(x * 1.16, 1.06, z, .43, .12, .92, m.paint);
+  }
+  for (const z of [-.58, .72]) tube(new T.Vector3(-.85, 2.15, z), new T.Vector3(.85, 2.15, z), .045, m.metal);
+  for (const x of [-.42, .42]) {
+    box(x, 1.45, 1, .65, .32, .45, m.paint);
+    box(x, 1.45, 1.24, .075, .33, .025, m.orange);
   }
   const control = new T.Group();
   control.position.set(-0.39, 1.52, -0.72);

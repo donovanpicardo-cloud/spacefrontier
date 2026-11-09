@@ -66,7 +66,7 @@ export class WorldRepairs {
       const housing = this.mesh(
         root,
         new RoundedBoxGeometry(1.5, 1.04, 0.2, 3, 0.05),
-        0x263e46,
+        0xbcb5a3,
         0,
         0,
         -0.05,
@@ -89,7 +89,7 @@ export class WorldRepairs {
         true,
       );
       industrialSurface(housing.material as T.MeshStandardMaterial);
-      serviceEquipment(root, kind);
+      serviceEquipment(root, kind, destination === "moon");
       const parts = new T.Group();
       parts.userData.noCollision = true;
       this.mesh(

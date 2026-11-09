@@ -1,4 +1,5 @@
 import * as T from "three";
+import { modelClarity } from "../ModelClarity";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 export function releaseModel(root: T.Object3D) {
   root.traverse((o) => {
@@ -30,6 +31,7 @@ export function loadCrewRover(
         if (o instanceof T.Mesh) o.castShadow = o.receiveShadow = true;
       });
       legacy.forEach((o) => (o.visible = false));
+      modelClarity(gltf.scene);
       parent.add(gltf.scene);
       const wheels = Array.from(
         { length: 6 },

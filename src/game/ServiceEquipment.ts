@@ -2,7 +2,7 @@ import * as T from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { hardwareMaterials } from "./environments/HardwareMaterials";
 import type { RepairKind } from "./RepairPlan";
-export function serviceEquipment(parent: T.Group, kind: RepairKind) {
+export function serviceEquipment(parent: T.Group, kind: RepairKind, moon = false) {
   const root = new T.Group();
   root.userData.noCollision = true;
   root.userData.serviceDetail = true;
@@ -91,6 +91,26 @@ export function serviceEquipment(parent: T.Group, kind: RepairKind) {
       box(-0.59 + i * 0.084, -0.49, 0.09, 0.035, 0.05, 0.045, m.metal);
     for (const x of [-0.5, 0.5]) box(x, -0.4, 0.04, 0.38, 0.025, 0.32, m.metal);
   } else {
+    if (moon) {
+      const monitor = new T.Group();
+      monitor.position.set(-.17, .64, -.07);
+      monitor.rotation.x = -.37;
+      root.add(monitor);
+      monitor.add(box(0, 0, 0, .89, .33, .22, m.paint));
+      const inset = new T.Mesh(new T.PlaneGeometry(.73, .238), new T.MeshBasicMaterial({ color: 0x3a3025 }));
+      inset.position.z = .115;
+      monitor.add(inset);
+      const screen = new T.Mesh(new T.PlaneGeometry(.65, .18), new T.MeshBasicMaterial({
+        color: 0xeab663, toneMapped: false,
+      }));
+      screen.position.z = .119;
+      monitor.add(screen);
+      for (const [index, width] of [.24, .45, .36].entries()) {
+        const line = new T.Mesh(new T.PlaneGeometry(width, .011), inset.material);
+        line.position.set(-.29 + width / 2, .046 - index * .043, .122);
+        monitor.add(line);
+      }
+    }
     for (const x of [-0.72, 0.72])
       for (let i = 0; i < 8; i++)
         box(x, -0.3 + i * 0.085, -0.11, 0.035, 0.035, 0.22, m.navy);

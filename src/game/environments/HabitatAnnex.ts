@@ -1,4 +1,5 @@
 import * as T from "three";
+import { modelClarity } from "../ModelClarity";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import type { CollisionWorld } from "../CollisionWorld";
 import { releaseModel } from "./NasaVehicle";
@@ -78,6 +79,7 @@ export function loadHabitatAnnex(
         bounds = new T.Box3().setFromObject(model),
         center = bounds.getCenter(new T.Vector3()),
         scale = 6 / bounds.getSize(new T.Vector3()).y;
+      modelClarity(model);
       model.scale.multiplyScalar(scale);
       model.position.set(
         -center.x * scale,

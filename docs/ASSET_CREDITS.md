@@ -9,7 +9,7 @@
 - Source license: https://grab3d.com/dl/astronaut-in-spacesuit/LICENSE.txt
 - The publisher discloses AI-assisted creation with Meshy followed by Blender cleanup. This is a third-party asset, not a NASA scan or official NASA suit model.
 - Local distribution: public/models/astronaut.glb, LICENSE.txt, source-manifest.json. No runtime hotlinking or account required.
-- Modifications: simplified from 300,000 to 65,998 triangles; embedded textures resized to 1024 pixels and converted to WebP; duplicate data removed. Source file approximately 14 MB; local optimized file approximately 3.4 MB.
+- Modifications: simplified from 300,000 to 65,998 triangles. Embedded WebP textures were restored from the rigged source at up to 2048 pixels while preserving game geometry, hierarchy and animations. Source file approximately 14 MB, local file approximately 9.2 MB.
 - Runtime: scaled to 2.05 m and rotated for the existing controller. Source walk/run clips crossfade with authored idle, airborne, landing and service poses. These authored poses are not motion capture or full hand/foot IK.
 - Attribution is not required by CC0. Credit is provided in the game and here as provenance.
 
@@ -34,7 +34,7 @@ Source: NASA / Michael D. Carbajal, https://science.nasa.gov/3d-resources/apollo
 
 Habitat Demonstration Unit: NASA / LaRC / Advanced Concepts Lab, https://science.nasa.gov/3d-resources/habitat-demonstration-unit/ . Optimized from 516,748 to 103,576 bytes, 2,264 triangles, textures up to 1024px in WebP. Retired from the active scene in the recovery-room update; the game no longer loads this annex.
 
-Space Exploration Vehicle: NASA / LaRC / Advanced Concepts Lab, https://science.nasa.gov/3d-resources/space-exploration-vehicle/ . Educational adaptation as the Mars Ares Scout; this is a concept vehicle, not a claim of a deployed Mars rover. Source 22,431,576 bytes and 413,198 triangles; game asset 4,609,336 bytes and 83,713 triangles, 1024px WebP textures, with six separately animated paired wheel modules. Draco removed to avoid a separate runtime decoder.
+Space Exploration Vehicle: NASA / LaRC / Advanced Concepts Lab, https://science.nasa.gov/3d-resources/space-exploration-vehicle/ . Educational adaptation of a concept vehicle as the Mars Ares Scout. Source 22,431,576 bytes and 413,198 triangles. The game uses 83,713 triangles, WebP textures up to 2048 pixels and six separately animated paired wheel modules. Draco was removed to avoid a separate runtime decoder.
 
 The NASA assets are credited with NASA acknowledgement under https://www.nasa.gov/nasa-brand-center/images-and-media/ ; no endorsement is implied. Exact local hashes and source URLs are in public/models/nasa-detail-sources.json.
 
@@ -58,4 +58,10 @@ Arrival uses the [NASA/JPL Mars globe](https://science.nasa.gov/resource/planet-
 
 ## Original sound design
 
-Music, footsteps, machinery, radio and cinematic effects are original procedural Web Audio synthesis authored for this game. No third-party audio recordings, remote audio services or generated audio files are bundled.
+Original procedural music and atmospheric beds are mixed with CC0 mechanical and footstep recordings from Kenney. See [sound credits](../public/audio/CREDITS.md).
+
+## Painted Moon campaign
+
+- The roof antenna adapts the [NASA Ames 70-meter dish](https://science.nasa.gov/3d-resources/70-meter-dish/) to the scale of the fictional habitat. The local GLB retains 14,852 triangles and uses a resized WebP texture. NASA acknowledgement does not imply endorsement. [NASA media usage guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/)
+- The foreground boulders adapt Rico Cilliers’ [Boulder 01](https://polyhaven.com/a/boulder_01). The local GLB retains 51,962 triangles with Meshopt compression and a warm-gray 1K WebP color map. The original is an Earth analog distributed under [CC0](https://polyhaven.com/license).
+- The habitat facade, ramp, cable, solar array and open-frame buggy were modeled to fit the playable outpost and vehicle controls. The supplied illustration served as a style reference.

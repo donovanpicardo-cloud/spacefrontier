@@ -7,9 +7,9 @@ export function renderRatio(
 ) {
   const maximum =
     quality === "Ultra"
-      ? 1.7
+      ? 2
       : quality === "High"
-        ? 1.25
+        ? 1.5
         : quality === "Low"
           ? 0.75
           : 1;
@@ -19,14 +19,16 @@ export function renderRatio(
       : quality === "School computer"
         ? 1_000_000
         : quality === "Medium"
-          ? 1_500_000
+          ? 2_100_000
           : quality === "High"
-            ? 2_500_000
-            : 4_000_000;
+            ? 3_700_000
+            : 6_000_000;
+  const sampling = quality === "Ultra" ? Math.max(1.5, dpr)
+    : quality === "High" ? Math.max(1.25, dpr) : dpr;
   return (
     Math.max(
       0.1,
-      Math.min(dpr, maximum, Math.sqrt(pixels / Math.max(1, width * height))),
+      Math.min(sampling, maximum, Math.sqrt(pixels / Math.max(1, width * height))),
     ) * scale
   );
 }

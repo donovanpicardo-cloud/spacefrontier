@@ -18,9 +18,21 @@
     "download": "https://assets.science.nasa.gov/content/dam/science/cds/3d/resources/model/space-exploration-vehicle/Space%20Exploration%20Vehicle.glb",
     "usage": "NASA educational media guidelines; no endorsement",
     "originalBytes": 22431576,
-    "optimizedBytes": 4609336,
+    "optimizedBytes": 5443224,
     "triangles": 83713,
-    "sha256": "bde18e8c982cd091d789207a1183a6562eb006e53c460d423636989c91a3a50d",
-    "modifications": "Simplified geometry, WebP textures at most 1024px, removed Draco; SEV normalized and wheel modules separated for animation."
+    "sha256": "0305130080ebd871e8077ffb6e4c31d404d2691cd239cbf8297b013795bd7478",
+    "modifications": "Simplified geometry, source textures restored as WebP up to 2048px, removed Draco, normalized and separated wheel modules for animation."
+  },
+  {
+    "triangles": 14852,
+    "title": "70 meter dish",
+    "download": "https://assets.science.nasa.gov/content/dam/science/cds/3d/resources/model/70-meter-dish/70%20meter%20dish.glb",
+    "creator": "NASA / Ames Research Center",
+    "sha256": "dda84701714037d1c133baaf8d7b2d397db947eac0c2dbfc24dcada4b21fbcb8",
+    "usage": "NASA educational media guidelines. No endorsement.",
+    "source": "https://science.nasa.gov/3d-resources/70-meter-dish/",
+    "optimizedBytes": 822088,
+    "modifications": "Welded vertices, resized base color to WebP at most 1024px, scaled and recolored in the game.",
+    "originalBytes": 2216584
   }
 ]

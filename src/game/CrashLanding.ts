@@ -1,15 +1,16 @@
 import * as T from "three";
+import { modelClarity } from "./ModelClarity";
+import { batchStatic } from "./environments/StaticBatch";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "meshoptimizer/decoder";
 import type { Destination } from "../simulation/engine";
 import { ARRIVAL_DURATION, ARRIVAL_IMPACT } from "./ArrivalTimeline";
+import { crashSite } from "./CrashSite";
 
-const site = { x: 0, z: 7 };
 export { survivorPosition } from "./CrashSite";
 const impact = ARRIVAL_IMPACT;
 const end = ARRIVAL_DURATION;
-const strike = new T.Vector3(site.x - 1.4, 0, site.z + 1.6);
 const wreckAngle = new T.Euler(0.38, -0.85, -1.08);
 
 type Fragment = {
@@ -44,6 +45,8 @@ export class CrashLanding {
   readonly root = new T.Group();
   readonly ready: Promise<void>;
   private restY = 0;
+  private site: ReturnType<typeof crashSite>;
+  private strike: T.Vector3;
   private strikeY = 0;
   private fragments: Fragment[] = [];
   private separated = false;
@@ -67,6 +70,8 @@ export class CrashLanding {
     private ground: (x: number, z: number) => number,
     register: (box: T.Box3, geometry?: T.BufferGeometry, matrix?: T.Matrix4) => void,
   ) {
+    const site = this.site = crashSite(destination);
+    const strike = this.strike = new T.Vector3(site.x - 1.4, 0, site.z + 1.6);
     this.root.visible = false;
     scene.add(this.root);
     const points = new Float32Array(180 * 3);
@@ -136,6 +141,7 @@ export class CrashLanding {
           ),
       )
       .then((model) => {
+        modelClarity(model);
         if (this.disposed) {
           model.traverse((o) => {
             if (o instanceof T.Mesh) {
@@ -194,7 +200,7 @@ export class CrashLanding {
           destination === "mars"
             ? ["panel_l_root", "panel_r_root", "arm_01"]
             : ["group73", "group74", "group51", "pCone6"];
-        const paths = [
+        const paths = destination === "moon" ? [[-5, 2], [4, 4], [-4, -3], [0, 5]] : [
           [-5, 2],
           [5, -2],
           [-3, -5],
@@ -251,6 +257,10 @@ export class CrashLanding {
           const collision = object.geometry.boundingBox!.clone().applyMatrix4(object.matrixWorld);
           register(collision, object.geometry, object.matrixWorld.clone());
         });
+        // Preserve registered collision geometry and the independent breaking pivots;
+        // merge only the rigid rendering inside each assembly for laptop GPUs.
+        batchStatic(this.root);
+        for (const piece of this.fragments) batchStatic(piece.mesh);
       });
   }
   private rotateFragment(piece: Fragment, progress: number) {
@@ -302,6 +312,7 @@ export class CrashLanding {
     }
     if (t < impact) {
       const sway = Math.sin(t * 1.7) * failure * Math.min(1, left * 5);
+      const strike = this.strike;
       const x = strike.x - 50 * left + 4 * sway;
       const z = strike.z + 78 * left;
       const groundRise = Math.max(
@@ -335,10 +346,10 @@ export class CrashLanding {
       const skid = 1 - (1 - Math.min(1, settle / 0.85)) ** 2;
       this.root.rotation.copy(wreckAngle);
       this.root.position.set(
-        T.MathUtils.lerp(strike.x, site.x, skid),
+        T.MathUtils.lerp(this.strike.x, this.site.x, skid),
         T.MathUtils.lerp(this.strikeY, this.restY, skid) +
           0.32 * Math.sin(Math.PI * skid),
-        T.MathUtils.lerp(strike.z, site.z, skid),
+        T.MathUtils.lerp(this.strike.z, this.site.z, skid),
       );
       for (const piece of this.fragments) {
         const u = Math.min(1, settle / piece.duration);
@@ -349,7 +360,8 @@ export class CrashLanding {
       }
     }
     this.dust.visible = settle > 0 && settle < 2.7;
-    this.dust.position.set(site.x, this.ground(site.x, site.z) + 0.08, site.z);
+    const { x, z } = this.site;
+    this.dust.position.set(x, this.ground(x, z) + 0.08, z);
     this.dust.scale.set(1 + settle * 4, 0.35 + settle * 1.1, 1 + settle * 4);
     (this.dust.material as T.PointsMaterial).opacity = Math.max(
       0,
