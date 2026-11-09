@@ -5,7 +5,7 @@ import { resourceSites } from "../Resources";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "meshoptimizer/decoder";
-import { photographedSurface } from "./SurfaceMaterials";
+import { landscapeMaterial } from "./SurfaceMaterials";
 import { paintedMap } from "./PainterlyMaterials";
 import { sampleSites, robotSites, recoveryBay } from "../Adventure";
 export const hash = (n: number) => {
@@ -55,7 +55,7 @@ export function launchLaneDistance(x: number, z: number, d: Destination) {
 function baseTerrainHeight(x: number, z: number, d: Destination) {
   const habitat = Math.max(Math.abs(x) - 9, Math.abs(z + 22) - 15);
   const array = Math.max(Math.abs(x - 16) - 12, Math.abs(z + 7) - 10);
-  const path = Math.max(Math.abs(x) - 5, Math.abs(z + 2) - 13);
+  const path = Math.max(Math.abs(x) - 5, d === "mars" ? Math.abs(z - 2) - 17 : Math.abs(z + 2) - 13);
   const mask = T.MathUtils.smoothstep(
     Math.min(
       habitat,
@@ -105,68 +105,6 @@ export function terrainHeight(x: number, z: number, d: Destination) {
       h = T.MathUtils.lerp(site.y, h, T.MathUtils.smoothstep(r, 6, 11));
   }
   return h;
-}
-function regolith(d: Destination) {
-  const c = document.createElement("canvas");
-  c.width = c.height = 512;
-  const ctx = c.getContext("2d")!;
-  const image = ctx.createImageData(512, 512);
-  for (let y = 0; y < 512; y++)
-    for (let x = 0; x < 512; x++) {
-      const i = (y * 512 + x) * 4;
-      const v = 155 + hash(y * 512 + x) * 65 + noise(x * 0.04, y * 0.04) * 25;
-      image.data[i] = image.data[i + 1] = image.data[i + 2] = v;
-      image.data[i + 3] = 255;
-    }
-  ctx.putImageData(image, 0, 0);
-  for (let i = 0; i < 3500; i++) {
-    const x = hash(i) * 512,
-      y = hash(i + 7000) * 512,
-      r = 0.3 + hash(i + 10) * 2;
-    ctx.fillStyle = i % 3 ? "#32333060" : "#f1e4c844";
-    ctx.beginPath();
-    ctx.ellipse(x, y, r, r * 0.6, i, 0, 6.28);
-    ctx.fill();
-  }
-  const texture = new T.CanvasTexture(c);
-  texture.colorSpace = T.SRGBColorSpace;
-  texture.wrapS = texture.wrapT = T.RepeatWrapping;
-  texture.repeat.set(160, 160);
-  texture.anisotropy = 8;
-  const normalCanvas = document.createElement("canvas");
-  normalCanvas.width = normalCanvas.height = 512;
-  const nc = normalCanvas.getContext("2d")!,
-    ni = nc.createImageData(512, 512);
-  const heights = ctx.getImageData(0, 0, 512, 512).data;
-  for (let y = 0; y < 512; y++)
-    for (let x = 0; x < 512; x++) {
-      const at = (a: number, b: number) =>
-        heights[(((b + 512) % 512) * 512 + ((a + 512) % 512)) * 4] / 255;
-      const nx = (at(x - 1, y) - at(x + 1, y)) * 0.6,
-        ny = (at(x, y - 1) - at(x, y + 1)) * 0.6;
-      const length = Math.hypot(nx, ny, 1),
-        i = (y * 512 + x) * 4;
-      ni.data[i] = ((nx / length) * 0.5 + 0.5) * 255;
-      ni.data[i + 1] = ((ny / length) * 0.5 + 0.5) * 255;
-      ni.data[i + 2] = ((1 / length) * 0.5 + 0.5) * 255;
-      ni.data[i + 3] = 255;
-    }
-  nc.putImageData(ni, 0, 0);
-  const normal = new T.CanvasTexture(normalCanvas);
-  normal.wrapS = normal.wrapT = T.RepeatWrapping;
-  normal.repeat.copy(texture.repeat);
-  normal.anisotropy = 8;
-  const m = new T.MeshStandardMaterial({
-    map: texture,
-    bumpMap: texture,
-    bumpScale: d === "moon" ? 0.035 : 0.025,
-    normalMap: normal,
-    normalScale: new T.Vector2(0.75, 0.75),
-    roughness: 0.96,
-    vertexColors: true,
-  });
-  photographedSurface(m, d, 260);
-  return m;
 }
 export function terrainGeometry(d: Destination, segments: number) {
   const g = new T.PlaneGeometry(650, 650, segments, segments);
@@ -230,7 +168,7 @@ export function buildTerrain(
 ) {
   const segments = terrainSegments(quality),
     g = terrainGeometry(d, segments);
-  const ground = new T.Mesh(g, regolith(d));
+  const ground = new T.Mesh(g, landscapeMaterial(d));
   ground.receiveShadow = true;
   ground.userData.segments = segments;
   scene.add(ground);
@@ -252,10 +190,10 @@ export function buildTerrain(
   const rocky = rockGeometry(2),
     lowRock = rockGeometry(1);
   const material = new T.MeshStandardMaterial({
-    color: d === "moon" ? 0x666d71 : 0x865c47,
+    color: d === "moon" ? 0xbeb2a2 : 0xba8a70,
+    map: paintedMap("basalt"),
     roughness: 0.97,
   });
-  photographedSurface(material, d, 1.8, true);
   const rocks = new T.InstancedMesh(lowRock, material, 2200);
   const largeRocks = new T.InstancedMesh(rocky, material, 60);
   largeRocks.userData.surfaceRock = true;
@@ -321,11 +259,13 @@ export function buildTerrain(
   largeRocks.count = largeCount;
   largeRocks.instanceMatrix.needsUpdate = true;
   scene.add(rocks, largeRocks);
-  if (d === "moon") {
-    const boulders = [[-11.4, -.5, 2.65, .8], [8.7, 13.3, 3.45, -.62]];
+  {
+    const boulders = d === "moon"
+      ? [[-11.4, -.5, 2.65, .8], [8.7, 13.3, 3.45, -.62]]
+      : [[-13.2, -.8, 3.5, -.42], [8.9, 11.8, 2.85, 1.2]];
     const proxies = boulders.map(([x, z, width, yaw]) => {
       const rock = new T.Mesh(rocky, material);
-      rock.name = "Lunar boulder";
+      rock.name = "Surface boulder";
       rock.position.set(x, terrainHeight(x, z, d) + width * .19, z);
       rock.scale.set(width * .47, width * .38, width * .4);
       rock.rotation.y = yaw;
@@ -352,6 +292,7 @@ export function buildTerrain(
       model.traverse(object => {
         if (!(object instanceof T.Mesh)) return;
         object.castShadow = object.receiveShadow = true;
+        if (d === "mars") object.material.color.setHex(0xcf9b79);
       });
       boulders.forEach(([x, z, width, yaw], index) => {
         const rock = new T.Group();
@@ -368,17 +309,20 @@ export function buildTerrain(
   {
     // Distant crater escarpment: a single low-poly ribbon outside the opening routes.
     // It is scenery only; the original terrain and physics remain authoritative.
-    const positions: number[] = [], uvs: number[] = [], indices: number[] = [];
+    const positions: number[] = [], indices: number[] = [];
+    const mars = d === "mars";
     for (let i = 0; i <= 80; i++) {
-      const angle = -3.67 + i / 80 * 2.85;
-      const radius = 103 + noise(i * .12, 4) * 11;
+      const angle = mars ? -3.8 + i / 80 * 2.35 : -3.67 + i / 80 * 2.85;
+      const radius = mars ? 123 + noise(i * .08, 4) * 17 : 103 + noise(i * .12, 4) * 11;
       const x = Math.sin(angle) * radius, z = Math.cos(angle) * radius - 12;
       const base = terrainHeight(x, z, d) - 1;
       const edge = Math.sin(Math.PI * i / 80);
-      const top = base + (18 + noise(i * .14, 8) * 7 + noise(i * .52, 7) * 1.6) * Math.min(1, edge * 5);
+      const rise = mars
+        ? 12 + 11 * T.MathUtils.smoothstep(noise(i * .11, 13), -.41, .18)
+        : 18 + noise(i * .14, 8) * 7 + noise(i * .52, 7) * 1.6;
+      const top = base + rise * Math.min(1, edge * 5);
       for (const [r, y] of [[1, base], [1.025, base + 2], [1.045, top], [1.2, top + 1], [1.65, terrainHeight(x * 1.65, (z + 12) * 1.65 - 12, d) - 1]]) {
         positions.push(x * r, y, (z + 12) * r - 12);
-        uvs.push(i * .13, (y - base) / 16 + (r - 1) * 5);
       }
       if (i < 80) for (let row = 0; row < 4; row++) {
         const a = i * 5 + row;
@@ -387,12 +331,9 @@ export function buildTerrain(
     }
     const cliffGeometry = new T.BufferGeometry();
     cliffGeometry.setAttribute("position", new T.Float32BufferAttribute(positions, 3));
-    cliffGeometry.setAttribute("uv", new T.Float32BufferAttribute(uvs, 2));
     cliffGeometry.setIndex(indices); cliffGeometry.computeVertexNormals();
-    const cliff = new T.Mesh(cliffGeometry, new T.MeshStandardMaterial({
-      map: paintedMap("cliff"), color: d === "moon" ? 0xd4c7b3 : 0xc9a086, roughness: 1, flatShading: true, side: T.DoubleSide,
-    }));
-    cliff.name = "Moon distant painted crater wall";
+    const cliff = new T.Mesh(cliffGeometry, landscapeMaterial(d, true));
+    cliff.name = mars ? "Stratified Martian escarpment" : "Lunar crater escarpment";
     cliff.userData.noCollision = true;
     cliff.receiveShadow = true;
     scene.add(cliff);
@@ -423,7 +364,43 @@ export function buildTerrain(
   return { colliders, ground };
 }
 export function buildSky(scene: T.Scene, d: Destination) {
-  if (d === "mars") return;
+  if (d === "mars") {
+    const sky = new T.Mesh(new T.SphereGeometry(32, 32, 20), new T.ShaderMaterial({
+      side: T.BackSide,
+      depthWrite: false,
+      toneMapped: false,
+      uniforms: {
+        dustHorizon: { value: new T.Color(0xb58d72) },
+        upperSky: { value: new T.Color(0x795647) },
+        sunWash: { value: new T.Color(0xd5a98a) },
+      },
+      vertexShader: `
+        varying vec3 skyRay;
+        void main() {
+          skyRay = position;
+          gl_Position = projectionMatrix * vec4(mat3(viewMatrix) * position, 1.);
+          gl_Position.z = gl_Position.w;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 dustHorizon, upperSky, sunWash;
+        varying vec3 skyRay;
+        void main() {
+          vec3 ray = normalize(skyRay);
+          float zenith = smoothstep(-.03, .64, ray.y);
+          float glow = pow(max(0., dot(ray, normalize(vec3(-.77, .41, .49)))), 5.);
+          vec3 colour = mix(dustHorizon, upperSky, zenith);
+          gl_FragColor = vec4(mix(colour, sunWash, glow * .42), 1.);
+          #include <colorspace_fragment>
+        }
+      `,
+    }));
+    sky.frustumCulled = false;
+    sky.renderOrder = -100;
+    sky.userData.noCollision = true;
+    scene.add(sky);
+    return;
+  }
   const texture = new T.TextureLoader().load("/materials/earth-nasa.jpg");
   texture.colorSpace = T.SRGBColorSpace;
   texture.anisotropy = 4;

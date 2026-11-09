@@ -7,6 +7,7 @@ import "./arrival.css";
 
 type Props = {
   onFilm: (quiet: boolean, show: () => void, finish: () => void) => void;
+  onSkip: () => void;
   ready: boolean;
   saved: boolean;
   reducedMotion: boolean;
@@ -23,6 +24,7 @@ export function ArrivalIntro(props: Props) {
 
   const [destination, setDestination] = useState<Destination>("moon");
   const [seconds, setSeconds] = useState(0);
+  const filmStarted = useRef(false);
   const beat = arrivalBeat(seconds, destination);
   useEffect(() => {
     if (phase !== "flight") return;
@@ -66,7 +68,8 @@ export function ArrivalIntro(props: Props) {
     setPhase("preparing");
   };
   useEffect(() => {
-    if (phase !== "preparing" || !props.ready) return;
+    if (phase !== "preparing" || !props.ready || filmStarted.current) return;
+    filmStarted.current = true;
     callbacks.current.onFilm(
       quiet || props.reducedMotion,
       () => {
@@ -103,6 +106,11 @@ export function ArrivalIntro(props: Props) {
             <p>{beat.text}</p>
           </div>
         </>
+      )}
+      {phase === "flight" && (
+        <button type="button" className="arrival-skip" onClick={props.onSkip}>
+          Skip cinematic <span aria-hidden="true">↠</span>
+        </button>
       )}
       {phase === "preparing" && (
         <div className="arrival-loading" role="status">

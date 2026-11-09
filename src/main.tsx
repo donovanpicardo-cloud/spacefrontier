@@ -1348,6 +1348,7 @@ function App() {
       </header>
       {!playing && <ArrivalIntro
         onFilm={(quiet, show, finish) => { void world.current?.filmLanding(quiet, show, finish); }}
+        onSkip={() => world.current?.skipLanding()}
         ready={graphicsReady && modelStatus !== "loading"}
         saved={saved}
         reducedMotion={reducedMotion}
@@ -2077,7 +2078,7 @@ function App() {
                     onChange={(e) => setMusicVolume(Number(e.target.value))} />
                   <span>{Math.round(musicVolume * 100)}%</span>
                 </label>
-                <p className="science-note">Recorded footsteps and mechanical effects with a quiet ambient score. Moon exterior sounds represent vibrations heard through your suit. Sound recordings: Kenney, CC0.</p>
+                <p className="science-note">The Moon mixes sound through the suit, while Mars adds exterior wind and grit. The interior mix uses recorded deck and machinery sounds. Additional recordings by Kenney, CC0.</p>
                 <label className="setting">
                   Simulation speed
                   <select
@@ -2387,7 +2388,7 @@ function App() {
                 onGuide={(id) => {
                   guideSide(
                     id,
-                    id === "rocket" ? rocketPad.name : "Outpost fabricator",
+                    id === "rocket" ? rocketPad.name : "Fabrication station",
                     id === "rocket"
                       ? "Park at the pad, get out and press E to board."
                       : "Build rocket sections at the fabricator inside your habitat.",

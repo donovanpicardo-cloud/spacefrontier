@@ -200,12 +200,9 @@ export class CrashLanding {
           destination === "mars"
             ? ["panel_l_root", "panel_r_root", "arm_01"]
             : ["group73", "group74", "group51", "pCone6"];
-        const paths = destination === "moon" ? [[-5, 2], [4, 4], [-4, -3], [0, 5]] : [
-          [-5, 2],
-          [5, -2],
-          [-3, -5],
-          [4, 3],
-        ];
+        const paths = destination === "moon"
+          ? [[-5, 2], [4, 4], [-4, -3], [0, 5]]
+          : [[-5, 3], [3, 5], [-2, -4]];
         assemblies.forEach((name, i) => {
           const parts: T.Object3D[] = [];
           model.traverse((o) => {
@@ -282,6 +279,11 @@ export class CrashLanding {
     this.separated = false;
     this.elapsed = 0;
     this.finished = finished;
+  }
+  skip(camera: T.PerspectiveCamera) {
+    if (!this.finished) return;
+    this.elapsed = end;
+    this.frame(0, camera);
   }
   frame(dt: number, camera: T.PerspectiveCamera) {
     this.elapsed = Math.min(end, this.elapsed + Math.min(dt, 0.15));

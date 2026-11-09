@@ -50,7 +50,7 @@ export function AdventurePanels(p: {
             onClick={() =>
               p.onGuide(
                 "fabricator",
-                "Outpost fabricator",
+                "Fabrication station",
                 "Follow the trail inside. Press E at the fabricator to build a project.",
               )
             }

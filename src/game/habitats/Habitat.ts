@@ -184,39 +184,32 @@ export function buildHabitat(scene: T.Scene, moon = false) {
       0,
       0,
     );
-  // A continuous arched pressure hull replaces the rectangular demo building.
-  const arch = (shape: T.Shape | T.Path, inset = 0) => {
-    shape.moveTo(-7 + inset, 0);
-    shape.lineTo(-7 + inset, 2.5);
-    shape.quadraticCurveTo(-7 + inset, 4.4 - inset, -4, 4.4 - inset);
-    shape.lineTo(4, 4.4 - inset);
-    shape.quadraticCurveTo(7 - inset, 4.4 - inset, 7 - inset, 2.5);
-    shape.lineTo(7 - inset, 0);
+  // Trace the outer and inner faces together so the pressure shell has a
+  // correctly wound ceiling from both the EVA and cabin cameras.
+  const arch = (annexOpening: number, thickness = .18) => {
+    const shape = new T.Shape();
+    const innerWidth = 7 - thickness;
+    const innerCeiling = 4.4 - thickness;
+    shape.moveTo(-7, 0);
+    shape.lineTo(-7, 2.5);
+    shape.quadraticCurveTo(-7, 4.4, -4, 4.4);
+    shape.lineTo(4, 4.4);
+    shape.quadraticCurveTo(7, 4.4, 7, 2.5);
+    shape.lineTo(7, annexOpening);
+    shape.lineTo(innerWidth, annexOpening);
+    shape.lineTo(innerWidth, 2.5);
+    shape.quadraticCurveTo(innerWidth, innerCeiling, 4, innerCeiling);
+    shape.lineTo(-4, innerCeiling);
+    shape.quadraticCurveTo(-innerWidth, innerCeiling, -innerWidth, 2.5);
+    shape.lineTo(-innerWidth, 0);
     shape.closePath();
+    return shape;
   };
-  const outer = new T.Shape();
-  arch(outer);
-  const hole = new T.Path();
-  arch(hole, 0.18);
-  outer.holes.push(hole);
-  const open = new T.Shape();
-  open.moveTo(-7, 0);
-  open.lineTo(-7, 2.5);
-  open.quadraticCurveTo(-7, 4.4, -4, 4.4);
-  open.lineTo(4, 4.4);
-  open.quadraticCurveTo(7, 4.4, 7, 2.5);
-  open.lineTo(7, 2.45);
-  open.lineTo(6.82, 2.45);
-  open.lineTo(6.82, 2.5);
-  open.quadraticCurveTo(6.82, 4.22, 4, 4.22);
-  open.lineTo(-4, 4.22);
-  open.quadraticCurveTo(-6.82, 4.22, -6.82, 2.5);
-  open.lineTo(-6.82, 0);
-  open.closePath();
+  const closed = arch(0), open = arch(2.45);
   for (const [start, depth, shape] of [
-    [-34, 9.8, outer],
+    [-34, 9.8, closed],
     [-24.2, 2.4, open],
-    [-21.8, 11.8, outer],
+    [-21.8, 11.8, closed],
   ] as const) {
     const shell = add(
       new T.ExtrudeGeometry(shape, {
@@ -231,6 +224,10 @@ export function buildHabitat(scene: T.Scene, moon = false) {
       start,
     );
     colliders.push(shell);
+  }
+  for (let z = -12; z > -34; z -= 2) {
+    box(0, 4.17, z, 7.7, 0.12, 1.93, hull, true);
+    for (const x of [-3.8, 3.8]) box(x, 4.08, z, .075, .07, 1.91, panel);
   }
   solid(box(-7, 2, -22, 0.2, 4, 24, hull));
   solid(box(7, 2, -29.1, 0.2, 4, 9.8, hull));
@@ -251,11 +248,7 @@ export function buildHabitat(scene: T.Scene, moon = false) {
     box(x, 0.14, -22, 0.025, 0.02, 23, yellow);
     for (let z = -13; z > -34; z -= 2) box(x, 0.16, z, 0.07, 0.025, 0.6, trim);
   }
-  const ribShape = new T.Shape();
-  arch(ribShape);
-  const ribHole = new T.Path();
-  arch(ribHole, 0.12);
-  ribShape.holes.push(ribHole);
+  const ribShape = arch(0, .27);
   for (let z = -10.2; z > -34; z -= 3.9) {
     add(
       new T.ExtrudeGeometry(ribShape, {

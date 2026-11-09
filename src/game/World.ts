@@ -1,5 +1,5 @@
 import { CrashLanding } from "./CrashLanding";
-import { dressMoonOutpost } from "./environments/MoonArt";
+import { dressOutpost } from "./environments/OutpostCladding";
 import { isSharedPaintMap, paintedMap, paintScene } from "./environments/PainterlyMaterials";
 import { warmGraphics } from "./GraphicsWarmup";
 import { sprintHeld, updateMovementInput } from "./MovementInput";
@@ -250,8 +250,12 @@ export class World {
     this.landingCamera = true;
     this.cinematicAudio = !quiet;
     show();
-    if (quiet) finish();
-    else this.wreck.start(finish);
+    this.wreck.start(finish);
+    if (quiet) this.skipLanding();
+  }
+  skipLanding() {
+    this.cinematicAudio = false;
+    this.wreck.skip(this.camera);
   }
   transit: { from: T.Vector3; to: T.Vector3; t: number } | null = null;
   doors: T.Mesh[] = [];
@@ -323,7 +327,7 @@ export class World {
     this.renderer.info.autoReset = false;
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = T.PCFShadowMap;
     this.renderer.toneMapping = T.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.02;
     container.appendChild(this.renderer.domElement);
@@ -332,12 +336,12 @@ export class World {
     this.scene.fog = d === "mars" ? new T.FogExp2(0xb58d72, 0.004) : null;
     this.ambient = new T.HemisphereLight(
       d === "moon" ? 0xd6ccba : 0xffd8ad,
-      0x403a30,
-      d === "moon" ? 0.62 : 0.9,
+      d === "moon" ? 0x867468 : 0xa06c55,
+      d === "moon" ? 0.82 : 0.99,
     );
     this.scene.add(this.ambient);
-    this.sun = new T.DirectionalLight(d === "moon" ? 0xfff4e5 : 0xffd9b9, 2.4);
-    this.sun.position.set(-40, 35, 32);
+    this.sun = new T.DirectionalLight(d === "moon" ? 0xfff1de : 0xffd7b7, 2.05);
+    this.sun.position.set(-42, 28, 30);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
     Object.assign(this.sun.shadow.camera, {
@@ -348,8 +352,8 @@ export class World {
       far: 140,
     });
     this.sun.shadow.bias = -0.0005;
-    this.sun.shadow.normalBias = 0.045;
-    this.sun.shadow.radius = d === "moon" ? 1.1 : 2.4;
+    this.sun.shadow.normalBias = 0.023;
+    this.sun.shadow.radius = d === "moon" ? 1.65 : 2.65;
     this.scene.add(this.sun, this.sun.target);
     const pmrem = new T.PMREMGenerator(this.renderer);
     const studio = new RoomEnvironment();
@@ -391,7 +395,7 @@ export class World {
       if (geometry && matrix) this.physics.shape(box, geometry, matrix, "Crashed spacecraft");
     });
     this.resources.batch();
-    if (d === "moon") dressMoonOutpost(this.scene, this.doors[0], () => this.disposed);
+    dressOutpost(this.scene, this.doors[0], () => this.disposed, d === "mars");
     this.repairs.devices.forEach((d) => {
       const detail = d.root.children.find((o) => o.userData.serviceDetail);
       if (detail instanceof T.Group) batchStatic(detail);
@@ -575,9 +579,9 @@ export class World {
     this.scene.add(root);
     this.staticScenery.push(root);
     const lunar = this.destination === "moon";
-    const panelFrame = lunar ? new T.MeshStandardMaterial({
-      color: 0xc8b99d, roughness: .93, map: paintedMap("panel"),
-    }) : dark;
+    const panelFrame = new T.MeshStandardMaterial({
+      color: lunar ? 0xc8b99d : 0xc5a58d, roughness: .93, map: paintedMap("panel"),
+    });
     const cells = [0x3c444a, 0x424950, 0x475058].map(color =>
       new T.MeshStandardMaterial({ color, roughness: .92, emissive: 0x24282a, emissiveIntensity: .24 }),
     );
@@ -585,16 +589,12 @@ export class World {
       for (let col = 0; col < 3; col++) {
         const x = 12 + col * 3.4,
           z = -3 - row * 4;
-        if (lunar) {
-          rounded(root, x, .26, z, .84, .52, .89, panelFrame);
-          rounded(root, x, .94, z, .35, .88, .41, panelFrame);
-          box(root, x, 1.49, z, 2.85, .13, .21, panelFrame);
-        } else {
-          mesh(new T.CylinderGeometry(0.08, 0.12, 1.4, 8), dark, root, x, 0.7, z);
-        }
+        rounded(root, x, .26, z, .84, .52, .89, panelFrame);
+        rounded(root, x, .94, z, .35, .88, .41, panelFrame);
+        box(root, x, 1.49, z, 2.85, .13, .21, panelFrame);
         const panel = new T.Group();
         panel.position.set(x, 1.65, z);
-        panel.rotation.x = lunar ? .56 : -.35;
+        panel.rotation.x = .56;
         root.add(panel);
         box(panel, 0, 0, 0, 3.1, 0.12, 2.7, panelFrame);
         for (let i = 0; i < 6; i++)
@@ -607,33 +607,18 @@ export class World {
               0.46,
               0.025,
               0.61,
-              cells[lunar ? (i * 5 + j * 7) % cells.length : 0],
+              cells[(i * 5 + j * 7) % cells.length],
             );
         if (row === 0) this.colliders.push(panel.children[0] as T.Mesh);
       }
-    if (lunar) {
-      rounded(root, 8.8, .45, -5, 1.19, .9, .76, panelFrame);
-      box(root, 8.8, .2, -4.59, 1.14, .13, .05, orange);
-      const cable = new T.CatmullRomCurve3([
-        new T.Vector3(9.34, .32, -4.86), new T.Vector3(9.78, .12, -4.46),
-        new T.Vector3(10.77, .08, -4.45), new T.Vector3(12, .18, -3.2),
-      ]);
-      mesh(new T.TubeGeometry(cable, 24, .065, 8), dark, root);
-    } else {
-    box(root, 8.8, 0.65, -5, 1.1, 1.3, 0.7, dark);
-    box(root, 8.8, 1.35, -4.8, 0.8, 0.25, 0.06, cyan);
-    mesh(new T.CylinderGeometry(0.1, 0.16, 8, 10), white, root, -12, 4, -16);
-    const dish = mesh(
-      new T.SphereGeometry(2.3, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.4),
-      white,
-      root,
-      -12,
-      8,
-      -16,
-    );
-    dish.rotation.z = 0.7;
-    dish.rotation.x = 0.7;
-    }
+    rounded(root, 8.8, .45, -5, 1.19, .9, .76, panelFrame);
+    box(root, 8.8, .2, -4.59, 1.14, .13, .05, orange);
+    const cable = new T.CatmullRomCurve3([
+      new T.Vector3(9.34, .32, -4.86), new T.Vector3(9.78, .12, -4.46),
+      new T.Vector3(10.77, .08, -4.45), new T.Vector3(12, .18, -3.2),
+    ]);
+    mesh(new T.TubeGeometry(cable, 24, .065, 8), dark, root);
+
     for (let i = 0; i < 7; i++) {
       box(root, -2.5, 0.38, 1 - i * 1.5, 0.05, 0.75, 0.05, orange);
       box(root, -2.5, 0.79, 1 - i * 1.5, 0.12, 0.06, 0.12, cyan);
@@ -735,6 +720,7 @@ export class World {
     this.sun.shadow.map?.dispose();
     this.sun.shadow.map = null;
     this.sun.shadow.mapSize.set(resolution, resolution);
+    this.sun.shadow.radius = (this.destination === "moon" ? 1.65 : 2.65) * resolution / 1024;
     Object.assign(this.sun.shadow.camera, {
       left: -28,
       right: 28,
@@ -1807,21 +1793,24 @@ export class World {
     this.habitatLighting.update(
       p.position, interior, this.state.power, lightLimit, dt,
     );
+    const dustStorm = this.destination === "mars" && this.state.storm;
+    if (this.scene.fog instanceof T.FogExp2)
+      this.scene.fog.density = T.MathUtils.damp(this.scene.fog.density, dustStorm ? .016 : .004, 2, dt);
     this.ambient.intensity = T.MathUtils.damp(
       this.ambient.intensity,
-      interior ? 0.5 : this.destination === "moon" ? 0.52 : 0.7,
+      interior ? 0.55 : this.destination === "moon" ? 0.82 : 0.99,
       3,
       dt,
     );
     this.scene.environmentIntensity = T.MathUtils.damp(
       this.scene.environmentIntensity,
-      interior ? 0.18 : 0.2,
+      interior ? 0.19 : 0.27,
       3,
       dt,
     );
     this.sun.intensity = T.MathUtils.damp(
       this.sun.intensity,
-      interior ? 0.5 : 2.4,
+      interior ? 0.42 : dustStorm ? 1.2 : 2.05,
       3,
       dt,
     );
@@ -1861,7 +1850,7 @@ export class World {
     const sx = Math.round(p.position.x / texel) * texel;
     const sz = Math.round((p.position.z - 8) / texel) * texel;
     this.sun.target.position.set(sx, 0, sz);
-    this.sun.position.set(sx - 40, 35, sz + 32);
+    this.sun.position.set(sx - 42, 28, sz + 30);
     this.dust.rotation.y += dt * (this.state.storm ? 0.015 : 0.001);
     (this.dust.material as T.PointsMaterial).opacity =
       this.destination === "mars" ? (this.state.storm ? 0.65 : 0.22) : 0;

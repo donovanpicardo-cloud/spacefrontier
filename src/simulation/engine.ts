@@ -161,7 +161,7 @@ export const missions = (d: Destination) => [
     task:
       d === "mars"
         ? "Brush the red dust from the solar contacts, then connect the two matching leads."
-        : "Visit the solar service console. Drag the three cables into matching sockets.",
+        : "Open the solar array service panel and connect all three leads to their matching sockets.",
     target: "solar",
     lesson:
       "Restoring solar generation improves power reserves, but sunlight is still finite.",

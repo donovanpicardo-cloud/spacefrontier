@@ -186,16 +186,23 @@
 }
 .arrival .arrival-skip {
   position: absolute;
-  right: 5%;
-  bottom: 12%;
-  color: #c7d1d4;
-  border: 1px solid #ffffff30;
-  background: #050b1380;
-  border-radius: 30px;
-  padding: 10px 17px;
-  font-size: 11px;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  color: #eee1c9;
+  border: 1px solid #b7a78d80;
+  background: #25211d;
+  border-radius: 6px;
+  min-height: 42px;
+  padding: 9px 15px;
+  font-size: 12px;
   cursor: pointer;
-  z-index: 1;
+  pointer-events: auto;
+  z-index: 3;
+}
+.arrival .arrival-skip:hover,
+.arrival .arrival-skip:focus-visible {
+  border-color: #edc694;
+  background: #493a29;
 }
 .arrival-captions {
   position: absolute;

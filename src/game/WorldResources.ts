@@ -1,6 +1,6 @@
 import * as T from "three";
 import type { Destination } from "../simulation/engine";
-import { Gathering, resourceSites, type ResourceSite } from "./Resources";
+import { Gathering, resourceSites, resourceTitles, type ResourceSite } from "./Resources";
 import { Extraction } from "./Extraction";
 import { resourceRig, type ResourceRig } from "./ResourceRigs";
 import { batchStatic } from "./environments/StaticBatch";
@@ -42,10 +42,8 @@ export class WorldResources {
       canvas.width = 512;
       canvas.height = 128;
       const ctx = canvas.getContext("2d")!;
-      ctx.font = "bold 38px sans-serif";
-      ctx.textAlign = "center";
       const label = new T.Mesh(
-        new T.PlaneGeometry(1.8, 0.45),
+        new T.PlaneGeometry(1.72, 0.43),
         new T.MeshBasicMaterial({
           map: new T.CanvasTexture(canvas),
           side: T.DoubleSide,
@@ -137,21 +135,17 @@ export class WorldResources {
     this.resetVisual(id);
     const texture = this.labels.get(id)!.material.map!,
       ctx = (texture.image as HTMLCanvasElement).getContext("2d")!;
-    ctx.fillStyle = "#132d35";
+    const site = this.sites.find((s) => s.id === id)!;
+    const recovered = this.gather.collected.has(id);
+    ctx.fillStyle = "#272622";
     ctx.fillRect(0, 0, 512, 128);
-    ctx.fillStyle = this.gather.collected.has(id) ? "#93a69a" : "#ecf0dd";
-    const kind = this.sites.find((s) => s.id === id)!.kind;
-    ctx.fillText(
-      this.gather.collected.has(id)
-        ? "RECOVERED"
-        : kind === "ice"
-          ? "ICE SEAM"
-          : kind === "salvage"
-            ? "SALVAGE WRECK"
-            : "FIELD DYNAMO",
-      256,
-      77,
-    );
+    ctx.fillStyle = recovered ? "#938e83" : "#c79857";
+    ctx.fillRect(14, 15, 5, 98);
+    ctx.font = "600 19px monospace";
+    ctx.fillText("FRONTIER / " + (recovered ? "RECOVERY COMPLETE" : "FIELD OPERATIONS"), 36, 44);
+    ctx.fillStyle = recovered ? "#b6aea0" : "#f2e6d0";
+    ctx.font = "600 33px sans-serif";
+    ctx.fillText(resourceTitles[site.kind], 36, 92, 442);
     texture.needsUpdate = true;
   }
   emit() {

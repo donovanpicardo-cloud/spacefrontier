@@ -47,8 +47,8 @@ export function paintMaterial(material: T.Material) {
     material.map = paintedMap("panel");
   if (material.transparent || material.emissiveMap) return;
   material.roughness = Math.max(0.87, material.roughness);
-  material.metalness = Math.min(0.12, material.metalness);
-  material.envMapIntensity = 0.18;
+  material.metalness = Math.min(0.16, material.metalness);
+  material.envMapIntensity = 0.26;
   if (material instanceof T.MeshPhysicalMaterial) {
     material.clearcoat = 0;
   }
@@ -67,28 +67,38 @@ export function paintMaterial(material: T.Material) {
       "uniform sampler2D paintWash;\nvarying vec3 paintPosition;\n" +
       shader.fragmentShader;
     shader.fragmentShader = shader.fragmentShader.replace(
+      "#include <lights_physical_pars_fragment>",
+      T.ShaderChunk.lights_physical_pars_fragment.replace(
+        "reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );",
+        `float facing = dot(geometryNormal, directLight.direction);
+        float broadDiffuse = smoothstep(-.24, 1., facing);
+        reflectedLight.directDiffuse += mix(dotNL, broadDiffuse, .63) *
+          directLight.color * BRDF_Lambert(material.diffuseColor);`,
+      ),
+    );
+    shader.fragmentShader = shader.fragmentShader.replace(
       "#include <color_fragment>",
       `#include <color_fragment>
-      float pigment = texture2D(paintWash, vec2(paintPosition.x + paintPosition.z * .61,
-                                               paintPosition.y + paintPosition.z * .79) * .41).r;
+      vec2 strokes = vec2(paintPosition.x + paintPosition.z * .61,
+                          paintPosition.y + paintPosition.z * .79);
+      float pigment = texture2D(paintWash, strokes * .73).r;
       float originalValue = dot(diffuseColor.rgb, vec3(.2126,.7152,.0722));
-      diffuseColor.rgb = mix(vec3(originalValue) * vec3(1.055, 1.01, .94), diffuseColor.rgb, .73);
-      diffuseColor.rgb *= mix(.92, 1.09, smoothstep(.12, .65, pigment));
+      diffuseColor.rgb = mix(vec3(originalValue) * vec3(1.04, 1., .95), diffuseColor.rgb, .84);
+      diffuseColor.rgb *= mix(.94, 1.08, smoothstep(.09, .55, pigment));
     `,
     );
     shader.fragmentShader = shader.fragmentShader.replace(
       "#include <opaque_fragment>",
       `
       float paintValue = dot(outgoingLight, vec3(.2126,.7152,.0722));
-      float band = floor(paintValue * 7.0 + .5) / 7.0;
-      float broadValue = mix(paintValue, band, .14);
-      outgoingLight *= broadValue / max(paintValue, .0001);
+      vec3 shadowPigment = vec3(.024, .019, .014) * (1. - smoothstep(.02, .32, paintValue));
+      outgoingLight += diffuseColor.rgb * shadowPigment;
       #include <opaque_fragment>
     `,
     );
   };
   material.onBeforeCompile = hook;
-  material.customProgramCacheKey = () => previousKey + "-gouache-3";
+  material.customProgramCacheKey = () => previousKey + "-gouache-4";
   material.userData.paintInstalled = hook;
   material.needsUpdate = true;
 }
@@ -120,31 +130,4 @@ export function paintScene(scene: T.Scene) {
     observed.forEach((o) => o.removeEventListener("childadded", onAdded));
     observed.clear();
   };
-}
-
-export function paintedTerrain(
-  material: T.MeshStandardMaterial,
-  mars: boolean,
-  repeat: number,
-  rock: boolean,
-) {
-  if (typeof window === "undefined") return;
-  const oldMap = material.map,
-    oldNormal = material.normalMap;
-  material.map = paintedMap(rock ? "basalt" : "regolith").clone();
-  material.map.repeat.setScalar(rock ? 1 : repeat / (mars ? 8 : 4.5));
-  material.map.needsUpdate = true;
-  material.normalMap = null;
-  material.bumpMap = null;
-  material.roughnessMap = null;
-  material.vertexColors = false;
-  material.color.setHex(
-    mars ? (rock ? 0xc39778 : 0xd2aa8b) : rock ? 0xe6dccc : 0xfff1dc,
-  );
-  material.roughness = 1;
-  material.metalness = 0;
-  material.flatShading = rock;
-  oldMap?.dispose();
-  oldNormal?.dispose();
-  paintMaterial(material);
 }

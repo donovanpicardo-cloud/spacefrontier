@@ -62,6 +62,16 @@ describe("survivable cinematic crash", () => {
         crash.frame(1 / 60, camera);
       expect(finish).toHaveBeenCalledTimes(2);
       expect(scene.children.length).toBe(objects);
+
+      // A skip uses the same settled wreck and cannot fire the handoff twice.
+      const landedAt = crash.root.position.clone();
+      crash.start(finish);
+      crash.frame(0.1, camera);
+      crash.skip(camera);
+      crash.skip(camera);
+      expect(crash.root.position.toArray()).toEqual(landedAt.toArray());
+      expect(wing.parent?.parent).toBe(scene);
+      expect(finish).toHaveBeenCalledTimes(3);
     },
   );
 });

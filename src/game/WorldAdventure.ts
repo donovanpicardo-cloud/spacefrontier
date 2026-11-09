@@ -89,12 +89,15 @@ export class WorldAdventure {
       c.width = 512;
       c.height = 128;
       const cx = c.getContext("2d")!;
-      cx.fillStyle = "#122b32";
+      cx.fillStyle = "#272622";
       cx.fillRect(0, 0, 512, 128);
-      cx.fillStyle = "#e7e9d6";
-      cx.font = "bold 39px sans-serif";
-      cx.textAlign = "center";
-      cx.fillText(text, 256, 76);
+      cx.fillStyle = "#c79857";
+      cx.fillRect(14, 15, 5, 98);
+      cx.font = "600 19px monospace";
+      cx.fillText("FRONTIER / FIELD OPERATIONS", 36, 44);
+      cx.fillStyle = "#f2e6d0";
+      cx.font = "600 32px sans-serif";
+      cx.fillText(text, 36, 92, 442);
       const m = new T.Mesh(
         new T.PlaneGeometry(1.6, 0.4),
         new T.MeshBasicMaterial({
@@ -200,7 +203,7 @@ export class WorldAdventure {
     const terminal = group(3, -15);
     this.solidMeshes.push(box(terminal, 1, 0.9, 0.65, 0x304952, 0, 0.45));
     box(terminal, 0.9, 0.5, 0.08, 0x80c8b5, 0, 1.12, -0.1);
-    label(terminal, "OUTPOST FABRICATOR", 1.85);
+    label(terminal, "Fabrication station", 1.85);
     for (const kind of ["solar", "recycler", "workshop"] as Upgrade[]) {
       const g = group(
         kind === "solar" ? 18 : kind === "recycler" ? -9.4 : -10,

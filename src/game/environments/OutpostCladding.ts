@@ -5,17 +5,18 @@ import { paintedMap, paintModel } from "./PainterlyMaterials";
 import { batchStatic } from "./StaticBatch";
 
 /** Exterior cladding fitted around the existing pressure doors and collision shell. */
-export function dressMoonOutpost(
+export function dressOutpost(
   scene: T.Scene,
   outerDoor: T.Mesh,
   disposed: () => boolean,
+  mars: boolean,
 ) {
   const root = new T.Group();
   root.name = "Painted expedition habitat facade";
   root.userData.noCollision = true;
   const panelMap = paintedMap("panel");
   const cream = new T.MeshStandardMaterial({
-    color: 0xe4d9c6,
+    color: mars ? 0xd5c2a8 : 0xe4d9c6,
     map: panelMap,
     roughness: 1,
   });
@@ -23,7 +24,7 @@ export function dressMoonOutpost(
     color: 0x433c32,
     roughness: 1,
   });
-  const ochre = new T.MeshStandardMaterial({ color: 0xc38d42, roughness: 1 });
+  const ochre = new T.MeshStandardMaterial({ color: mars ? 0xab5e41 : 0xc38d42, roughness: 1 });
   const inner = new T.MeshStandardMaterial({
     color: 0x8f7050,
     map: panelMap,
@@ -113,7 +114,7 @@ export function dressMoonOutpost(
   box(0, 4.43, -9.08, 1, 0.11, 0.04, amber);
   box(0, 3.26, -9.37, 1.12, 0.13, 0.09, amber);
   const face = new T.MeshStandardMaterial({
-    color: 0xb8905f,
+    color: mars ? 0xb07a56 : 0xb8905f,
     map: panelMap,
     roughness: 1,
     emissive: 0x94602b,

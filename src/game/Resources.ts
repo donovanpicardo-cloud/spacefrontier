@@ -1,5 +1,10 @@
 import type { Destination, Sim } from "../simulation/engine";
 export type ResourceKind = "ice" | "salvage" | "battery";
+export const resourceTitles: Record<ResourceKind, string> = {
+  ice: "Water ice extraction",
+  salvage: "Equipment recovery",
+  battery: "Portable power station",
+};
 export type ResourceSite = {
   id: string;
   kind: ResourceKind;
@@ -27,15 +32,15 @@ const surveyStations: ResourceSite[] = [];
 for (const [sector, sx, sz] of [
   ["NE", 1, -1], ["SE", 1, 1], ["SW", -1, 1], ["NW", -1, -1],
 ] as const) {
-  for (const [kind, x, z, label, amount] of [
-    ["ice", 34, 15, "Ice bore", 10], ["battery", 25, 41, "Charging station", 12],
-    ["ice", 100, 146, "Ice bore", 14], ["battery", 151, 63, "Charging station", 16],
-    ["ice", 265, 346, "Ice bore", 14], ["battery", 482, 118, "Charging station", 16],
-    ["salvage", 312, 554, "Survey wreck", 3],
+  for (const [kind, x, z, amount] of [
+    ["ice", 34, 15, 10], ["battery", 25, 41, 12],
+    ["ice", 100, 146, 14], ["battery", 151, 63, 16],
+    ["ice", 265, 346, 14], ["battery", 482, 118, 16],
+    ["salvage", 312, 554, 3],
   ] as const) {
     const band = x > 200 ? "frontier" : x > 80 ? "outer" : "inner";
     surveyStations.push({ id: kind + "-" + sector + "-" + band, kind,
-      name: sector + " " + band + " " + label, x: sx * x, z: sz * z, amount });
+      name: resourceTitles[kind] + " · " + sector + " " + band, x: sx * x, z: sz * z, amount });
   }
 }
 export const resourceIds = [...originalIds, ...surveyStations.map(s => s.id)];
@@ -87,32 +92,32 @@ export function resourceSites(d: Destination): ResourceSite[] {
   const names =
     d === "moon"
       ? [
-          "Shadow-crater ice seam",
-          "Remote frozen regolith",
-          "Lost ridge survey probe",
-          "Western crater wreck",
-          "Southern field dynamo",
-          "Far-ridge power generator",
-          "Polar rim ice bore",
-          "Shaded basin ice seam",
-          "Eastern relay wreck",
-          "Outer crater salvage",
-          "Highland battery station",
-          "Basin emergency dynamo",
+          "Water ice deposit · Shadow Crater",
+          "Water ice deposit · Far Regolith",
+          "Survey probe recovery · Ridge",
+          "Equipment recovery · Western Crater",
+          "Portable power station · Southern Plain",
+          "Portable power station · Far Ridge",
+          "Water ice deposit · Polar Rim",
+          "Water ice deposit · Shaded Basin",
+          "Relay equipment recovery · East",
+          "Equipment recovery · Outer Crater",
+          "Portable power station · Highland",
+          "Emergency power station · Basin",
         ]
       : [
-          "Buried northern ice",
-          "Southern frozen seam",
-          "Lost canyon survey drone",
-          "Eastern equipment wreck",
-          "Southern field dynamo",
-          "Northern power generator",
-          "Frost canyon ice bore",
-          "Ancient lake ice seam",
-          "Western relay wreck",
-          "Red canyon salvage",
-          "Mesa battery station",
-          "Northern ridge dynamo",
+          "Subsurface ice deposit · North",
+          "Subsurface ice deposit · South",
+          "Survey drone recovery · Canyon",
+          "Equipment recovery · Eastern Plain",
+          "Portable power station · Southern Plain",
+          "Portable power station · Northern Plain",
+          "Subsurface ice deposit · Frost Canyon",
+          "Subsurface ice deposit · Ancient Lake",
+          "Relay equipment recovery · West",
+          "Equipment recovery · Red Canyon",
+          "Portable power station · Mesa",
+          "Portable power station · Northern Ridge",
         ];
   return originalIds.map((id, i) => ({
     id,
