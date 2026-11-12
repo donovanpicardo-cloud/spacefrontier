@@ -326,20 +326,20 @@ export class World {
     this.renderer.info.autoReset = false;
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFShadowMap;
+    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
     this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.02;
+    this.renderer.toneMappingExposure = 1.08;
     container.appendChild(this.renderer.domElement);
     this.stopPainting = paintScene(this.scene);
-    this.scene.background = new T.Color(d === "moon" ? 0x211f1e : 0x9e7562);
+    this.scene.background = new T.Color(d === "moon" ? 0x03060c : 0x9e7562);
     this.scene.fog = d === "mars" ? new T.FogExp2(0xb58d72, 0.004) : null;
     this.ambient = new T.HemisphereLight(
-      d === "moon" ? 0xd6ccba : 0xffd8ad,
-      d === "moon" ? 0x867468 : 0xa06c55,
-      d === "moon" ? 0.82 : 0.99,
+      d === "moon" ? 0xb8cee8 : 0xe9c5ac,
+      d === "moon" ? 0x454b56 : 0x785044,
+      d === "moon" ? 0.52 : 0.78,
     );
     this.scene.add(this.ambient);
-    this.sun = new T.DirectionalLight(d === "moon" ? 0xfff1de : 0xffd7b7, 2.05);
+    this.sun = new T.DirectionalLight(d === "moon" ? 0xfff6e9 : 0xffddbc, 2.7);
     this.sun.position.set(-42, 28, 30);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
@@ -1771,7 +1771,7 @@ export class World {
       const collision = hits.length > 0 && hits[0].distance < length;
       this.camera.position.lerp(
         this.desired,
-        collision ? 0.8 : 1 - Math.exp(-8 * dt),
+        1 - Math.exp(-(collision ? 96 : 8) * dt),
       );
       this.look.copy(this.target).add(shoulder.clone().multiplyScalar(0.4));
       const framing = shoulderFraming(
@@ -1797,19 +1797,19 @@ export class World {
       this.scene.fog.density = T.MathUtils.damp(this.scene.fog.density, dustStorm ? .016 : .004, 2, dt);
     this.ambient.intensity = T.MathUtils.damp(
       this.ambient.intensity,
-      interior ? 0.55 : this.destination === "moon" ? 0.82 : 0.99,
+      interior ? 0.55 : this.destination === "moon" ? 0.52 : 0.78,
       3,
       dt,
     );
     this.scene.environmentIntensity = T.MathUtils.damp(
       this.scene.environmentIntensity,
-      interior ? 0.19 : 0.27,
+      interior ? 0.3 : 0.5,
       3,
       dt,
     );
     this.sun.intensity = T.MathUtils.damp(
       this.sun.intensity,
-      interior ? 0.42 : dustStorm ? 1.2 : 2.05,
+      interior ? 0.42 : dustStorm ? 1.2 : 2.7,
       3,
       dt,
     );

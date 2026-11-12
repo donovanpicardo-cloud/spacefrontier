@@ -212,7 +212,7 @@ class GameAudio {
     const wind = frame.destination === "mars" && !frame.inside;
     this.mix(
       "air",
-      surface ? (wind ? (frame.storm ? .11 : .025) : .011) : 0,
+      surface ? (wind ? (frame.storm ? .095 : .022) : .007 + Math.min(frame.speed, 5) * .0012) : 0,
       wind ? (frame.storm ? 680 : 390) : 270,
     );
     this.mix("room", surface && frame.inside ? .021 : 0, 360);
@@ -237,7 +237,8 @@ class GameAudio {
           : 0,
       rocket ? 520 : 320,
     );
-    this.scoreLevel = frame.paused ? .2 : surface ? .28 : .85;
+    // Leave room for warning cues and close-up mechanical work.
+    this.scoreLevel = frame.paused ? .2 : surface ? (frame.oxygen < 22 || frame.working || frame.airlock ? .1 : .24) : .85;
   }
   cue(cue: AudioCue, inside = false) {
     const context = this.context;

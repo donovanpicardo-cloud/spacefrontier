@@ -3,19 +3,20 @@ import * as T from "three";
 import { paintScene } from "../game/environments/PainterlyMaterials";
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
-describe("campaign-wide painted rendering", () => {
-  it("styles later construction and imported meshes without replacing gameplay materials or geometry", () => {
+describe("campaign-wide authored material rendering", () => {
+  it("prepares later construction and imported meshes without replacing gameplay materials or geometry", () => {
     vi.stubGlobal("window", {});
     vi.spyOn(T.TextureLoader.prototype, "load").mockReturnValue(new T.Texture());
     const scene = new T.Scene();
     const stop = paintScene(scene);
     const room = new T.Group(); scene.add(room);
-    const material = new T.MeshStandardMaterial({color: 0x91be76});
+    const material = new T.MeshStandardMaterial({color: 0x91be76, roughness: .42, metalness: .78});
     const geometry = new T.BoxGeometry(1, 2, 3);
     const mesh = new T.Mesh(geometry, material);
     mesh.position.set(7, 2, -22); room.add(mesh);
     const originalHook = material.onBeforeCompile;
-    expect(material.roughness).toBeGreaterThanOrEqual(.87);
+    expect(material.roughness).toBe(.42);
+    expect(material.metalness).toBe(.78);
     expect(mesh.geometry).toBe(geometry);
     expect(mesh.material).toBe(material);
     expect(mesh.position.toArray()).toEqual([7, 2, -22]);

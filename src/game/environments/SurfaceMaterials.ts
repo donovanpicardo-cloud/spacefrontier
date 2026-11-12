@@ -1,70 +1,70 @@
 import * as T from "three";
 import type { Destination } from "../../simulation/engine";
-import { paintedMap } from "./PainterlyMaterials";
 
+let grain: T.Texture | undefined;
+function terrainGrain() {
+  if (!grain) {
+    grain = new T.TextureLoader().load("/materials/terrain_red_01_color.jpg");
+    grain.wrapS = grain.wrapT = T.RepeatWrapping;
+    grain.anisotropy = 8;
+    // Read as data: derive mineral luminance rather than source hue.
+  }
+  return grain;
+}
+
+/** World-space three-axis rock detail avoids stretched cliff UVs.
+ * Two frequencies share one existing CC0 photograph, without extra draw calls. */
 export function landscapeMaterial(destination: Destination, cliff = false) {
   const mars = destination === "mars";
-  const pigment = paintedMap(cliff ? "cliff" : "regolith");
-  const stone = paintedMap("cliff");
   const material = new T.MeshStandardMaterial({
-    color: cliff ? (mars ? 0xcf9475 : 0xc7bba6) : mars ? 0xcc9779 : 0xc6b9a5,
-    roughness: 1,
+    color: cliff ? (mars ? 0x9d6e56 : 0x777e87) : mars ? 0xb48567 : 0x999fa8,
+    roughness: .96,
     side: cliff ? T.DoubleSide : T.FrontSide,
   });
-  material.onBeforeCompile = (shader) => {
-    shader.uniforms.landscapePigment = { value: pigment };
-    shader.uniforms.landscapeStone = { value: stone };
-    shader.vertexShader = "varying vec3 landscapePoint;\n" + shader.vertexShader.replace(
+  material.onBeforeCompile = shader => {
+    shader.uniforms.surfaceGrain = { value: terrainGrain() };
+    shader.vertexShader = "varying vec3 surfacePoint; varying vec3 surfaceNormal;\n" + shader.vertexShader.replace(
       "#include <begin_vertex>",
-      "#include <begin_vertex>\nlandscapePoint = (modelMatrix * vec4(position, 1.)).xyz;",
+      "#include <begin_vertex>\nsurfacePoint = (modelMatrix * vec4(position, 1.)).xyz; surfaceNormal = mat3(modelMatrix) * normal;",
     );
     shader.fragmentShader = `
-      uniform sampler2D landscapePigment;
-      uniform sampler2D landscapeStone;
-      varying vec3 landscapePoint;
-      vec2 brushSeed(vec2 p) {
-        return fract(sin(vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)))) * 43758.5453);
+      uniform sampler2D surfaceGrain;
+      varying vec3 surfacePoint;
+      varying vec3 surfaceNormal;
+      float strataNoise(vec3 p) {
+        vec3 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+        vec4 h = vec4(dot(i, vec3(127.1,311.7,74.7))) + vec4(0.,127.1,311.7,438.8);
+        vec4 a = fract(sin(h) * 43758.5453), b = fract(sin(h + 74.7) * 43758.5453);
+        vec4 c = mix(a,b,f.z);
+        return mix(mix(c.x,c.y,f.x),mix(c.z,c.w,f.x),f.y);
       }
-      float brush(vec2 p, vec2 tile) {
-        vec2 seed = brushSeed(tile);
-        float angle = ${cliff
-          ? (mars ? "1.57 + (seed.x - .5) * .32" : "(seed.x - .5) * .27")
-          : "seed.x * 6.283185"};
-        float c = cos(angle), s = sin(angle);
-        mat2 orientation = mat2(c, -s, s, c) * 1.26;
-        vec2 uv = orientation * (p - tile) + seed;
-        return textureGrad(landscapePigment, uv, orientation * dFdx(p), orientation * dFdy(p)).r;
+      float mineral(vec2 uv) { return dot(texture2D(surfaceGrain, uv).rgb, vec3(.3,.5,.2)); }
+      float rockDetail(vec3 p, vec3 weights) {
+        return mineral(p.yz) * weights.x + mineral(p.xz) * weights.y + mineral(p.xy) * weights.z;
       }
-      float brushField(vec2 p) {
-        vec2 cell = floor(p), f = smoothstep(vec2(0.), vec2(1.), fract(p));
-        float a = mix(brush(p, cell), brush(p, cell + vec2(1., 0.)), f.x);
-        float b = mix(brush(p, cell + vec2(0., 1.)), brush(p, cell + vec2(1.)), f.x);
-        return mix(a, b, f.y);
-      }
-    ` + shader.fragmentShader.replace("#include <map_fragment>", `
-      vec2 xz = landscapePoint.xz;
-      float broad = sin(xz.x * .071 + cos(xz.y * .093)) * cos(xz.y * .058 - xz.x * .019);
-      vec2 strata = vec2((xz.x + xz.y * .68) * .066, landscapePoint.y * .061 + xz.y * .027);
-      vec2 landscapeStrokes = ${cliff
-        ? "strata"
-        : "xz * .29 + vec2(sin(xz.y * .28), cos(xz.x * .21)) * .29"};
-      float wash = brushField(landscapeStrokes);
-      float grit = texture2D(landscapePigment, xz * 1.41 + wash * .074).g;
-      float value = ${cliff ? ".44" : mars ? ".61" : ".53"} + broad * .09 +
-        (wash - .30) * ${cliff ? "1.72" : "1.06"} + (grit - .26) * .31;
-      ${!cliff ? `
-        vec3 facing = cross(dFdx(landscapePoint), dFdy(landscapePoint));
-        float up = abs(facing.y) / max(length(facing), .00001);
-        float rock = 1. - smoothstep(.44, .88, up);
-        float mineral = texture2D(landscapeStone, strata + wash * .06).r;
-        value *= mix(1., .78 + (mineral - .23) * 1.28, rock);
-      ` : ""}
-      ${cliff && mars
-        ? "value *= .96 + .10 * smoothstep(-.65, .8, sin(landscapePoint.y * 1.4 + broad * .6));"
-        : ""}
-      diffuseColor.rgb *= max(.19, value);
+    ` + shader.fragmentShader;
+    shader.fragmentShader = shader.fragmentShader.replace("#include <map_fragment>", `
+      vec3 weights = pow(abs(normalize(surfaceNormal)), vec3(5.));
+      weights /= max(dot(weights, vec3(1.)), .0001);
+      float fineGrain = rockDetail(surfacePoint * .72, weights);
+      float broadGrain = rockDetail(surfacePoint * .067 + vec3(.37,.19,.71), weights);
+      float fractured = strataNoise(surfacePoint * .16) * .65 + strataNoise(surfacePoint * .61) * .35;
+      float geology = .64 + fractured * .62;
+      float surfaceHeight = fineGrain * .45 + broadGrain * .25 + fractured * .3;
+      diffuseColor.rgb *= clamp(.53 + fineGrain * .8 + broadGrain * .32, .48, 1.24) * geology;
+      ${cliff ? "diffuseColor.rgb *= .9 + .1 * strataNoise(vec3(surfacePoint.x * .08, surfacePoint.y * .7, surfacePoint.z * .08));" : ""}
+    `);
+    shader.fragmentShader = shader.fragmentShader.replace("#include <normal_fragment_begin>", `
+      #include <normal_fragment_begin>
+      vec3 sigmaX = dFdx(-vViewPosition), sigmaY = dFdy(-vViewPosition);
+      vec3 r1 = cross(sigmaY, normal), r2 = cross(normal, sigmaX);
+      float determinant = dot(sigmaX, r1);
+      float footprint = max(length(dFdx(surfacePoint)), length(dFdy(surfacePoint)));
+      float relief = ${cliff ? ".1" : ".045"} * (1. - smoothstep(.08, .65, footprint));
+      vec3 gradient = sign(determinant) * (dFdx(surfaceHeight) * r1 + dFdy(surfaceHeight) * r2);
+      normal = normalize(abs(determinant) * normal - relief * gradient);
     `);
   };
-  material.customProgramCacheKey = () => (cliff ? "landscape-cliff-" : "landscape-floor-") + destination;
+  material.customProgramCacheKey = () => "geology-pbr-v1-" + destination + cliff;
   return material;
 }

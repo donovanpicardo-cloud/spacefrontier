@@ -16,6 +16,7 @@ import { serviceReward, serviceMessage } from "./simulation/ServiceRewards";
 import React, { useEffect, useRef, useState, useReducer } from "react";
 import { createRoot } from "react-dom/client";
 import {
+  CircleHelp,
   ArrowUpRight,
   ArrowRight,
   Orbit,
@@ -1469,14 +1470,14 @@ function App() {
           {!panel && (
             <div className="explorer-tools">
               <button aria-label="Help me" title="Help me" onClick={help}>
-                ?
+                <CircleHelp size={19} aria-hidden="true" />
               </button>
               <button
                 aria-label="Pause game"
                 title="Pause · Escape"
                 onClick={() => open("pause")}
               >
-                Ⅱ
+                <Pause size={18} aria-hidden="true" />
               </button>
             </div>
           )}
@@ -2093,7 +2094,7 @@ function App() {
                   </select>
                 </label>
                 <p className="science-note">
-                  School computer caps resolution, uses 1024px shadows and skips
+                  School computer caps resolution, disables directional shadows and skips
                   ambient occlusion. Low disables shadows. Pointer sensitivity
                   applies to cursor dragging and captured mouse movement.
                 </p>

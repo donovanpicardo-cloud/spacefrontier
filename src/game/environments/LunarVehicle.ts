@@ -1,3 +1,4 @@
+import { fenderGeometry, roverWheel } from "./RoverWheel";
 import * as T from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { hardwareMaterials } from "./HardwareMaterials";
@@ -8,6 +9,8 @@ export function buildLunarVehicle(root: T.Group) {
   const m = hardwareMaterials(),
     wheels: T.Group[] = [],
     steering: T.Group[] = [];
+  m.paint.color.setHex(0xd6c7af);
+  m.navy.color.setHex(0x4c453c);
   const mesh = (
     p: T.Object3D,
     g: T.BufferGeometry,
@@ -80,57 +83,15 @@ export function buildLunarVehicle(root: T.Group) {
     box(x, 1.1, 1.287, 0.07, 0.31, 0.025, m.rubber);
     box(x, 1.1, 1.31, 0.11, 0.08, 0.025, m.metal);
   }
-  const tire = new T.MeshStandardMaterial({
-    color: 0x30312d,
-    metalness: 0.04,
-    roughness: 1,
-
-
-    side: T.DoubleSide,
-  });
   for (const x of [-0.98, 0.98])
     for (const z of [-0.96, 0.96]) {
       const pivot = new T.Group();
       pivot.position.set(x, 0.55, z);
       root.add(pivot);
       if (z < 0) steering.push(pivot);
-      const wheel = new T.Group();
+      const wheel = roverWheel(.485, .34);
       pivot.add(wheel);
       wheels.push(wheel);
-      mesh(
-        wheel,
-        new T.CylinderGeometry(0.49, 0.49, 0.3, 32, 1, true),
-        tire,
-      ).rotation.z = Math.PI / 2;
-      for (const side of [-0.155, 0.155]) {
-        mesh(
-          wheel,
-          new T.TorusGeometry(0.49, 0.018, 8, 40),
-          m.metal,
-          side,
-        ).rotation.y = Math.PI / 2;
-        mesh(
-          wheel,
-          new T.CylinderGeometry(0.1, 0.1, 0.04, 16),
-          m.orange,
-          side,
-        ).rotation.z = Math.PI / 2;
-        for (let i = 0; i < 16; i++) {
-          const a = (i * Math.PI) / 8;
-          tube(
-            new T.Vector3(side, Math.sin(a) * 0.11, Math.cos(a) * 0.11),
-            new T.Vector3(
-              side,
-              Math.sin(a + 0.2) * 0.47,
-              Math.cos(a + 0.2) * 0.47,
-            ),
-            0.009,
-            m.metal,
-            wheel,
-          );
-        }
-      }
-      batchStatic(wheel);
       tube(
         new T.Vector3(Math.sign(x) * 0.5, 0.68, z - 0.17),
         new T.Vector3(x, 0.55, z),
@@ -142,15 +103,7 @@ export function buildLunarVehicle(root: T.Group) {
         0.035,
         m.navy,
       );
-      const fender = mesh(
-        fixed,
-        new T.CylinderGeometry(0.59, 0.59, 0.38, 28, 1, true, 0.5, 2.14),
-        m.paint,
-        x,
-        0.55,
-        z,
-      );
-      fender.rotation.z = Math.PI / 2;
+      mesh(fixed, fenderGeometry(.58, .48), m.paint, x, .55, z);
     }
   for (const x of [-0.83, 0.83]) {
     tube(
@@ -174,12 +127,14 @@ export function buildLunarVehicle(root: T.Group) {
   }
   // Broad fenders and a four-post cage establish the concept buggy silhouette.
   for (const x of [-.85, .85]) {
-    tube(new T.Vector3(x, .87, -.9), new T.Vector3(x, 2.15, -.58), .045, m.metal);
-    tube(new T.Vector3(x, 2.15, -.58), new T.Vector3(x, 2.15, .72), .045, m.metal);
-    tube(new T.Vector3(x, 2.15, .72), new T.Vector3(x, .87, 1), .045, m.metal);
-    for (const z of [-.96, .96]) box(x * 1.16, 1.06, z, .43, .12, .92, m.paint);
+    const cage = new T.CatmullRomCurve3([
+      new T.Vector3(x, .87, -.96), new T.Vector3(x, 1.91, -.73),
+      new T.Vector3(x * .91, 2.13, -.49), new T.Vector3(x * .91, 2.13, .59),
+      new T.Vector3(x, 1.94, .78), new T.Vector3(x, .87, 1.01),
+    ], false, "catmullrom", .18);
+    mesh(fixed, new T.TubeGeometry(cage, 44, .054, 12, false), m.metal);
   }
-  for (const z of [-.58, .72]) tube(new T.Vector3(-.85, 2.15, z), new T.Vector3(.85, 2.15, z), .045, m.metal);
+  for (const z of [-.49, .59]) tube(new T.Vector3(-.78, 2.13, z), new T.Vector3(.78, 2.13, z), .048, m.metal);
   for (const x of [-.42, .42]) {
     box(x, 1.45, 1, .65, .32, .45, m.paint);
     box(x, 1.45, 1.24, .075, .33, .025, m.orange);

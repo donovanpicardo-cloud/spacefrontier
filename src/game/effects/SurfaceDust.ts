@@ -18,11 +18,11 @@ export class SurfaceDust {
     const material = new T.ShaderMaterial({
       transparent: true,
       depthWrite: false,
-      uniforms: { color: { value: new T.Color(mars ? 0xc79874 : 0xa5aaa5) } },
+      uniforms: { color: { value: new T.Color(mars ? 0xc79874 : 0xa5b0bf) }, spread: { value: mars ? 115 : 58 } },
       vertexShader:
-        "attribute float life; varying float alpha; void main(){alpha=life;vec4 p=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*p;gl_PointSize=clamp(110.*life/max(1.,-p.z),1.,32.);}",
+        "uniform float spread; attribute float life; varying float alpha; void main(){alpha=life;vec4 p=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*p;gl_PointSize=clamp(spread*(.3+sin(life*3.14159)*.7)/max(1.,-p.z),1.,32.);}",
       fragmentShader:
-        "uniform vec3 color;varying float alpha;void main(){float d=length(gl_PointCoord-.5)*2.;if(d>1.)discard;gl_FragColor=vec4(color,(1.-d)*(1.-d)*alpha*.16);}",
+        "uniform vec3 color;varying float alpha;void main(){float d=length(gl_PointCoord-.5)*2.;if(d>1.)discard;gl_FragColor=vec4(color,(1.-d)*(1.-d)*alpha*alpha*.21);}",
     });
     this.points = new T.Points(this.geometry, material);
     this.points.frustumCulled = false;

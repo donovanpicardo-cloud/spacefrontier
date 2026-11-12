@@ -1,7 +1,8 @@
+import { engineeringMap } from "./EngineeringFinish";
 import * as T from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { paintedMap, paintModel } from "./PainterlyMaterials";
+import { paintModel } from "./PainterlyMaterials";
 import { batchStatic } from "./StaticBatch";
 
 /** Exterior cladding fitted around the existing pressure doors and collision shell. */
@@ -12,25 +13,30 @@ export function dressOutpost(
   mars: boolean,
 ) {
   const root = new T.Group();
-  root.name = "Painted expedition habitat facade";
+  root.name = "Ceramic pressure shell / expedition habitat";
   root.userData.noCollision = true;
-  const panelMap = paintedMap("panel");
+  const panelMap = engineeringMap();
   const cream = new T.MeshStandardMaterial({
-    color: mars ? 0xd5c2a8 : 0xe4d9c6,
+    color: mars ? 0xd0c9bc : 0xd9e1e5,
     map: panelMap,
-    roughness: 1,
+    roughness: .52,
+    metalness: .38,
   });
   const charcoal = new T.MeshStandardMaterial({
-    color: 0x433c32,
-    roughness: 1,
+    color: 0x202c37,
+    roughness: .52,
+    metalness: .38,
   });
   const ochre = new T.MeshStandardMaterial({ color: mars ? 0xab5e41 : 0xc38d42, roughness: 1 });
   const inner = new T.MeshStandardMaterial({
-    color: 0x8f7050,
+    color: 0x67717a,
     map: panelMap,
-    roughness: 1,
+    roughness: .52,
+    metalness: .38,
   });
   const amber = new T.MeshBasicMaterial({ color: 0xffcb7e, toneMapped: false });
+  const titanium = new T.MeshStandardMaterial({ color: 0x8a99a6, metalness: .85, roughness: .27 });
+  const glass = new T.MeshPhysicalMaterial({ color: 0x102735, metalness: .55, roughness: .12, clearcoat: 1 });
   const mesh = (
     geometry: T.BufferGeometry,
     material: T.Material,
@@ -114,11 +120,12 @@ export function dressOutpost(
   box(0, 4.43, -9.08, 1, 0.11, 0.04, amber);
   box(0, 3.26, -9.37, 1.12, 0.13, 0.09, amber);
   const face = new T.MeshStandardMaterial({
-    color: mars ? 0xb07a56 : 0xb8905f,
+    color: mars ? 0xaaa393 : 0xa5b2ba,
     map: panelMap,
-    roughness: 1,
+    roughness: .52,
+    metalness: .38,
     emissive: 0x94602b,
-    emissiveIntensity: 0.24,
+    emissiveIntensity: 0.025,
   });
   box(0, 0, 0.215, 2.28, 2.61, 0.13, face, outerDoor);
   box(0, 0.03, 0.292, 0.035, 2.42, 0.025, charcoal, outerDoor);
@@ -132,7 +139,7 @@ export function dressOutpost(
   // Pressure modules, bands, skid feet and cargo cases.
   for (const side of [-1, 1]) {
     const module = mesh(
-      new T.CylinderGeometry(2.07, 2.07, 4.7, 10),
+      new T.CylinderGeometry(2.07, 2.07, 4.7, 40),
       cream,
       side * 4.64,
       2.16,
@@ -140,9 +147,17 @@ export function dressOutpost(
     );
     module.rotation.z = Math.PI / 2;
     module.rotation.x = Math.PI / 10;
+    // Pressure-shell inspection windows and separate machined retaining rings.
+    for (const offset of [-.9, .5]) {
+      const x = side * 4.64 + offset;
+      mesh(new T.TorusGeometry(.39, .055, 8, 32), titanium, x, 2.16, -8.94);
+      mesh(new T.CircleGeometry(.35, 32), glass, x, 2.16, -8.945);
+      box(x, 1.63, -8.99, .52, .045, .04, charcoal);
+      for (const dx of [-.18, .18]) box(x + dx, 2.71, -9.04, .055, .055, .03, titanium);
+    }
     for (const x of [3.08, 5.66, 6.82]) {
       const band = mesh(
-        new T.CylinderGeometry(2.12, 2.12, 0.12, 10),
+        new T.CylinderGeometry(2.12, 2.12, 0.12, 40),
         inner,
         side * x,
         2.16,
@@ -152,7 +167,7 @@ export function dressOutpost(
       box(side * x, 0.29, -9.54, 0.47, 0.54, 0.78, charcoal);
     }
     const stripes = [];
-    for (const degrees of [-54, -18, 18, 54]) {
+    for (const degrees of Array.from({ length: 13 }, (_, i) => -54 + i * 9)) {
       const angle = T.MathUtils.degToRad(degrees);
       const rise = Math.sin(angle) * 2.08;
       const depth = Math.cos(angle) * 2.08;
@@ -168,7 +183,7 @@ export function dressOutpost(
     }
     const stripe = new T.BufferGeometry();
     stripe.setAttribute("position", new T.Float32BufferAttribute(stripes, 3));
-    stripe.setIndex([0, 1, 2, 1, 3, 2, 2, 3, 4, 3, 5, 4, 4, 5, 6, 5, 7, 6]);
+    stripe.setIndex(Array.from({ length: 12 }, (_, i) => { const a = i * 2; return [a, a + 1, a + 2, a + 1, a + 3, a + 2]; }).flat());
     stripe.computeVertexNormals();
     mesh(stripe, ochre, 0, 0, 0).castShadow = false;
     box(side * 6.24, 1.37, -8.99, 0.78, 0.76, 0.17, cream);
@@ -248,9 +263,10 @@ export function dressOutpost(
       antenna.traverse((object) => {
         if (!(object instanceof T.Mesh)) return;
         object.castShadow = object.receiveShadow = true;
-        object.material.color.setHex(0xe5d7bd);
-        object.material.emissive.setHex(0x7f7360);
-        object.material.emissiveIntensity = 0.23;
+        object.material.color.setHex(0xc5d0db);
+        object.material.emissiveIntensity = 0;
+        object.material.metalness = .45;
+        object.material.roughness = .52;
       });
       fallback.visible = false;
       root.add(antenna);

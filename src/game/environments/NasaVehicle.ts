@@ -1,6 +1,7 @@
 import * as T from "three";
 import { modelClarity } from "../ModelClarity";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { roverWheel } from "./RoverWheel";
 export function releaseModel(root: T.Object3D) {
   root.traverse((o) => {
     if (o instanceof T.Mesh) {
@@ -37,6 +38,11 @@ export function loadCrewRover(
         { length: 6 },
         (_, i) => gltf.scene.getObjectByName("WheelPivot_" + i) as T.Group,
       );
+      for (const pivot of wheels) {
+        if (!pivot) continue;
+        for (const wheel of pivot.children) wheel.visible = false;
+        pivot.add(roverWheel(.312, .45));
+      }
       ready(wheels.filter(Boolean));
     },
     undefined,

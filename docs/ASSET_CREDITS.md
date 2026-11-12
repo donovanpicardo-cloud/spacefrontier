@@ -65,3 +65,7 @@ Original procedural music and atmospheric beds are mixed with CC0 mechanical and
 - The roof antenna adapts the [NASA Ames 70-meter dish](https://science.nasa.gov/3d-resources/70-meter-dish/) to the scale of the fictional habitat. The local GLB retains 14,852 triangles and uses a resized WebP texture. NASA acknowledgement does not imply endorsement. [NASA media usage guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/)
 - The foreground boulders adapt Rico Cilliers’ [Boulder 01](https://polyhaven.com/a/boulder_01). The local GLB retains 51,962 triangles with Meshopt compression and a warm-gray 1K WebP color map. The original is an Earth analog distributed under [CC0](https://polyhaven.com/license).
 - The habitat facade, ramp, cable, solar array and open-frame buggy were modeled to fit the playable outpost and vehicle controls. The supplied illustration served as a style reference.
+
+## Aerospace material refinement (November 2026)
+
+The ceramic coating, panel seams, captive fasteners, barcode markings, inspection-window geometry, geological detail shader and particle falloff are original procedural game artwork. The new terrain shader reuses the existing locally hosted Poly Haven `terrain_red_01_color.jpg` under its existing CC0 credit; its luminance is used for both lunar and Martian mineral detail. No new external assets or services are required. Authored metalness, roughness, glass clearcoat and model textures are now preserved instead of applying the former global painted treatment.

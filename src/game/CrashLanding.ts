@@ -8,6 +8,19 @@ import type { Destination } from "../simulation/engine";
 import { ARRIVAL_DURATION, ARRIVAL_IMPACT } from "./ArrivalTimeline";
 import { crashSite } from "./CrashSite";
 
+/** Round falloff keeps the existing particle pools from reading as square pixels. */
+function softenParticles(material: T.PointsMaterial) {
+  material.onBeforeCompile = shader => {
+    shader.fragmentShader = shader.fragmentShader.replace("#include <color_fragment>", `
+      #include <color_fragment>
+      float radius = length(gl_PointCoord - vec2(.5)) * 2.;
+      diffuseColor.a *= 1. - smoothstep(.1, 1., radius);
+    `);
+  };
+  material.customProgramCacheKey = () => "soft-flight-particles-v1";
+  return material;
+}
+
 export { survivorPosition } from "./CrashSite";
 const impact = ARRIVAL_IMPACT;
 const end = ARRIVAL_DURATION;
@@ -111,6 +124,8 @@ export class CrashLanding {
       }),
     );
     this.sparks.frustumCulled = false;
+    softenParticles(this.dust.material as T.PointsMaterial);
+    softenParticles(this.sparks.material as T.PointsMaterial);
     this.sparks.visible = false;
     scene.add(this.sparks);
     this.flame = new T.Mesh(

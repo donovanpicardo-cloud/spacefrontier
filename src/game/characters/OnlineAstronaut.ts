@@ -1,8 +1,10 @@
 import * as T from "three";
 import { modelClarity } from "../ModelClarity";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "meshoptimizer/decoder";
 import { jumpPhase } from "../Jump";
 import { reachArm } from "../ArmIK";
+import { fitLifeSupportPack } from "./SuitHardware";
 
 /** Locally hosted Grab3D CC0 spacesuit, simplified for the browser. */
 export class OnlineAstronaut {
@@ -14,7 +16,7 @@ export class OnlineAstronaut {
   disposed = false;
   constructor(onStatus: (s: "loading" | "ready" | "error") => void) {
     onStatus("loading");
-    new GLTFLoader().load(
+    new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load(
       "/models/astronaut.glb",
       (gltf) => {
         if (this.disposed) {
@@ -187,6 +189,7 @@ export class OnlineAstronaut {
         this.mixer.update(0);
         model.updateMatrixWorld(true);
         const bounds = new T.Box3().setFromObject(model, true);
+        fitLifeSupportPack(model);
         const scale = 2.05 / Math.max(0.1, bounds.max.y - bounds.min.y);
         model.scale.multiplyScalar(scale);
         model.position.y -= bounds.min.y * scale;

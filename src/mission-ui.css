@@ -193,12 +193,48 @@
     font-size: 7px;
   }
 }
-/* Painted expedition art direction extends to every campaign instrument. */
-.app.in-game { --paper: 34 35 30; --ink: #eee5d4; --accent: #d6b780; --line: #b8aa8a65; }
-.app.in-game :is(.objective,.suit,.tutorial-card,.vehicle-hud,.world-repair-hud,.radio-status,.notification,.panel),
-.app :is(.settings-panel,.modal) {
-  background: linear-gradient(125deg,#292a25f5,#1b1d1af2);
-  border-color: var(--line); border-top-color: #d4c5a580; color: var(--ink);
+/* Aerospace instruments: restrained cyan, graphite and warm caution accents. */
+.app { --ink: #edf3f8; --accent: #b7dce9; --paper: 10 18 27; --line: #a5c6d52e; }
+.app.edition-mars { --accent: #efbd96; }
+.app.in-game { --paper: 10 18 27; --ink: #edf3f8; --accent: #b7dce9; --line: #a5c6d52e; }
+.app.in-game :is(.objective,.suit,.tutorial-card,.vehicle-hud,.world-repair-hud,.radio-status,.notification) {
+  background: linear-gradient(115deg,#0b1520f2,#101d2ae6);
+  border: 1px solid var(--line);
+  border-top-color: #bbdfef61;
+  box-shadow: 0 8px 28px #02050924, inset 0 1px #ffffff05;
+  border-radius: 3px;
 }
-.app.in-game .explorer-tools button { background:#252720eb; color:#d6b780; border-color:#b8aa8a65; }
-.app.in-game .panel-plate { filter: grayscale(.8) sepia(.3); }
+.app.in-game .objective { width: 270px; padding: 16px 18px 18px; border-left: 2px solid #a2cddd; }
+.app.in-game .objective .eyebrow { font-size: 9px; font-weight: 600; letter-spacing: .16em; margin-bottom: 10px; }
+.app.in-game .objective h2 { font-size: clamp(22px,2vw,28px); letter-spacing: -.035em; margin-bottom: 9px; }
+.app.in-game .objective p { color: #bfccd8; font-size: 12px; line-height: 1.65; }
+.app.in-game .goal-distance { color: #dbbc88; font-variant-numeric: tabular-nums; }
+.app.in-game .suit { width: 180px; padding: 14px 17px; }
+.app.in-game .suit-row > span { font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: #afc3d1; }
+.app.in-game .suit-row strong { font-size: 24px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.app.in-game .explorer-tools button { display: grid; place-items: center; background: #0b1520eb; color: #b7dce9; border-color: #a5c6d540; }
+.app.in-game .interact { background: #0b1520f2; border-color: #b7dce95c; padding: 12px 18px; font-size: 13px; box-shadow: 0 8px 32px #0004; }
+.app.in-game .interact kbd { border-radius: 2px; background: #b7dce9; color: #0b1520; border: 0; }
+.app :is(.panel,.settings-panel,.modal) { background: linear-gradient(140deg,#0b1520fc,#142331fa); border-color: #b7dce938; color: #edf3f8; }
+.app.in-game .panel-plate { filter: saturate(.7); }
+.app .panel-top { padding-block: 14px; }
+.app .setting { padding-block: 15px; }
+.app .primary { color: #0b1520; background: #b7dce9; font-weight: 600; }
+.app .secondary { border-color: #a5c6d540; }
+.app :is(.primary,.secondary,.explorer-tools button) { transition: background-color .16s, border-color .16s, box-shadow .16s; }
+.app button:hover:not(:disabled) { border-color: #c6e4efaa; }
+.app .primary:hover:not(:disabled) { background: #dbedf5; box-shadow: 0 3px 20px #95cce218; }
+.app button:active:not(:disabled) { box-shadow: inset 0 2px 5px #0003; }
+.app :is(.suit-bar,.repair-progress) { border-radius: 1px; overflow: hidden; }
+.app .vignette { opacity: .35; }
+@media(max-width:650px) {
+  .app.in-game .objective { width: 230px; max-width: calc(100vw - 130px); padding: 12px 14px; }
+  .app.in-game .objective h2 { font-size: 22px; }
+  .app.in-game .suit { width: 160px; }
+}
+@media(prefers-reduced-motion:reduce) { .app button { transition: none !important; } }
+.app.in-game .notification {
+  top: auto; bottom: 104px; left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: min(400px, calc(100vw - 48px));
+  font-size: 12px; line-height: 1.6;
+}

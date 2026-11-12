@@ -191,7 +191,7 @@ export function buildTerrain(
   const rocky = rockGeometry(2),
     lowRock = rockGeometry(1);
   const material = new T.MeshStandardMaterial({
-    color: d === "moon" ? 0xbeb2a2 : 0xba8a70,
+    color: d === "moon" ? 0x858c95 : 0xa77960,
     map: paintedMap("basalt"),
     roughness: 0.97,
   });
@@ -312,22 +312,28 @@ export function buildTerrain(
     // It is scenery only; the original terrain and physics remain authoritative.
     const positions: number[] = [], indices: number[] = [];
     const mars = d === "mars";
-    for (let i = 0; i <= 80; i++) {
-      const angle = mars ? -3.8 + i / 80 * 2.35 : -3.67 + i / 80 * 2.85;
+    for (let i = 0; i <= 160; i++) {
+      const angle = mars ? -3.8 + i / 160 * 2.35 : -3.67 + i / 160 * 2.85;
       const radius = mars ? 123 + noise(i * .08, 4) * 17 : 103 + noise(i * .12, 4) * 11;
       const x = Math.sin(angle) * radius, z = Math.cos(angle) * radius - 12;
       const base = terrainHeight(x, z, d) - 1;
-      const edge = Math.sin(Math.PI * i / 80);
+      const edge = Math.sin(Math.PI * i / 160);
       const rise = mars
         ? 12 + 11 * T.MathUtils.smoothstep(noise(i * .11, 13), -.41, .18)
         : 18 + noise(i * .14, 8) * 7 + noise(i * .52, 7) * 1.6;
       const top = base + rise * Math.min(1, edge * 5);
-      for (const [r, y] of [[1, base], [1.025, base + 2], [1.045, top], [1.2, top + 1], [1.65, terrainHeight(x * 1.65, (z + 12) * 1.65 - 12, d) - 1]]) {
-        positions.push(x * r, y, (z + 12) * r - 12);
+      const section: number[][] = [];
+      for (let layer = 0; layer <= 8; layer++) {
+        const t = layer / 8;
+        const fracture = noise(i * .21, layer * 1.7);
+        section.push([1 + t * .045 + fracture * .018 * Math.sin(t * Math.PI),
+          T.MathUtils.lerp(base, top, t) + fracture * .65 * Math.sin(t * Math.PI)]);
       }
-      if (i < 80) for (let row = 0; row < 4; row++) {
-        const a = i * 5 + row;
-        indices.push(a, a + 5, a + 1, a + 1, a + 5, a + 6);
+      section.push([1.2, top + 1], [1.65, terrainHeight(x * 1.65, (z + 12) * 1.65 - 12, d) - 1]);
+      for (const [r,y] of section) positions.push(x * r, y, (z + 12) * r - 12);
+      if (i < 160) for (let row = 0; row < 10; row++) {
+        const a = i * 11 + row;
+        indices.push(a, a + 11, a + 1, a + 1, a + 11, a + 12);
       }
     }
     const cliffGeometry = new T.BufferGeometry();

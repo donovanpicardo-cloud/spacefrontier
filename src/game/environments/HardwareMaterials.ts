@@ -1,13 +1,13 @@
 import * as T from "three";
-import { paintedMap, paintMaterial } from "./PainterlyMaterials";
+import { engineeringMap } from "./EngineeringFinish";
 export function industrialSurface(material: T.MeshStandardMaterial, kind: "paint" | "tread" = "paint", u = 1, v = 1) {
   if (typeof window === "undefined") return;
-  material.map = paintedMap(kind === "paint" ? "panel" : "basalt").clone();
+  material.map = engineeringMap().clone();
   material.map.repeat.set(u, v);
   material.map.needsUpdate = true;
-  material.roughness = .94;
-  material.metalness = .08;
-  paintMaterial(material);
+  material.roughness = kind === "tread" ? .72 : .48;
+  material.metalness = kind === "tread" ? .58 : .35;
+
 }
 export function hardwareMaterials() {
   const paint = new T.MeshStandardMaterial({
