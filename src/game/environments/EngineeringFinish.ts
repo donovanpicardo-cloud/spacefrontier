@@ -1,55 +1,49 @@
 import * as T from "three";
 
-let panel: T.CanvasTexture | undefined;
-/** One shared, neutral coating map. Fine wear never overrides semantic colours. */
-export function engineeringMap() {
-  if (panel) return panel;
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = 512;
-  const ctx = canvas.getContext("2d")!;
-  const pixels = ctx.createImageData(512, 512);
-  let seed = 4701;
-  const random = () => ((seed = Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296;
-  for (let y = 0; y < 512; y++) {
-    const brushing = random() * 3;
-    for (let x = 0; x < 512; x++) {
-      const i = (y * 512 + x) * 4;
-      const value = 225 + brushing + random() * 13;
-      pixels.data[i] = pixels.data[i + 1] = pixels.data[i + 2] = value;
-      pixels.data[i + 3] = 255;
-    }
+const textures = new Map<string, T.Texture>();
+/** Shared locally hosted PBR maps. These retain real scratches and edge wear. */
+function finishMap(kind: "color" | "normal" | "roughness") {
+  let texture = textures.get(kind);
+  if (!texture) {
+    texture = new T.TextureLoader().load(`/materials/blue_metal_plate_${kind}.jpg`);
+    texture.wrapS = texture.wrapT = T.RepeatWrapping;
+    texture.anisotropy = 8;
+    if (kind === "color") texture.colorSpace = T.SRGBColorSpace;
+    texture.userData.engineeringCoating = true;
+    textures.set(kind, texture);
   }
-  ctx.putImageData(pixels, 0, 0);
-  for (let i = 0; i < 100; i++) {
-    ctx.strokeStyle = `rgba(65,75,82,${.025 + random() * .045})`;
-    const x = random() * 512, y = random() * 512;
-    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 2 + random() * 17, y + random() * 2); ctx.stroke();
-  }
-  // Recessed panel joint, chamfer highlight and captive fasteners, all in one map.
-  ctx.strokeStyle = "#747d83"; ctx.lineWidth = 3;
-  ctx.strokeRect(5, 5, 502, 502);
-  ctx.strokeStyle = "#fafbfc"; ctx.lineWidth = 2;
-  ctx.strokeRect(9, 9, 494, 494);
-  ctx.strokeStyle = "#b9bec1"; ctx.lineWidth = 1;
-  ctx.strokeRect(21, 21, 470, 470);
-  for (const x of [31, 481]) for (const y of [31, 481]) {
-    ctx.fillStyle = "#727b82";
-    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#dfe3e5";
-    ctx.beginPath(); ctx.moveTo(x - 2, y); ctx.lineTo(x + 2, y); ctx.stroke();
-  }
-  const dust = ctx.createLinearGradient(0, 390, 0, 505);
-  dust.addColorStop(0, "#484d5100"); dust.addColorStop(1, "#484d5122");
-  ctx.fillStyle = dust; ctx.fillRect(11, 390, 490, 112);
-  ctx.fillStyle = "#7b8388"; ctx.font = "9px monospace";
-  ctx.fillText("THERMAL / 07", 42, 474);
-  for (let i = 0; i < 14; i++) ctx.fillRect(408 + i * 3, 460, i % 3 === 0 ? 2 : 1, 12);
-  panel = new T.CanvasTexture(canvas);
-  panel.name = "Ceramic coating / fine brushed wear";
-  panel.colorSpace = T.SRGBColorSpace;
-  panel.wrapS = panel.wrapT = T.RepeatWrapping;
-  panel.anisotropy = 8;
-  return panel;
+  return texture;
 }
+export function engineeringMap() { return finishMap("color"); }
+export function isEngineeringMap(texture: T.Texture) { return [...textures.values()].includes(texture); }
 
-export function isEngineeringMap(texture: T.Texture) { return texture === panel; }
+/** Neutralize the source blue paint, retaining photographic abrasion and grime.
+ * Normal and roughness maps stay in data space and match each material's UV scale. */
+export function applyEngineeringFinish(material: T.MeshStandardMaterial) {
+  if (!material.map?.userData.engineeringCoating || material.userData.engineeringInstalled) return;
+  material.userData.engineeringInstalled = true;
+  for (const kind of ["normal", "roughness"] as const) {
+    const map = finishMap(kind).clone();
+    map.repeat.copy(material.map.repeat);
+    map.needsUpdate = true;
+    if (kind === "normal") material.normalMap = map;
+    else material.roughnessMap = map;
+  }
+  material.normalScale.set(.65, .65);
+  material.roughness = .82;
+  const previous = material.onBeforeCompile;
+  const key = material.customProgramCacheKey();
+  material.onBeforeCompile = (shader, renderer) => {
+    previous.call(material, shader, renderer);
+    shader.fragmentShader = shader.fragmentShader.replace("#include <map_fragment>", `
+      #ifdef USE_MAP
+        vec4 coating = texture2D(map, vMapUv);
+        float wear = dot(coating.rgb, vec3(.2126,.7152,.0722));
+        diffuseColor.rgb *= vec3(clamp(sqrt(max(wear, .001)) * 1.7, .12, .95));
+        diffuseColor.a *= coating.a;
+      #endif
+    `);
+  };
+  material.customProgramCacheKey = () => key + "-photographic-coating-v2";
+  material.needsUpdate = true;
+}

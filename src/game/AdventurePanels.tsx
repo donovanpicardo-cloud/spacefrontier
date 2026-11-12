@@ -51,7 +51,7 @@ export function AdventurePanels(p: {
               p.onGuide(
                 "fabricator",
                 "Fabrication station",
-                "Follow the trail inside. Press E at the fabricator to build a project.",
+                "Go inside the habitat. Press E at the fabricator to build a project.",
               )
             }
           >
@@ -134,7 +134,7 @@ export function AdventurePanels(p: {
                         p.onGuide(
                           "medbay",
                           "Crew recovery room",
-                          "Follow the trail through the east doorway. Rest inside to restore health and suit air.",
+                          "Head through the east doorway. Rest inside to restore health and suit air.",
                         )
                       }
                     >
@@ -287,7 +287,7 @@ export function AdventurePanels(p: {
                     p.onGuide(
                       "sample:" + sample.id,
                       sample.name,
-                      "Follow the trail. Capture two scan pulses as they cross the striped zone.",
+                      "Capture two scan pulses as they cross the striped zone.",
                     )
                   }
                 >

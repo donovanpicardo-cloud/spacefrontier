@@ -146,7 +146,7 @@ function App() {
     [muted, setMuted] = useState(() => readLocal("frontier-audio-muted") === "true"),
     [sensitivity, setSensitivity] = useState(1),
     [reducedMotion, setReducedMotion] = useState(false),
-    [quality, setQuality] = useState("Medium"),
+    [quality, setQuality] = useState("High"),
     [speed, setSpeed] = useState(1),
     [saved, setSaved] = useState(() => !!parseSave(readLocal("frontier-save")));
   const [tutorialActive, setTutorialActive] = useState(false);
@@ -193,7 +193,6 @@ function App() {
   const [lessonKey, setLessonKey] = useState(0);
   const [strongerHint, setStrongerHint] = useState(false);
   const [narration, setNarration] = useState(false);
-  const autoCamera = false;
   const [modelStatus, setModelStatus] = useState<"loading" | "ready" | "error">(
     "loading",
   );
@@ -308,7 +307,7 @@ function App() {
       flashlight: false,
       sensitivity: 1,
       reducedMotion: false,
-      quality: "Medium",
+      quality: "High",
       power: 74,
       storm: false,
       crop: 25,
@@ -408,7 +407,6 @@ function App() {
           history: sim.history,
         },
         tutorial: tutorialActive,
-        autoCamera,
         guideTarget: tutorialActive
           ? tutorialTarget(guideStep.id)
           : null,
@@ -435,7 +433,6 @@ function App() {
     sim,
     tutorialActive,
     tutorial.index,
-    autoCamera,
     destination,
     mission,
     done,
@@ -921,7 +918,7 @@ function App() {
       beginMission();
       toast(
         completed
-          ? "You earned your Explorer patch! Follow the trail to begin."
+          ? "You earned your Explorer patch! Head to begin."
           : "Ready when you are! Help me is always here.",
       );
     }
@@ -954,7 +951,7 @@ function App() {
     setSupplyGoal(site.name);
     open(null);
     toast(
-      `${site.name}: follow the trail, then follow the equipment’s own instructions. H returns to your mission.`,
+      `${site.name}: locate the site and follow the equipment’s own instructions. H returns to your mission.`,
     );
   }
   useEffect(() => {
@@ -1170,7 +1167,7 @@ function App() {
       guideSide(
         "medbay",
         "Crew recovery room",
-        "Your recovery room is ready. Follow the trail through the east doorway to rest inside.",
+        "Your recovery room is ready. Head through the east doorway to rest inside.",
       );
   }
   function buildReturnRocket() {
@@ -1386,7 +1383,7 @@ function App() {
                 ? "Practice together with Mission Control."
                 : supplyGoal
                   ? sideInstruction ||
-                    `${supplyGoal}. Follow the trail. Each rig has its own controls. H returns to your mission.`
+                    `${supplyGoal}. Each rig has its own controls. H returns to your mission.`
                   : done.includes(4)
                     ? "Explore, recover robots or build your return rocket. J · Journal  /  U · Projects"
                     : objective.task}
@@ -2014,8 +2011,8 @@ function App() {
                 </button>
 
                 <p className="science-note">
-                  You control the camera. The yellow trail guides you without
-                  turning your view. During hands-on tasks, the camera zooms in on the equipment.
+                  You control the camera. Objectives and distances stay in the HUD;
+                  selecting a destination never turns your view. During hands-on tasks, the camera zooms in on the equipment.
                 </p>
                 <label className="setting">
                   Read tutorial aloud
@@ -2260,7 +2257,7 @@ function App() {
                     guideSide(
                       "rover",
                       "Your buggy",
-                      "Follow the trail. Press E beside the buggy to climb in.",
+                      "Press E beside the buggy to climb in.",
                     )
                   }
                 >

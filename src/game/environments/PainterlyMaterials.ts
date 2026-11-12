@@ -1,4 +1,4 @@
-import { isEngineeringMap } from "./EngineeringFinish";
+import { isEngineeringMap, applyEngineeringFinish } from "./EngineeringFinish";
 import * as T from "three";
 
 export type PaintedSurface = "regolith" | "cliff" | "panel" | "basalt";
@@ -27,6 +27,7 @@ export function paintMaterial(material: T.Material) {
   if (!(material instanceof T.MeshStandardMaterial)) return;
   if (material.userData.surfacePrepared) return;
   material.userData.surfacePrepared = true;
+  applyEngineeringFinish(material);
   for (const texture of [material.map, material.normalMap, material.roughnessMap]) {
     if (texture) texture.anisotropy = 8;
   }

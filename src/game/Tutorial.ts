@@ -30,9 +30,9 @@ export const tutorialSteps = [
   {
     id: "marker",
     title: "Follow the stars",
-    text: "Follow the golden trail to the solar panels.",
+    text: "Head to the solar panels.",
     keys: ["W", "A", "S", "D"],
-    hint: "Walk toward the tall golden marker. The distance tells you how far to go.",
+    hint: "Find the solar array beside the habitat. The objective distance tells you how far to go.",
   },
   {
     id: "repair",
@@ -44,7 +44,7 @@ export const tutorialSteps = [
   {
     id: "airlock",
     title: "Welcome to your space home",
-    text: "Follow the trail to the airlock. Press E to go inside.",
+    text: "Head to the airlock. Press E to go inside.",
     keys: ["E"],
     hint: "The entrance has an orange frame. Wait for the doors to finish moving.",
   },
@@ -114,11 +114,11 @@ export function simulationRuns(
   return playing && worldReady && !tutorial && (panel === null || panel === "repair");
 }
 export const juniorGoals = [
-  "Follow the trail to your space home. Press E at the door.",
-  "Follow the trail to the solar panels. Let’s fix the plug!",
+  "Head to your space home. Press E at the door.",
+  "Head to the solar panels. Let’s fix the plug!",
   "Help the plants! Go inside and fix their water pipe.",
   "Let’s clean the air! Fix the filter inside your space home.",
-  "Follow the trail to the shelter. Press E to keep everyone safe.",
+  "Head to the shelter. Press E to keep everyone safe.",
 ];
 export function juniorGoal(mission: number, destination: "moon" | "mars") {
   if (destination === "mars") {

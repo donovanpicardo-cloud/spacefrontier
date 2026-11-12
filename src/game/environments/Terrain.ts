@@ -6,7 +6,6 @@ import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "meshoptimizer/decoder";
 import { landscapeMaterial } from "./SurfaceMaterials";
-import { paintedMap } from "./PainterlyMaterials";
 import { sampleSites, robotSites, recoveryBay } from "../Adventure";
 export const hash = (n: number) => {
   const v = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -190,11 +189,7 @@ export function buildTerrain(
   };
   const rocky = rockGeometry(2),
     lowRock = rockGeometry(1);
-  const material = new T.MeshStandardMaterial({
-    color: d === "moon" ? 0x858c95 : 0xa77960,
-    map: paintedMap("basalt"),
-    roughness: 0.97,
-  });
+  const material = landscapeMaterial(d, true);
   const rocks = new T.InstancedMesh(lowRock, material, 2200);
   const largeRocks = new T.InstancedMesh(rocky, material, 60);
   largeRocks.userData.surfaceRock = true;

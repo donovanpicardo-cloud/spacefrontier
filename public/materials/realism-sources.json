@@ -1,0 +1,44 @@
+[
+  {
+    "file": "rock_face_03-Diffuse.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rock_face_03/rock_face_03_diff_2k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/rock_face_03",
+    "md5": "657add9e8a8dffaeed19bdfc58078b59"
+  },
+  {
+    "file": "rock_face_03-nor_gl.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rock_face_03/rock_face_03_nor_gl_2k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/rock_face_03",
+    "md5": "279b33e71ae6275cafa24e6597024c98"
+  },
+  {
+    "file": "rock_face_03-Rough.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_face_03/rock_face_03_rough_1k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/rock_face_03",
+    "md5": "bbb2c7dafde3f81808fa7404d4527a56"
+  },
+  {
+    "file": "sandy_gravel_02-Diffuse.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/sandy_gravel_02/sandy_gravel_02_diff_2k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/sandy_gravel_02",
+    "md5": "0ae7373189752d85642f589c12093ec2"
+  },
+  {
+    "file": "sandy_gravel_02-nor_gl.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/sandy_gravel_02/sandy_gravel_02_nor_gl_2k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/sandy_gravel_02",
+    "md5": "795860c61dd2ae8fb06c90f7cf2a7e39"
+  },
+  {
+    "file": "sandy_gravel_02-Rough.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sandy_gravel_02/sandy_gravel_02_rough_1k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/sandy_gravel_02",
+    "md5": "bbd5bd1358d0a3f7dbdee52707c126c1"
+  }
+]

@@ -88,7 +88,6 @@ export type WorldState = {
   guideTarget?: string | null;
   junior?: boolean;
   tutorial?: boolean;
-  autoCamera?: boolean;
   onLookReleased?: () => void;
   onRepair?: (info: RepairInfo | null) => void;
   onRepairComplete?: () => void;
@@ -244,7 +243,7 @@ export class World {
   async filmLanding(quiet: boolean, show: () => void, finish: () => void) {
     await this.wreck.ready;
     if (this.disposed) return;
-    this.landingLabels = [...this.resources.labels.values(), ...this.adventure.labels, this.guide].filter(o => o.visible);
+    this.landingLabels = [...this.resources.labels.values(), ...this.adventure.labels].filter(o => o.visible);
     this.landingLabels.forEach(o => { o.visible = false; });
     this.landingCamera = true;
     this.cinematicAudio = !quiet;
@@ -293,9 +292,6 @@ export class World {
   supplyTarget: string | null = null;
   vehicle!: ExplorerVehicle;
   repairApproach: { from: T.Vector3; to: T.Vector3; t: number } | null = null;
-  guide = new T.Group();
-  guideDots: T.Mesh[] = [];
-  guideRing!: T.Mesh;
   guideClock = 0;
   guidePoint = new T.Vector3();
   lastGuide = "";
@@ -328,7 +324,7 @@ export class World {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = T.PCFSoftShadowMap;
     this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.08;
+    this.renderer.toneMappingExposure = 1.0;
     container.appendChild(this.renderer.domElement);
     this.stopPainting = paintScene(this.scene);
     this.scene.background = new T.Color(d === "moon" ? 0x03060c : 0x9e7562);
@@ -336,11 +332,11 @@ export class World {
     this.ambient = new T.HemisphereLight(
       d === "moon" ? 0xb8cee8 : 0xe9c5ac,
       d === "moon" ? 0x454b56 : 0x785044,
-      d === "moon" ? 0.52 : 0.78,
+      d === "moon" ? 0.28 : 0.6,
     );
     this.scene.add(this.ambient);
-    this.sun = new T.DirectionalLight(d === "moon" ? 0xfff6e9 : 0xffddbc, 2.7);
-    this.sun.position.set(-42, 28, 30);
+    this.sun = new T.DirectionalLight(d === "moon" ? 0xfff5e8 : 0xffe1c5, 3.6);
+    this.sun.position.set(-48, 21, 16);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
     Object.assign(this.sun.shadow.camera, {
@@ -433,7 +429,6 @@ export class World {
       }
     });
     this.player.root.add(this.online.root);
-    this.buildGuide();
     const contact = document.createElement("canvas");
     contact.width = contact.height = 128;
     const cx = contact.getContext("2d")!;
@@ -654,9 +649,9 @@ export class World {
     this.composer = new EffectComposer(this.renderer, renderTarget);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.ao = new SSAOPass(this.scene, this.camera, 640, 400, 16);
-    this.ao.kernelRadius = 0.35;
+    this.ao.kernelRadius = 0.8;
     this.ao.minDistance = 0.001;
-    this.ao.maxDistance = 0.12;
+    this.ao.maxDistance = 0.16;
     this.composer.addPass(this.ao);
     this.composer.addPass(new OutputPass());
   }
@@ -795,65 +790,15 @@ export class World {
     this.doors.forEach((d) => (d.position.x = 0));
     this.resetCamera();
   }
-  buildGuide() {
-    const mat = new T.MeshBasicMaterial({ color: 0xffdb78, depthWrite: false });
-    for (let i = 0; i < 28; i++) {
-      const dot = new T.Mesh(new T.RingGeometry(0.07, 0.14, 12), mat);
-      dot.rotation.x = -Math.PI / 2;
-      this.guide.add(dot);
-      this.guideDots.push(dot);
-    }
-    this.guideRing = new T.Mesh(new T.TorusGeometry(0.58, 0.045, 6, 32), mat);
-    this.guideRing.rotation.x = -Math.PI / 2;
-    this.guide.add(this.guideRing);
-    const beacon = new T.Mesh(new T.ConeGeometry(0.22, 0.38, 5), mat);
-    beacon.rotation.z = Math.PI;
-    beacon.position.y = 2.7;
-    this.guideRing.add(beacon);
-    // Keep the beacon upright despite the horizontal target ring.
-    beacon.position.set(0, -2.7, 0);
-    beacon.rotation.set(Math.PI / 2, 0, 0);
-    this.scene.add(this.guide);
-  }
   updateGuide(dt: number) {
-    this.guide.visible =
-      !!(this.supplyTarget || this.state.guideTarget) && this.state.playing;
-    if (!this.guide.visible) return;
+    // Objective distance remains useful; navigation never draws a trail or steers the view.
     this.guideClock += dt;
-    if (this.guideClock < 0.16) return;
+    if (this.guideClock < .16) return;
     this.guideClock = 0;
-    const station = this.navigationSites().find(
-      (s) => s.id === (this.supplyTarget || this.state.guideTarget),
-    );
+    const station = this.navigationSites().find(s => s.id === (this.supplyTarget || this.state.guideTarget));
     if (!station) return;
-    const point = navigationTarget(
-      this.player.root.position,
-      this.state.inside,
-      station,
-    );
-    const guideKey = station.id + this.state.inside + point.phase;
-    if (guideKey !== this.lastGuide) {
-      this.lastGuide = guideKey;
-      if (this.state.autoCamera) this.focusGuide();
-    }
-    const p = this.player.root.position;
-    const target = new T.Vector3(point.x, 0, point.z);
-    this.guidePoint.copy(target);
-    const length = Math.hypot(target.x - p.x, target.z - p.z);
-    this.guideRing.position.set(
-      target.x,
-      this.groundHeight(target.x, target.z) + 0.2,
-      target.z,
-    );
-    this.guideRing.scale.setScalar(
-      1 + Math.sin(this.clock.elapsedTime * 2) * 0.06,
-    );
-    this.guideDots.forEach((dot, i) => {
-      const t = ((i + 1) * 0.8) / Math.max(0.1, length);
-      dot.visible = t < 0.97;
-      dot.position.lerpVectors(p, target, t);
-      dot.position.y = this.groundHeight(dot.position.x, dot.position.z) + 0.15;
-    });
+    const point = navigationTarget(this.player.root.position, this.state.inside, station);
+    this.guidePoint.set(point.x, 0, point.z);
   }
   beginRepair(kind: RepairKind) {
     this.resources.cancel();
@@ -1702,12 +1647,7 @@ export class World {
       }
     }
     this.diagnostics.mark("Character and gameplay");
-    const menu = !this.state.playing;
     if (active) this.surfaceDust.update(dt);
-    if (menu) {
-      this.yaw = 0.32 + Math.sin(this.clock.elapsedTime * 0.035) * 0.08;
-      this.pitch = 0.2;
-    }
     const interior = this.state.inside;
     const site = this.resources.gather.active;
     const rig = site && this.resources.rigs.get(site);
@@ -1797,19 +1737,19 @@ export class World {
       this.scene.fog.density = T.MathUtils.damp(this.scene.fog.density, dustStorm ? .016 : .004, 2, dt);
     this.ambient.intensity = T.MathUtils.damp(
       this.ambient.intensity,
-      interior ? 0.55 : this.destination === "moon" ? 0.52 : 0.78,
+      interior ? 0.55 : this.destination === "moon" ? 0.28 : 0.6,
       3,
       dt,
     );
     this.scene.environmentIntensity = T.MathUtils.damp(
       this.scene.environmentIntensity,
-      interior ? 0.3 : 0.5,
+      interior ? 0.3 : 0.22,
       3,
       dt,
     );
     this.sun.intensity = T.MathUtils.damp(
       this.sun.intensity,
-      interior ? 0.42 : dustStorm ? 1.2 : 2.7,
+      interior ? 0.42 : dustStorm ? 1.2 : 3.6,
       3,
       dt,
     );
@@ -1849,7 +1789,7 @@ export class World {
     const sx = Math.round(p.position.x / texel) * texel;
     const sz = Math.round((p.position.z - 8) / texel) * texel;
     this.sun.target.position.set(sx, 0, sz);
-    this.sun.position.set(sx - 42, 28, sz + 30);
+    this.sun.position.set(sx - 48, 21, sz + 16);
     this.dust.rotation.y += dt * (this.state.storm ? 0.015 : 0.001);
     (this.dust.material as T.PointsMaterial).opacity =
       this.destination === "mars" ? (this.state.storm ? 0.65 : 0.22) : 0;

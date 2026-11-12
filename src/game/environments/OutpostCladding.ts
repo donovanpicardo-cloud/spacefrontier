@@ -1,3 +1,4 @@
+import { pressureShellDetail } from "./PressureShellDetail";
 import { engineeringMap } from "./EngineeringFinish";
 import * as T from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
@@ -20,7 +21,7 @@ export function dressOutpost(
     color: mars ? 0xd0c9bc : 0xd9e1e5,
     map: panelMap,
     roughness: .52,
-    metalness: .38,
+    metalness: .18,
   });
   const charcoal = new T.MeshStandardMaterial({
     color: 0x202c37,
@@ -62,7 +63,7 @@ export function dressOutpost(
     parent: T.Object3D = root,
   ) =>
     mesh(
-      new RoundedBoxGeometry(w, h, d, 1, Math.min(w, h, d) * 0.16),
+      new RoundedBoxGeometry(w, h, d, 3, Math.min(w, h, d) * 0.16),
       mat,
       x,
       y,
@@ -100,7 +101,7 @@ export function dressOutpost(
       steps: 1,
       bevelSize: 0.035,
       bevelThickness: 0.035,
-      bevelSegments: 1,
+      bevelSegments: 3,
     });
     // ExtrudeGeometry's metre UVs become one authored panel per face-sized region.
     const uv = geo.getAttribute("uv");
@@ -214,6 +215,7 @@ export function dressOutpost(
       }
   bolts.count = n;
   root.add(bolts);
+  pressureShellDetail(root, cream, titanium, charcoal);
   paintModel(root);
   batchStatic(root);
   scene.add(root);

@@ -24,3 +24,11 @@ The complete campaign was not manually replayed. Audio timing/mix behavior was c
 Final checks: `npm test` passed all 155 tests across 24 files; `npm run build` passed. A narrow-viewport arrival toast overlapped the objective during visual QA; it was moved above the lower HUD so it no longer covers mission text.
 
 Deployment follow-up: Vercel's first build ran 154 tests successfully but the exhaustive lunar terrain/site raycast test took 5.394 seconds and exceeded Vitest's default five-second timeout. That specific test now allows 20 seconds on shared CI hardware, retaining all geometry-budget and site-alignment assertions. The gameplay and renderer are unchanged by this follow-up.
+
+## Photographic correction and navigation removal
+
+The follow-up replaces the pale procedural hull coating and compressed ground coloration with photographic color, normal and roughness maps. World-space slope blending separates gravel from cliff surfaces; habitat wear retains visible contrast. Added pressure hoops, heat-exchanger fins, protected conduits and equipment detail are batched with existing cosmetic geometry. Lower-angle sunlight and reduced exterior fill strengthen relief. High is now the initial quality preset; existing scalable quality options remain available.
+
+Removed the golden route dots/beacon, navigation camera steering and idle menu camera orbit. Objectives, HUD guidance, manual camera reset, task close-ups and authored cinematics remain. No progression, save-schema, control-binding or collision changes.
+
+Verification for this follow-up: 156 tests across 24 files passed; production build passed. Browser checks covered the saved lunar surface, textured cliffs/ground, close habitat approach, help guidance without a golden trail, and pause UI. No console errors were observed. A local High-quality spot sample on RX 7800 XT measured about 114 FPS (GPU about 3 ms); this is hardware/view-specific, not a cross-device benchmark. Mars and the complete campaign were not manually replayed for this follow-up. New CC0 source credits and hashes are in the asset credits and manifest. Before/after screenshots remain outside the shipped repository.
