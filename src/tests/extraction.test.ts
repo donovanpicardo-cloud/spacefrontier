@@ -97,6 +97,9 @@ describe("deliberate resource recovery", () => {
         ).toBeLessThan(0.25);
       }
     },
+    // Full terrain/site raycasts exceed 5s on shared CI CPUs; geometry limits
+    // and every alignment assertion remain enforced. This is not a frame benchmark.
+    20_000,
   );
   it("uses heat management for ice, not aiming or crank strokes", () => {
     const task = new Extraction("ice");

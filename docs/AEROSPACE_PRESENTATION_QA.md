@@ -22,3 +22,5 @@ The player selects a destination, watches or skips descent, explores the surface
 The complete campaign was not manually replayed. Audio timing/mix behavior was checked in code and automated tests; subjective listening was not independently assessed. Existing imported assets and engine constraints remain; this is a substantial browser-game art-direction refinement, not AAA production parity. No new gameplay systems or external asset downloads were added.
 
 Final checks: `npm test` passed all 155 tests across 24 files; `npm run build` passed. A narrow-viewport arrival toast overlapped the objective during visual QA; it was moved above the lower HUD so it no longer covers mission text.
+
+Deployment follow-up: Vercel's first build ran 154 tests successfully but the exhaustive lunar terrain/site raycast test took 5.394 seconds and exceeded Vitest's default five-second timeout. That specific test now allows 20 seconds on shared CI hardware, retaining all geometry-budget and site-alignment assertions. The gameplay and renderer are unchanged by this follow-up.
