@@ -1,8 +1,8 @@
 export const tutorialSteps = [
   {
     id: "move",
-    title: "Let’s walk!",
-    text: "Use W A S D to walk a few steps.",
+    title: "Learn to explore",
+    text: "Hold W A S D to walk. First, practise moving a few steps; your air and supplies are paused during this lesson.",
     keys: ["W", "A", "S", "D"],
     hint: "Hold W to walk forward. You can take your time.",
   },
@@ -29,8 +29,8 @@ export const tutorialSteps = [
   },
   {
     id: "marker",
-    title: "Follow the stars",
-    text: "Head to the solar panels.",
+    title: "Find the solar array",
+    text: "Walk to the solar panels beside the habitat. Watch the objective distance decrease as you approach.",
     keys: ["W", "A", "S", "D"],
     hint: "Find the solar array beside the habitat. The objective distance tells you how far to go.",
   },
@@ -46,7 +46,7 @@ export const tutorialSteps = [
     title: "Welcome to your space home",
     text: "Head to the airlock. Press E to go inside.",
     keys: ["E"],
-    hint: "The entrance has an orange frame. Wait for the doors to finish moving.",
+    hint: "Approach the main habitat door until Cycle airlock appears. Press E, walk into the chamber, and wait for the pressure cycle.",
   },
   {
     id: "objective",
@@ -60,7 +60,7 @@ export const tutorialSteps = [
     title: "Help is always here",
     text: "Press Help me. Mission Control will show you what to do.",
     keys: ["Help me"],
-    hint: "The Help me button is beside Reset camera. You can use it at any time.",
+    hint: "Use the question-mark button at the top right, or Help me in this lesson. Escape opens Pause and R resets your camera.",
   },
   {
     id: "oxygen",
@@ -72,7 +72,7 @@ export const tutorialSteps = [
   {
     id: "finish",
     title: "You’re ready, explorer!",
-    text: "You walked, jumped, fixed a panel and used an airlock. Your real mission starts next!",
+    text: "Your final task is to return to Earth. Complete the five outpost missions, gather supplies and sample research, then build all three rocket sections at the Earthbound launch pad. Once ready, launch home. Start my mission begins a fresh mission after practice.",
     keys: [],
     hint: "Press Start my mission. You can replay this lesson from Pause.",
   },

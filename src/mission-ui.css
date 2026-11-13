@@ -238,3 +238,31 @@
   width: max-content; max-width: min(400px, calc(100vw - 48px));
   font-size: 12px; line-height: 1.6;
 }
+
+/* Solid instrument labels: no translucent glass, blur, or reflective gradients. */
+.app.in-game :is(.objective,.suit,.telemetry,.tutorial-card,.vehicle-hud,.world-repair-hud,.radio-status,.notification,.interaction,.interaction-prompt,.model-status,.practice-badge,.lesson-hint) {
+  background: #101d29;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  border: 1px solid #455765;
+}
+.app .overlay { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.app .tutorial-card { max-height: calc(100dvh - 185px); overflow-y: auto; }
+.app .tutorial-card .lesson-mission { font-size: 13px; line-height: 1.5; color: #c5d7e4; border-bottom: 1px solid #455765; padding-bottom: 12px; }
+.app .tutorial-card .lesson-mission strong { display: block; color: #fff; }
+.app.in-game :is(.interact,.trail-caption,.explorer-tools button,.panel,.settings-panel,.modal) {
+  background: #101d29;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+.app .tutorial-card { padding: 18px; top: 96px; max-height: calc(100dvh - 112px); }
+.app .tutorial-card h2 { font-size: 25px; margin: 10px 0; }
+.app .tutorial-card p { font-size: 15px; line-height: 1.45; margin-bottom: 12px; }
+.app .tutorial-card .lesson-mission { font-size: 12px; margin-bottom: 10px; }
+.app .tutorial-card .lesson-progress { margin: 12px 0; }
+.app .tutorial-card .lesson-keys { margin-bottom: 10px; }
+.app .tutorial-card .lesson-keys kbd { padding: 7px 10px; min-width: 34px; }
+.app .tutorial-card .lesson-hint { font-size: 13px; padding: 8px; background: #1b2b39; }
+.app .tutorial-card :is(.lesson-actions,.lesson-footer) { margin-top: 8px; }

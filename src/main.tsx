@@ -1357,7 +1357,7 @@ function App() {
           setDestination(next);
           setPanel(null);
         }}
-        onStart={() => beginMission(true)}
+        onStart={() => beginTutorial(false)}
         onContinue={load}
       />}
       {playing && (

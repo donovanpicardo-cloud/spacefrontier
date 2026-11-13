@@ -22,18 +22,15 @@ export function drawFieldLabel(label: FieldLabel, title: string, subtitle: strin
   const ctx = (map.image as HTMLCanvasElement).getContext("2d")!;
   ctx.clearRect(0, 0, 768, 192);
   ctx.beginPath();
-  ctx.roundRect(10, 10, 748, 158, 37);
-  const tint = ctx.createLinearGradient(0, 10, 0, 168);
-  tint.addColorStop(0, "#292a2af5");
-  tint.addColorStop(1, "#121314f5");
-  ctx.fillStyle = tint;
+  ctx.roundRect(10, 10, 748, 158, 6);
+  ctx.fillStyle = "#17212b";
   ctx.fill();
-  ctx.strokeStyle = "#ffffff40";
+  ctx.strokeStyle = "#51616e";
   ctx.lineWidth = 3;
   ctx.stroke();
   ctx.beginPath();
-  ctx.roundRect(37, 44, 79, 88, 24);
-  ctx.fillStyle = "#ffffff12";
+  ctx.roundRect(37, 44, 79, 88, 4);
+  ctx.fillStyle = "#263544";
   ctx.fill();
   ctx.beginPath();
   ctx.arc(76, 88, 15, 0, Math.PI * 2);
@@ -54,7 +51,7 @@ export function drawFieldLabel(label: FieldLabel, title: string, subtitle: strin
   ctx.moveTo(374, 168);
   ctx.lineTo(384, 182);
   ctx.lineTo(394, 168);
-  ctx.fillStyle = "#141415f5";
+  ctx.fillStyle = "#17212b";
   ctx.fill();
   map.needsUpdate = true;
 }

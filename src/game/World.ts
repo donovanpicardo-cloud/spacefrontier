@@ -247,8 +247,11 @@ export class World {
     this.landingLabels.forEach(o => { o.visible = false; });
     this.landingCamera = true;
     this.cinematicAudio = !quiet;
-    show();
     this.wreck.start(finish);
+    this.player.root.visible = this.contactShadow.visible = false;
+    this.wreck.frame(0, this.camera);
+    this.renderScene();
+    show();
     if (quiet) this.skipLanding();
   }
   skipLanding() {

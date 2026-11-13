@@ -38,6 +38,7 @@ export function TutorialOverlay(p: {
           <i key={s.id} className={i <= p.state.index ? "learned" : ""} />
         ))}
       </div>
+      <p className="lesson-mission"><strong>Final goal: return to Earth.</strong> Restore the outpost, gather supplies and research, then assemble and launch your return rocket. This lesson teaches the controls first.</p>
       <div aria-live="polite" aria-atomic="true">
         <h2>{step.title}</h2>
         <p>{step.text}</p>
