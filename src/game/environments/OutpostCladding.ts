@@ -1,3 +1,4 @@
+import { pressureCollar, pressureVesselGeometry, vaultedHabitat } from "./PressureArchitecture";
 import { pressureShellDetail } from "./PressureShellDetail";
 import { engineeringMap } from "./EngineeringFinish";
 import * as T from "three";
@@ -79,26 +80,11 @@ export function dressOutpost(
     depth: number,
     mat: T.Material,
   ) => {
-    const shape = new T.Shape();
-    // One open arch contour. Its underside never crosses the walking surface.
-    shape.moveTo(-width * 0.85, 0);
-    shape.lineTo(-width, height * 0.14);
-    shape.lineTo(-width, height * 0.72);
-    shape.lineTo(-width * 0.63, height);
-    shape.lineTo(width * 0.63, height);
-    shape.lineTo(width, height * 0.72);
-    shape.lineTo(width, height * 0.14);
-    shape.lineTo(width * 0.85, 0);
-    shape.lineTo(holeW, 0);
-    shape.lineTo(holeW, holeH * 0.81);
-    shape.lineTo(holeW * 0.71, holeH);
-    shape.lineTo(-holeW * 0.71, holeH);
-    shape.lineTo(-holeW, holeH * 0.81);
-    shape.lineTo(-holeW, 0);
-    shape.closePath();
+    const shape = pressureCollar(width, height, holeW, holeH);
     const geo = new T.ExtrudeGeometry(shape, {
       depth,
       steps: 1,
+      curveSegments: 32,
       bevelSize: 0.035,
       bevelThickness: 0.035,
       bevelSegments: 3,
@@ -109,7 +95,7 @@ export function dressOutpost(
       uv.setXY(i, uv.getX(i) / 4.5, uv.getY(i) / 4.5);
     return mesh(geo, mat, 0, 0, z);
   };
-  ring(2.86, 5.04, 2.2, 4.27, -10.08, 0.82, cream);
+  ring(2.72, 4.94, 2.22, 4.36, -10.08, 0.82, cream);
   ring(2.32, 4.31, 1.73, 3.58, -9.73, 0.43, charcoal);
   ring(1.88, 3.76, 1.41, 3.01, -9.89, 0.41, inner);
   for (const x of [-2.04, 2.04]) {
@@ -140,14 +126,14 @@ export function dressOutpost(
   // Pressure modules, bands, skid feet and cargo cases.
   for (const side of [-1, 1]) {
     const module = mesh(
-      new T.CylinderGeometry(2.07, 2.07, 4.7, 40),
+      pressureVesselGeometry(),
       cream,
       side * 4.64,
       2.16,
       -11.04,
     );
     module.rotation.z = Math.PI / 2;
-    module.rotation.x = Math.PI / 10;
+
     // Pressure-shell inspection windows and separate machined retaining rings.
     for (const offset of [-.9, .5]) {
       const x = side * 4.64 + offset;
@@ -156,7 +142,7 @@ export function dressOutpost(
       box(x, 1.63, -8.99, .52, .045, .04, charcoal);
       for (const dx of [-.18, .18]) box(x + dx, 2.71, -9.04, .055, .055, .03, titanium);
     }
-    for (const x of [3.08, 5.66, 6.82]) {
+    for (const x of [3.54, 5.66]) {
       const band = mesh(
         new T.CylinderGeometry(2.12, 2.12, 0.12, 40),
         inner,
@@ -167,26 +153,6 @@ export function dressOutpost(
       band.rotation.copy(module.rotation);
       box(side * x, 0.29, -9.54, 0.47, 0.54, 0.78, charcoal);
     }
-    const stripes = [];
-    for (const degrees of Array.from({ length: 13 }, (_, i) => -54 + i * 9)) {
-      const angle = T.MathUtils.degToRad(degrees);
-      const rise = Math.sin(angle) * 2.08;
-      const depth = Math.cos(angle) * 2.08;
-      const x = side * 4.4 + rise * 0.52;
-      stripes.push(
-        x - 0.19,
-        2.16 + rise,
-        -11.04 + depth,
-        x + 0.19,
-        2.16 + rise,
-        -11.04 + depth,
-      );
-    }
-    const stripe = new T.BufferGeometry();
-    stripe.setAttribute("position", new T.Float32BufferAttribute(stripes, 3));
-    stripe.setIndex(Array.from({ length: 12 }, (_, i) => { const a = i * 2; return [a, a + 1, a + 2, a + 1, a + 3, a + 2]; }).flat());
-    stripe.computeVertexNormals();
-    mesh(stripe, ochre, 0, 0, 0).castShadow = false;
     box(side * 6.24, 1.37, -8.99, 0.78, 0.76, 0.17, cream);
     box(side * 6.24, 1.37, -8.89, 0.32, 0.1, 0.07, charcoal);
     box(side * 4.88, 4.32, -10.82, 0.99, 0.3, 0.65, inner);
@@ -216,15 +182,13 @@ export function dressOutpost(
   bolts.count = n;
   root.add(bolts);
   pressureShellDetail(root, cream, titanium, charcoal);
+  vaultedHabitat(root, cream, titanium, charcoal);
   paintModel(root);
   batchStatic(root);
   scene.add(root);
 
   // The NASA assembly is mounted on a roof service cabinet at outpost scale.
-  const tower = box(5.62, 4.92, -15.5, 2.52, 1.8, 2.3);
-  box(5.62, 5.2, -14.32, 2.18, 1.05, 0.13, inner);
-  for (const angle of [-0.49, 0.49])
-    box(5.62, 5.2, -14.22, 1.98, 0.1, 0.1, cream).rotation.z = angle;
+  const tower = mesh(new T.CylinderGeometry(.76, 1.18, 1.8, 48), inner, 5.62, 5.65, -15.5);
   const mast = mesh(
     new T.CylinderGeometry(0.036, 0.055, 4.1, 8),
     charcoal,
@@ -237,7 +201,7 @@ export function dressOutpost(
     new T.SphereGeometry(1.64, 32, 14, 0, Math.PI * 2, 0, 1.06),
     cream,
     5.62,
-    6.85,
+    7.6,
     -15.5,
   );
   fallback.rotation.z = 0.83;
@@ -259,7 +223,7 @@ export function dressOutpost(
       antenna.scale.setScalar(scale);
       antenna.position.set(
         tower.position.x - center.x * scale,
-        5.81 - bounds.min.y * scale,
+        6.55 - bounds.min.y * scale,
         tower.position.z - center.z * scale,
       );
       antenna.traverse((object) => {

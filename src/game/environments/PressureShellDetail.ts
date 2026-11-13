@@ -13,7 +13,7 @@ export function pressureShellDetail(root: T.Group, paint: T.Material, metal: T.M
     add(new T.TubeGeometry(new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p as [number,number,number]))),32,radius,8,false),m,0,0,0);
   for (const side of [-1,1]) {
     // Raised hoop stiffeners and saddle mounts articulate the pressure hull.
-    for (const x of [3.06,5.66,6.82]) {
+    for (const x of [3.54,5.66]) {
       const ring=add(new T.TorusGeometry(2.135,.047,8,64),metal,side*x,2.16,-11.04);
       ring.rotation.y=Math.PI/2;
       for (const y of [.55,3.77]) box(side*x,y,-9.6,.23,.18,.19,dark);
