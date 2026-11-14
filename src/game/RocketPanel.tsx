@@ -40,13 +40,13 @@ export function RocketPanel(p: {
       </div>
       <div className="expedition-reserves">
         <span>
-          PARTS<strong>{p.sim.parts.toFixed(1)}</strong>
+          PARTS<strong>{Math.floor(p.sim.parts * 10) / 10}</strong>
         </span>
         <span>
-          POWER<strong>{Math.round(p.sim.battery)}%</strong>
+          POWER<strong>{Math.floor(p.sim.battery)}%</strong>
         </span>
         <span>
-          WATER<strong>{Math.round(p.sim.water)}%</strong>
+          WATER<strong>{Math.floor(p.sim.water)}%</strong>
         </span>
         <span>
           RESEARCH<strong>{p.research}</strong>

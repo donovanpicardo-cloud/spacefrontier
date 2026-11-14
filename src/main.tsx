@@ -813,7 +813,7 @@ function App() {
       return;
     }
     if (id === "fabricator") {
-      open("outpost");
+      open(done.includes(4) && rocketLive.current.stage < 3 ? "rocket" : "outpost");
       return;
     }
     if (
@@ -1753,7 +1753,7 @@ function App() {
                         : near === "rocket"
                           ? "Return rocket · build / board"
                           : near === "fabricator"
-                            ? "Outpost projects"
+                            ? done.includes(4) && rocket.stage < 3 ? "Build your return rocket" : "Outpost projects"
                             : near.startsWith("hitch:")
                               ? "Attach robot tow cable"
                               : near.startsWith("sample:")
