@@ -5,7 +5,12 @@ export type Allocation = {
   recycler: boolean;
   backup: boolean;
 };
+export type GreenhousePlan = "grow" | "save-power";
+export const GROW_LIGHT_LOAD = 0.55;
+export const STORM_DURATION = 45;
+export const SOLAR_DRILL_WARNING = 30;
 export type Sim = {
+  greenhousePlan?: GreenhousePlan;
   time: number;
   oxygen: number;
   co2: number;
@@ -70,7 +75,7 @@ export function power(
   const consumed =
     0.45 +
     (a.oxygen ? 0.65 : 0) +
-    (a.greenhouse ? 0.55 : 0) +
+    (a.greenhouse ? GROW_LIGHT_LOAD : 0) +
     (a.recycler ? 0.25 : 0);
   return {
     generated,
@@ -89,6 +94,13 @@ export function tick(
   recoveryRoom = false,
 ): Sim {
   const s = { ...state, time: state.time + 1 };
+  if (
+    d === "moon" &&
+    s.stormSince !== null &&
+    state.time < s.stormSince &&
+    s.time >= s.stormSince
+  )
+    s.storm = true;
   const p = power(s, a, d, upgrades);
   s.battery = clamp(s.battery + p.net * 0.18);
   const powered = s.battery > 0;
@@ -131,7 +143,7 @@ export function tick(
     ? s.shielded
       ? 0.0001
       : 0.001
-    : s.storm
+    : s.storm && d === "moon"
       ? 0.04
       : 0.003;
   s.temperature +=
@@ -168,7 +180,7 @@ export const missions = (d: Destination) => [
   },
   {
     name: d === "moon" ? "A garden beyond Earth" : "Greenhouse emergency",
-    task: "Turn both supply and return valves, then enable grow lights.",
+    task: "Turn both supply and return valves, then choose a greenhouse power plan.",
     target: "greenhouse",
     lesson:
       "Plants need water and electrical lighting. Food production competes with life support.",
@@ -181,7 +193,7 @@ export const missions = (d: Destination) => [
       "Electrolysis consumes both water and electricity to replenish oxygen.",
   },
   {
-    name: d === "moon" ? "Survive the darkness" : "The great dust storm",
+    name: d === "moon" ? "Archived solar storm drill" : "The great dust storm",
     task: "Enable emergency power, switch off grow lights and reach shelter.",
     target: "shelter",
     lesson:

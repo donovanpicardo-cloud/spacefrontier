@@ -4,7 +4,26 @@ export const solarArchive = {
   classification: "X8.7",
   url: "https://science.nasa.gov/blogs/solar-cycle-25/2024/05/14/strong-solar-flare-erupts-from-sun-15/",
 };
+export const donkiArchive = {
+  date: "10 September 2017",
+  detection: "16:45 UTC",
+  instrument: "GOES-13",
+  eventId: "2017-09-10T16:45:00-SEP-001",
+  url: "https://ccmc.gsfc.nasa.gov/assessment/topics/SEP/campaign2020/20170910.php",
+};
+export const greenhouseSource =
+  "https://www.asc-csa.gc.ca/eng/youth-educators/activities/fitness-and-nutrition/interplanetary-farming.asp";
 export const sources = [
+  {
+    title: "DONKI solar energetic particle event",
+    url: donkiArchive.url,
+    note: "NASA CCMC archive for the 10 September 2017 event recorded near Earth by GOES-13.",
+  },
+  {
+    title: "Canadian Space Agency · Interplanetary Farming",
+    url: greenhouseSource,
+    note: "Light and water requirements for growing food in space.",
+  },
   {
     title: "Apollo Lunar Module model",
     url: "https://science.nasa.gov/3d-resources/apollo-lunar-module/",

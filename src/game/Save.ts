@@ -72,6 +72,9 @@ export function parseSave(raw: string | null): Save | null {
       return null;
     if (
       v.sim.time < 0 ||
+      (v.sim.greenhousePlan !== undefined &&
+        v.sim.greenhousePlan !== "grow" &&
+        v.sim.greenhousePlan !== "save-power") ||
       v.sim.parts < 0 ||
       ["oxygen", "battery", "water", "food", "health", "suit", "crop"].some(
         (k) => v.sim[k] < 0 || v.sim[k] > 100,

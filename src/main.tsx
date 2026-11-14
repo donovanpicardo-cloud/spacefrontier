@@ -71,11 +71,15 @@ import {
   tick,
   power,
   missions,
+  GROW_LIGHT_LOAD,
+  SOLAR_DRILL_WARNING,
+  STORM_DURATION,
   type Sim,
   type Destination,
   type Allocation,
+  type GreenhousePlan,
 } from "./simulation/engine";
-import { sources, solarArchive } from "./data/science/sources";
+import { sources, solarArchive, donkiArchive, greenhouseSource } from "./data/science/sources";
 import "./styles.css";
 import "./play.css";
 import "./expedition.css";
@@ -102,6 +106,8 @@ type Panel =
   | "science"
   | "settings"
   | "dashboard"
+  | "greenhouse"
+  | "solar-drill"
   | "map"
   | "journal"
   | "outpost"
@@ -255,6 +261,8 @@ function App() {
   };
   const list = missions(destination);
   const objective = list[Math.min(mission, 4)];
+  const greenhouseDecision = mission === 2 && sim.irrigation && !tutorialActive;
+  const stormTime = sim.stormSince === null ? null : sim.time - sim.stormSince;
   const radio = useEarthRadio(sim.time, destination);
   const [gatherInfo, setGatherInfo] = useState<GatherInfo | null>(null);
   const [supplyGoal, setSupplyGoal] = useState<string | null>(null);
@@ -487,16 +495,6 @@ function App() {
   }, [inside, tutorialActive, mission, playing]);
   useEffect(() => {
     if (
-      mission === 2 &&
-      sim.irrigation &&
-      allocation.greenhouse &&
-      playing &&
-      !tutorialActive
-    )
-      complete(2);
-  }, [sim.irrigation, allocation.greenhouse, mission, tutorialActive]);
-  useEffect(() => {
-    if (
       mission === 4 &&
       !tutorialActive &&
       near === "shelter" &&
@@ -505,8 +503,8 @@ function App() {
       !allocation.greenhouse &&
       sim.shielded &&
       playing &&
-      sim.stormSince !== null &&
-      sim.time - sim.stormSince >= 45
+      stormTime !== null &&
+      stormTime >= STORM_DURATION
     )
       complete(4);
   }, [
@@ -515,7 +513,7 @@ function App() {
     allocation,
     sim.shielded,
     mission,
-    sim.time,
+    stormTime,
     tutorialActive,
   ]);
   useEffect(() => {
@@ -584,7 +582,7 @@ function App() {
       [
         "Welcome to your space home!",
         "Solar power restored!",
-        "The plants have water!",
+        "Greenhouse power plan set.",
         "Fresh air restored!",
         "Mission complete. Great work!",
       ][n],
@@ -594,8 +592,22 @@ function App() {
       setTimeout(() => open("debrief"), 900);
     } else {
       setMission(n + 1);
-      if (n === 3) setSim((s) => ({ ...s, storm: true, stormSince: s.time }));
+      if (n === 3) {
+        setSim((s) => ({
+          ...s,
+          storm: destination === "mars",
+          stormSince: s.time + (destination === "moon" ? SOLAR_DRILL_WARNING : 0),
+        }));
+        if (destination === "moon") open("solar-drill");
+      }
     }
+  }
+  function chooseGreenhousePlan(plan: GreenhousePlan) {
+    if (!greenhouseDecision || done.includes(2)) return;
+    setSim((s) => ({ ...s, greenhousePlan: plan }));
+    setAllocation((a) => ({ ...a, oxygen: true, greenhouse: plan === "grow" }));
+    complete(2);
+    open(null);
   }
   function interact(id: string) {
     if (tutorialLive.current.active) {
@@ -716,6 +728,8 @@ function App() {
       }
       toast("AIRLOCK · Suit verified. Pressure cycle in progress…");
       setRepairing(true);
+    } else if (id === "greenhouse" && greenhouseDecision) {
+      open("greenhouse");
     } else if (id === "shelter") {
       if (live.current.sim.shielded) {
         toast("Shelter protection is active. Stay here while the emergency passes.");
@@ -773,7 +787,8 @@ function App() {
       ...a,
       cooldowns: { ...a.cooldowns, [id]: live.current.sim.time + 45 },
     });
-    open(null);
+    if (id === "greenhouse" && mission === 2) open("greenhouse");
+    else if (id !== "life" || mission !== 3 || destination === "mars") open(null);
     if (id === "solar" && mission === 1) complete(1);
     if (id === "life" && mission === 3) complete(3);
 
@@ -864,7 +879,13 @@ function App() {
     setInside(v.inside);
     setRepairing(false);
     setPanel(
-      v.rocket?.arrived ? "homecoming" : v.done.includes(4) ? "debrief" : null,
+      v.rocket?.arrived
+        ? "homecoming"
+        : v.done.includes(4)
+          ? "debrief"
+          : v.mission === 2 && v.sim.irrigation
+            ? "greenhouse"
+            : null,
     );
     setPlaying(true);
     if (v.adventure?.towing) {
@@ -929,7 +950,9 @@ function App() {
     if (world.current) world.current.supplyTarget = null;
     const text = tutorialActive
       ? guideStep.hint
-      : juniorGoal(mission, destination);
+      : greenhouseDecision
+        ? "Choose a power plan at the greenhouse, or open Systems with Tab."
+        : juniorGoal(mission, destination);
     setStrongerHint(true);
     toast(text);
     speak(text);
@@ -1386,13 +1409,16 @@ function App() {
                     `${supplyGoal}. Each rig has its own controls. H returns to your mission.`
                   : done.includes(4)
                     ? "Explore, recover robots or build your return rocket. J · Journal  /  U · Projects"
-                    : objective.task}
+                    : greenhouseDecision
+                      ? "Choose a power plan at the greenhouse, or open Systems with Tab."
+                      : objective.task}
               {mission === 4 &&
                 !done.includes(4) &&
-                sim.stormSince !== null && (
+                stormTime !== null && (
                   <strong className="storm-countdown">
-                    Hold essential systems ·{" "}
-                    {Math.max(0, 45 - (sim.time - sim.stormSince))}s remaining
+                    {stormTime < 0
+                      ? `Solar storm drill starts in ${-stormTime}s`
+                      : `Hold essential systems · ${Math.max(0, STORM_DURATION - stormTime)}s remaining`}
                   </strong>
                 )}
             </p>
@@ -1766,6 +1792,41 @@ function App() {
                 <X size={20} />
               </button>
             </div>
+            {panel === "solar-drill" && (
+              <>
+                <h2>Archived solar storm drill</h2>
+                <p>
+                  Mission Control is replaying a solar particle event from{" "}
+                  {donkiArchive.date}. NASA’s DONKI archive records particles
+                  detected by {donkiArchive.instrument} at {donkiArchive.detection}.
+                </p>
+                <p>
+                  You have {SOLAR_DRILL_WARNING} game seconds to prepare.
+                  Head to the shelter, reinforce it, and use Systems (Tab) to
+                  turn on backup power and pause the grow lights.
+                </p>
+                <button className="primary" onClick={() => open(null)}>
+                  Begin drill <ArrowRight size={18} />
+                </button>
+              </>
+            )}
+            {panel === "greenhouse" && (
+              <>
+                <h2>Choose a greenhouse power plan</h2>
+                <p>
+                  Irrigation is ready. The grow lights share a battery with
+                  oxygen production. What should the outpost prioritize?
+                </p>
+                <button className="primary" onClick={() => chooseGreenhousePlan("grow")}>
+                  Run grow lights <ArrowRight size={18} />
+                </button>
+                <p>Use more power to bring the next food harvest closer.</p>
+                <button className="secondary" onClick={() => chooseGreenhousePlan("save-power")}>
+                  Save power for life support
+                </button>
+                <p>Pause crop growth and give the battery more room to recover.</p>
+              </>
+            )}
             {panel === "destinations" && (
               <>
                 <h2>Choose your frontier.</h2>
@@ -2181,6 +2242,11 @@ function App() {
                   </div>
                   <div>
                     <div className="eyebrow">POWER DISTRIBUTION</div>
+                    {greenhouseDecision && (
+                      <button className="secondary" onClick={() => open("greenhouse")}>
+                        Choose greenhouse power plan
+                      </button>
+                    )}
                     <p className="power-net">
                       {p.generated.toFixed(2)} <small>generation</small> /{" "}
                       {p.consumed.toFixed(2)} <small>load · game units</small>
@@ -2214,7 +2280,7 @@ function App() {
                       <strong>
                         {(p.net * 0.18 * 60).toFixed(1)}% / simulation minute
                       </strong>
-                      . Disabling grow lights saves 0.55 power units and stops
+                      . Disabling grow lights saves {GROW_LIGHT_LOAD} power units and stops
                       growth. Backup consumes spare parts.
                     </p>
                     <button
@@ -2569,12 +2635,40 @@ function App() {
                     Battery <strong>{sim.battery.toFixed(0)}%</strong>
                   </span>
                 </div>
-                <p className="science-note">
-                  What if you kept the grow lights on? Their additional load
-                  would consume another {(0.55 * 0.18 * 60).toFixed(1)} battery
-                  percentage points each simulation minute. Balance food growth
-                  against the reserve you need to survive.
-                </p>
+                {sim.irrigation && (
+                  <article className="science-note">
+                    <h3>Greenhouse power debrief</h3>
+                    <p>
+                      {sim.greenhousePlan === "grow"
+                        ? "You chose to run the grow lights after restoring irrigation."
+                        : sim.greenhousePlan === "save-power"
+                          ? "You chose to save battery power and pause crop growth after restoring irrigation."
+                          : "You restored greenhouse irrigation."}{" "}
+                      While the battery has charge, running the lights lets
+                      watered crops grow. Switching them off pauses the next
+                      harvest and reduces battery drain by up to{" "}
+                      {(GROW_LIGHT_LOAD * 0.18 * 60).toFixed(1)} percentage
+                      points per simulation minute.
+                    </p>
+                    <a href={greenhouseSource} target="_blank" rel="noreferrer">
+                      Canadian Space Agency · Interplanetary Farming
+                    </a>
+                  </article>
+                )}
+                {destination === "moon" && stormTime !== null && (
+                  <article className="science-note">
+                    <h3>Solar storm drill debrief</h3>
+                    <p>
+                      NASA archived the {donkiArchive.date} particle event as{" "}
+                      {donkiArchive.eventId}. Reinforcing the shelter reduces
+                      the simulated exposure rate. The warning window,
+                      power shortage, and exposure index are game parameters.
+                    </p>
+                    <a href={donkiArchive.url} target="_blank" rel="noreferrer">
+                      NASA CCMC · Archived DONKI event
+                    </a>
+                  </article>
+                )}
                 {sim.health > 0 && (
                   <button className="primary" onClick={() => open("rocket")}>
                     Continue expedition · build return rocket

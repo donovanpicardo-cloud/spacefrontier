@@ -4,6 +4,8 @@ import {
   tick,
   power,
   missions,
+  SOLAR_DRILL_WARNING,
+  GROW_LIGHT_LOAD,
   type Allocation,
 } from "../simulation/engine";
 import { gravity } from "../data/science/sources";
@@ -69,6 +71,22 @@ describe("life-support conservation and power", () => {
     expect(
       tick({ ...s, shielded: true }, on, "moon", true).radiation,
     ).toBeLessThan(tick(s, on, "moon", false).radiation);
+  });
+  it("starts the lunar drill at the scheduled tick, including after a save", () => {
+    const s = { ...initialSim(), stormSince: SOLAR_DRILL_WARNING };
+    const warning = tick({ ...s, time: SOLAR_DRILL_WARNING - 2 }, on, "moon", false);
+    expect(warning.storm).toBe(false);
+    const active = tick(JSON.parse(JSON.stringify(warning)), on, "moon", false);
+    expect(active.storm).toBe(true);
+    expect(active.radiation - warning.radiation).toBeCloseTo(0.04);
+  });
+  it("saves battery at the cost of crop progress when grow lights are paused", () => {
+    const s = { ...initialSim(), irrigation: true };
+    const grow = tick(s, on, "moon", true);
+    const conserve = tick(s, { ...on, greenhouse: false }, "moon", true);
+    expect(conserve.battery - grow.battery).toBeCloseTo(GROW_LIGHT_LOAD * 0.18);
+    expect(grow.crop).toBeGreaterThan(conserve.crop);
+    expect(conserve.oxygen).toBe(grow.oxygen);
   });
   it("zero suit oxygen harms the crew and resources stay bounded", () => {
     let s = { ...initialSim(), suit: 0, water: 1, battery: 0, oxygen: 1 };
