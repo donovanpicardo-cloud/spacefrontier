@@ -383,6 +383,7 @@ function App() {
         gameAudio.cue("success");
         setSim((s) => resourceReward(s, site));
         setSupplyGoal(null);
+        if (world.current?.supplyTarget === site.id) world.current.supplyTarget = null;
         resumeTowGuide();
         toast(
           site.kind === "ice"
@@ -1293,8 +1294,11 @@ function App() {
     if (action.type === "sample") {
       if (a.samples.includes(action.id)) return;
       commitAdventure(collectSample(a, action.id));
-      setSupplyGoal(null);
-      setSideInstruction(null);
+      if (!w?.supplyTarget || w.supplyTarget === action.id) {
+        if (w) w.supplyTarget = null;
+        setSupplyGoal(null);
+        setSideInstruction(null);
+      }
       toast(
         "Sample sealed · +1 research. Open J to see your discoveries and badges.",
       );
