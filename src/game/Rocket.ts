@@ -85,8 +85,12 @@ export function launchProblem(
   completed: number[],
   inside: boolean,
   riding: boolean,
+  lifeSupport: Pick<Sim, "health" | "suit" | "oxygen">,
 ) {
   if (r.arrived) return "Your mission is complete";
+  if (lifeSupport.health <= 0) return "Crew health is depleted. Restart the mission.";
+  if (lifeSupport.suit <= 0) return "Suit air is empty. Go inside the habitat to refill it.";
+  if (lifeSupport.oxygen < 10) return "Outpost oxygen is too low. Restore life support before launch.";
   if (r.stage < 3) return "Build all three rocket sections first";
   if (![0, 1, 2, 3, 4].every((i) => completed.includes(i)))
     return "Finish the five outpost missions first";

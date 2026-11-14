@@ -21,7 +21,7 @@ export function SurfaceMap(p:{sites:ResourceSite[];collected:Set<string>;player:
  <span className="survey-base" style={point(0,-22)} title="Habitat"><Home size={16}/></span>
  <span className="survey-rover" style={point(p.vehicle.x,p.vehicle.z)} title="Rover"><CarFront size={16}/></span>
  {p.destination==='mars'&&<span className="survey-site salvage" style={point(destination.x,destination.z)} title="Supply run destination"><Wrench size={16}/></span>}
- {expanded&&matches.filter(s=>s.id!==expeditionSite).map(s=><button key={s.id} className={'survey-site '+s.kind} style={point(s.x,s.z)} title={s.name} aria-label={'Mark trail to '+s.name} onClick={()=>p.onSelect(s)}>{s.kind==='ice'?<Droplets size={14}/>:s.kind==='battery'?<Zap size={14}/>:<Wrench size={14}/>}</button>)}
+ {expanded&&matches.filter(s=>p.destination!=='mars'||s.id!==expeditionSite).map(s=><button key={s.id} className={'survey-site '+s.kind} style={point(s.x,s.z)} title={s.name} aria-label={'Mark trail to '+s.name} onClick={()=>p.onSelect(s)}>{s.kind==='ice'?<Droplets size={14}/>:s.kind==='battery'?<Zap size={14}/>:<Wrench size={14}/>}</button>)}
  <span className="survey-player" style={point(p.player[0],p.player[2])} title="You">▲</span>
  </div>
  <p className="map-legend">▲ You · ⌂ Habitat · ▣ Rover · ⚒ Destination · cyan: selected trail</p>

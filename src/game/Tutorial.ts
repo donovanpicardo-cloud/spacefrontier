@@ -72,7 +72,7 @@ export const tutorialSteps = [
   {
     id: "finish",
     title: "You’re ready, explorer!",
-    text: "Your final task is to return to Earth. Complete the five outpost missions, gather supplies and sample research, then build all three rocket sections at the Earthbound launch pad. Once ready, launch home. Start my mission begins a fresh mission after practice.",
+    text: "Your goal is to get back to Earth. Finish the five outpost missions, gather supplies and scan a rock sample. Build three rocket sections at the workbench inside the habitat, then go to the launch pad. Press Enter to start your mission.",
     keys: ["Enter"],
     hint: "Press Enter to finish. You can replay this lesson from Pause.",
   },

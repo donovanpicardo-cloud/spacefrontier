@@ -308,6 +308,7 @@ function App() {
       setPanel("homecoming");
       return;
     }
+    if (live.current.playing && live.current.sim.health <= 0 && p !== "debrief") return;
     if (p !== null) world.current?.adventure.cancel();
     if (p !== null) world.current?.resources.cancel();
     setPanel(p);
@@ -538,7 +539,7 @@ function App() {
     const key = (e: KeyboardEvent) => {
       if (e.repeat || !live.current.playing) return;
       const v = live.current;
-      if (rocketLive.current.arrived) return;
+      if (rocketLive.current.arrived || v.sim.health <= 0) return;
       if (inFlightLive.current) {
         if (e.code === "Escape") {
           e.preventDefault();
@@ -569,9 +570,9 @@ function App() {
       }
       if (e.code === "KeyQ") world.current?.resources.cancel();
       if(!v.panel&&!tutorialLive.current.active) {
-        if(e.code==='KeyL'&&(v.sim.training?.garden||v.sim.training?.storm)) {setAllocation(a=>({...a,oxygen:true,greenhouse:!a.greenhouse}));return;}
-        if(e.code==='KeyB'&&v.sim.training?.storm) {setAllocation(a=>({...a,backup:true}));return;}
-        if(e.code==='KeyP'&&v.sim.training) {emergencyPack();return;}
+        if(e.code==='KeyL'&&(v.sim.training?.garden||mission===4)) {setAllocation(a=>({...a,oxygen:true,greenhouse:!a.greenhouse}));return;}
+        if(e.code==='KeyB'&&mission===4) {setAllocation(a=>({...a,backup:!a.backup}));return;}
+        if(e.code==='KeyP'&&(v.sim.training||mission===4)) {emergencyPack();return;}
         if(e.code==='KeyC'&&v.sim.training?.storm?.stage==='finish') {stormChoice('return');return;}
       }
       if (e.code === "Escape") {
@@ -656,6 +657,12 @@ function App() {
   }
   function emergencyPack() {
     const {garden,storm,rover}=live.current.sim.training??{};
+    const sim=live.current.sim;
+    if(destination==="mars"&&mission===4&&!done.includes(4)&&live.current.near==="shelter"&&!sim.shielded&&(sim.parts<1||sim.battery<6)) {
+      setSim(s=>({...s,battery:Math.max(8,s.battery),parts:Math.max(2,s.parts)}));
+      toast("Emergency shelter kit ready. Press E to reinforce the shelter.");
+      return;
+    }
     if (!(garden&&garden.end===undefined) && !(storm&&storm.stage!=='complete') && !(rover&&!rover.returned&&rover.reserve<20)) return;
     setSim(s=>{
       const g=s.training?.garden,d=s.training?.storm,r=s.training?.rover;
@@ -741,7 +748,21 @@ function App() {
       : expedition&&!expedition.returned
         ? !vehicleInfo?.driving?`${expedition.collected?'Press E beside the rover to board and drive back to the departure point.':'Press E beside the rover to board, or at the marked site to recover supplies.'} Reserve ${expedition.reserve.toFixed(0)}%.`
           : `Drive with WASD along the cyan trail ${expedition.collected?'back to the departure point':'to the supply site'}. Space: brake. E: exit. Reserve ${expedition.reserve.toFixed(0)}%.${expedition.reserve<20?' P: emergency reserve.':''}`
-        : null;
+        : destination === "mars" && mission === 4 && !done.includes(4)
+          ? allocation.greenhouse
+            ? "Press L to turn off the grow lights and save power."
+            : !allocation.backup
+              ? "Press B to switch on backup power."
+              : !inside
+                ? "Follow the trail to the habitat. Press E at the airlock."
+                : near !== "shelter"
+                  ? "Walk down the center aisle to the shelter."
+                  : !sim.shielded
+                    ? sim.parts < 1 || sim.battery < 6
+                      ? "Press P for a shelter kit, then E to reinforce the shelter."
+                      : "Press E to reinforce the shelter. It costs 1 part and 6% power."
+                    : "Stay in the shelter until the storm passes."
+          : null;
   function interact(id: string) {
     if(!tutorialLive.current.active&&mission===4&&destination==='moon'&&id==='solar'&&live.current.sim.training?.storm&&live.current.sim.training.storm.stage!=='complete') {
       const d=live.current.sim.training.storm;
@@ -1023,7 +1044,7 @@ function App() {
     setPanel(
       v.rocket?.arrived
         ? "homecoming"
-        : v.done.includes(4)
+        : v.sim.health <= 0 || v.done.includes(4)
           ? "debrief"
           : v.sim.training?.storm?.stage === 'choice'
             ? "solar-drill"
@@ -1083,7 +1104,7 @@ function App() {
       beginMission();
       toast(
         completed
-          ? "You earned your Explorer patch! Head to begin."
+          ? "You earned your Explorer patch! Follow the trail to the habitat door."
           : "Ready when you are! Help me is always here.",
       );
     }
@@ -1094,6 +1115,12 @@ function App() {
     if (world.current) world.current.supplyTarget = null;
     const text = tutorialActive
       ? guideStep.hint
+      : trainingInstruction
+        ? trainingInstruction
+      : done.includes(4)
+        ? rocket.stage === 3
+          ? "Go to the launch pad and press E to board. Check your suit air first."
+          : "Press U, then choose Earthbound to see what the next rocket section needs."
       : greenhouseDecision
         ? "Choose a power plan at the greenhouse, or open Systems with Tab."
         : juniorGoal(mission, destination);
@@ -1390,6 +1417,7 @@ function App() {
       done,
       live.current.inside,
       live.current.driving,
+      live.current.sim,
     );
     if (problem) {
       toast(problem);
@@ -1762,8 +1790,9 @@ function App() {
             {repairInfo.steps > 1
               ? "Stage " + repairInfo.step + " / " + repairInfo.steps + " · "
               : ""}
-            Left-drag equipment · Escape
-            to stop
+            Drag with the mouse, or press Space to pick up or drop and use the
+            arrow keys to move. For wires and valves, press 1, 2, or 3 to select.
+            Press Esc to stop.
           </small>
         </aside>
       )}
@@ -1922,7 +1951,7 @@ function App() {
                   : panel.toUpperCase()}
               </span>
               <button
-                hidden={panel === "homecoming"}
+                hidden={panel === "homecoming" || (panel === "debrief" && sim.health <= 0)}
                 aria-label="Close"
                 onClick={() => {
                   setRepairing(false);
@@ -2555,15 +2584,17 @@ function App() {
                   done,
                   inside,
                   !!vehicleInfo?.driving,
+                  sim,
                 )}
                 onBuild={buildReturnRocket}
                 onLaunch={launchReturnRocket}
+                onSupplies={findSupplies}
                 onGuide={(id) => {
                   guideSide(
                     id,
                     id === "rocket" ? rocketPad.name : "Fabrication station",
                     id === "rocket"
-                      ? "Park at the pad, get out and press E to board."
+                      ? "Walk to the pad, or park and get out of your rover. Press E beside the rocket."
                       : "Build rocket sections at the fabricator inside your habitat.",
                   );
                 }}
@@ -2727,7 +2758,7 @@ function App() {
                 </h2>
                 <p>
                   {sim.health <= 0
-                    ? "Life support reserves became unsafe. Review your power allocation and return from EVA sooner."
+                    ? "The crew ran out of life support. Replay the mission and head back inside when suit air gets low."
                     : "You restored the outpost and sheltered through an emergency. Your engineering decisions kept the crew alive."}
                 </p>
                 <div className="mini-metrics">

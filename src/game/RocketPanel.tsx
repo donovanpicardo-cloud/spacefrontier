@@ -10,16 +10,17 @@ export function RocketPanel(p: {
   onBuild: () => void;
   onLaunch: () => void;
   onGuide: (id: string) => void;
+  onSupplies: (kind: "salvage" | "battery" | "ice") => void;
 }) {
   const next = rocketStages[p.rocket.stage];
+  const supply = next && (p.sim.parts < next.parts ? "salvage" : p.sim.battery < next.battery ? "battery" : p.sim.water < next.water ? "ice" : null);
   return (
     <div className="expedition-panel rocket-project">
       <div className="expedition-kicker">EARTHBOUND / YOUR JOURNEY HOME</div>
       <h2>Build your way back to Earth.</h2>
       <p>
-        Gather supplies, build three sections at the habitat fabricator, then
-        board at the launch pad. Complete all five outpost missions before
-        departure.
+        Build three sections at the workbench inside the habitat. Finish all
+        five outpost missions, then go outside to the launch pad.
       </p>
       <div
         className="rocket-blueprint"
@@ -80,6 +81,14 @@ export function RocketPanel(p: {
             >
               Show the way to the fabricator
             </button>
+          )}
+          {supply && (
+            <button className="secondary" onClick={() => p.onSupplies(supply)}>
+              {supply === "salvage" ? "Mark spare parts on my trail" : supply === "battery" ? "Mark a power station on my trail" : "Mark a water deposit on my trail"}
+            </button>
+          )}
+          {next.research > p.research && (
+            <p>Press J to open your journal. Pick a rock sample to mark it, then press E near the sample to scan it.</p>
           )}
         </article>
       ) : (

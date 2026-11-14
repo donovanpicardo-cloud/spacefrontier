@@ -56,14 +56,23 @@ describe("earned return journey", () => {
     expect(
       assembleRocket(initialRocket(), { ...initialSim(), parts: 1 }, 1),
     ).toBeNull();
-    expect(launchProblem(rocket, [0, 1, 2, 3, 4], false, false)).toBeNull();
-    expect(launchProblem(rocket, [0, 1, 2, 3], false, false)).toContain("five");
-    expect(launchProblem(rocket, [0, 1, 2, 3, 4], true, false)).toContain(
+    expect(launchProblem(rocket, [0, 1, 2, 3, 4], false, false, sim)).toBeNull();
+    expect(launchProblem(rocket, [0, 1, 2, 3], false, false, sim)).toContain("five");
+    expect(launchProblem(rocket, [0, 1, 2, 3, 4], true, false, sim)).toContain(
       "outside",
     );
-    expect(launchProblem(rocket, [0, 1, 2, 3, 4], false, true)).toContain(
+    expect(launchProblem(rocket, [0, 1, 2, 3, 4], false, true, sim)).toContain(
       "buggy",
     );
+  });
+  it("blocks boarding with depleted health, suit air, or outpost oxygen", () => {
+    const rocket = { stage: 3, arrived: false };
+    const done = [0, 1, 2, 3, 4];
+    const sim = initialSim();
+    expect(launchProblem(rocket, done, false, false, { ...sim, health: 0 })).toContain("Crew health");
+    expect(launchProblem(rocket, done, false, false, { ...sim, suit: 0 })).toContain("Suit air");
+    expect(launchProblem(rocket, done, false, false, { ...sim, oxygen: 9 })).toContain("Outpost oxygen");
+    expect(launchProblem(rocket, done, false, false, sim)).toBeNull();
   });
   it("reads old saves, preserves depleted sites and validates new rocket checkpoints", () => {
     const save = {
