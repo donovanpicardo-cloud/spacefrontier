@@ -1722,6 +1722,19 @@ kbd {
   min-height: 38px;
   font-size: 10px;
 }
+.survey-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.survey-filter select {
+  background: #203c42;
+  color: #fff;
+  border: 1px solid #b4cfc754;
+  border-radius: 6px;
+  padding: 7px 10px;
+}
 .survey-site.ice {
   color: #96dcf0;
 }

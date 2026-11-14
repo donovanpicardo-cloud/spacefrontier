@@ -1,4 +1,5 @@
 import { rocketPad } from "./Rocket";
+import { useState } from "react";
 import { Droplets, Zap, Wrench, Home, CarFront } from "lucide-react";
 import type { ResourceSite } from "./Resources";
 export function SurfaceMap(p: {
@@ -9,8 +10,16 @@ export function SurfaceMap(p: {
   roomBuilt: boolean;
   onSelect: (site: ResourceSite) => void;
 }) {
-  const sites = p.sites.filter(site => !site.id.endsWith("-frontier") ||
-    p.collected.has(site.id) || Math.hypot(site.x - p.player[0], site.z - p.player[2]) <= 150);
+  const [kind, setKind] = useState<ResourceSite["kind"] | "all">("all");
+  const [expanded, setExpanded] = useState(false);
+  const distance = (site: ResourceSite) =>
+    Math.hypot(site.x - p.player[0], site.z - p.player[2]);
+  const matches = p.sites
+    .filter((site) => !p.collected.has(site.id) &&
+      (kind === "all" || kind === site.kind) &&
+      (!site.id.endsWith("-frontier") || distance(site) <= 150))
+    .sort((a, b) => distance(a) - distance(b));
+  const sites = expanded ? matches : matches.slice(0, 6);
   const span = Math.max(
     115,
     ...sites.flatMap((s) => [Math.abs(s.x) + 15, Math.abs(s.z) + 15]),
@@ -23,6 +32,19 @@ export function SurfaceMap(p: {
   });
   return (
     <>
+      <label className="survey-filter">
+        Supplies
+        <select value={kind} onChange={(event) => {
+          setKind(event.target.value as typeof kind);
+          setExpanded(false);
+        }}>
+          <option value="all">All supplies</option>
+          <option value="ice">Water</option>
+          <option value="battery">Power</option>
+          <option value="salvage">Parts</option>
+        </select>
+      </label>
+      <p>Choose a site to mark a trail. More remote sites appear as you explore.</p>
       <div
         className="surface-map"
         aria-label="Surface survey map, north at the top"
@@ -43,11 +65,11 @@ export function SurfaceMap(p: {
         {sites.map((s) => (
           <button
             key={s.id}
-            disabled={p.collected.has(s.id)}
-            className={`survey-site ${s.kind} ${p.collected.has(s.id) ? "used" : ""}`}
+            className={`survey-site ${s.kind}`}
             style={point(s.x, s.z)}
             onClick={() => p.onSelect(s)}
-            aria-label={`${s.name}, ${p.collected.has(s.id) ? "used" : s.kind === "ice" ? "water available" : s.kind === "battery" ? "battery available" : "salvage available"}`}
+            aria-label={`Mark trail to ${s.name}`}
+            title={s.name}
           >
             {s.kind === "ice" ? (
               <Droplets size={17} />
@@ -56,43 +78,32 @@ export function SurfaceMap(p: {
             ) : (
               <Wrench size={17} />
             )}
-            <span>
-              {p.collected.has(s.id)
-                ? "USED"
-                : s.kind === "ice"
-                  ? "WATER"
-                  : s.kind === "battery"
-                    ? "BATTERY"
-                    : "PARTS"}
-            </span>
           </button>
         ))}
         <div className="survey-player" style={point(p.player[0], p.player[2])}>
           ▲ YOU
         </div>
       </div>
-      <p className="science-note">
-        Water is buried at drilling rigs. Batteries must be charged at field
-        generators. Select a marker for a trail. Used sites are grey. The map
-        expands with your travels. Drive beyond the base survey to pick up remote stations within 150 m.
-      </p>
+      {matches.length === 0 && <p>No available sites in this survey. Try another supply or explore farther.</p>}
       <div className="survey-list">
         {sites.map((s) => (
           <button
             key={s.id}
             className="secondary"
-            disabled={p.collected.has(s.id)}
             onClick={() => p.onSelect(s)}
           >
             <strong>{s.name}</strong>
             <small>
-              {p.collected.has(s.id)
-                ? "Recovered — empty"
-                : `${Math.round(Math.hypot(s.x - p.player[0], s.z - p.player[2]))} m · ${s.amount}${s.kind === "salvage" ? " spare parts" : s.kind === "ice" ? "% water" : "% battery"}`}
+              {`${Math.round(distance(s))} m · ${s.amount}${s.kind === "salvage" ? " spare parts" : s.kind === "ice" ? "% water" : "% battery"}`}
             </small>
           </button>
         ))}
       </div>
+      {matches.length > 6 && (
+        <button className="secondary" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+          {expanded ? "Show nearest six" : `Show all ${matches.length} available sites`}
+        </button>
+      )}
     </>
   );
 }

@@ -12,7 +12,6 @@ import {
   type RocketProgress,
 } from "./game/Rocket";
 import { SurfaceMap } from "./game/SurfaceMap";
-import { GreenhouseResearch, MarsRouteActivity, RadiationReadings } from "./game/ScienceActivities";
 import { serviceReward, serviceMessage } from "./simulation/ServiceRewards";
 import React, { useEffect, useRef, useState, useReducer } from "react";
 import { createRoot } from "react-dom/client";
@@ -573,6 +572,7 @@ function App() {
         open(v.panel ? null : "pause");
       }
       if (e.code === "Tab" && world.current?.adventure.hold) return;
+      if (e.code === "Tab" && v.panel === "map") return;
       if (e.code === "Tab") {
         e.preventDefault();
         open(v.panel === "dashboard" ? null : "dashboard");
@@ -2309,12 +2309,11 @@ function App() {
                           crop: 0,
                           food: Math.min(100, s.food + 20),
                         }));
-                        toast("Red romaine harvested · Up to 20% food restored.");
+                        toast("Harvest complete · Food reserves +20%.");
                       }}
                     >
-                      Harvest red romaine · {sim.crop.toFixed(0)}%
+                      Harvest crops · {sim.crop.toFixed(0)}%
                     </button>
-                    {sim.irrigation && <GreenhouseResearch />}
                   </div>
                 </div>
                 <EarthRadio
@@ -2334,8 +2333,7 @@ function App() {
             )}
             {panel === "map" && (
               <>
-                <h2>Your corner of the cosmos.</h2>
-                {destination === "mars" && <MarsRouteActivity />}
+                <h2>Surface map</h2>
                 <button
                   className="secondary"
                   onClick={() =>
@@ -2358,45 +2356,6 @@ function App() {
                   roomBuilt={adventure.upgrades.includes("medbay")}
                   onSelect={(site) => findSupplies(site.kind, site.id)}
                 />
-                <p>
-                  Low on supplies? Find ice for water, salvage for spare parts,
-                  or field dynamos for power. Supplies are finite and spread
-                  across the map. Drive out, then follow each rig’s own
-                  controls. Q leaves a task. Used sites stay empty.
-                </p>
-                <div className="supply-actions">
-                  {(["ice", "salvage", "battery"] as ResourceKind[]).map(
-                    (kind) => {
-                      const left = resourceSites(destination).filter(
-                        (s) =>
-                          s.kind === kind &&
-                          !world.current?.resources.gather.collected.has(s.id),
-                      ).length;
-                      return (
-                        <button
-                          className="secondary"
-                          key={kind}
-                          disabled={!left}
-                          onClick={() => findSupplies(kind)}
-                        >
-                          Find{" "}
-                          {kind === "ice"
-                            ? "ice / water"
-                            : kind === "salvage"
-                              ? "salvage / parts"
-                              : "battery / power"}{" "}
-                          · {left} sites
-                        </button>
-                      );
-                    },
-                  )}
-                </div>
-                <p className="science-note">
-                  Ice collection uses a portable purifier in this game. Power is
-                  generated with a hand crank; salvage comes from damaged
-                  expedition equipment. Oxygen needs water and power at the
-                  habitat; food comes from the greenhouse harvest.
-                </p>
               </>
             )}
             {panel === "journal" && (
@@ -2672,7 +2631,6 @@ function App() {
                     <a href={greenhouseSource} target="_blank" rel="noreferrer">
                       Canadian Space Agency · Interplanetary Farming
                     </a>
-                    <GreenhouseResearch />
                   </article>
                 )}
                 {destination === "moon" && stormTime !== null && (
@@ -2687,7 +2645,6 @@ function App() {
                     <a href={donkiArchive.url} target="_blank" rel="noreferrer">
                       NASA CCMC · Archived DONKI event
                     </a>
-                    <RadiationReadings exposure={sim.radiation} />
                   </article>
                 )}
                 {sim.health > 0 && (

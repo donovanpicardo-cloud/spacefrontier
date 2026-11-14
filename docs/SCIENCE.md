@@ -1,11 +1,5 @@
 # Science assumptions and provenance
 
-The Mars map includes a route-planning exercise based on NASA/JPL-Caltech’s proposed Perseverance traverse at Jezero Crater (PIA24379). Mars Trek opens separately for real terrain exploration. The in-game supply map uses the game world’s coordinates.
-
-The greenhouse features red romaine, based on NASA’s Veggie ISS experiment, [OSD-267](https://osdr.nasa.gov/bio/repo/data/studies/OSD-267). Growth and harvest quantities use the simulation’s existing rates.
-
-The lunar drill debrief includes six archived DosTel1 absorbed dose rates from NASA RadLab, recorded aboard the ISS on 1 April 2022 from 23:00:00 to 23:05:33 UTC. Rates are displayed in µGy/h, alongside the separately labeled game exposure index. The dataset link in the debrief opens the original query.
-
 | Value or principle | Units / classification | Source and simplification |
 | --- | --- | --- |
 | Moon gravity 1.62 | m/s²; rounded physical constant | NASA lunar context: https://science.nasa.gov/moon/facts/ ; game acceleration is applied to vertical velocity each render step |
