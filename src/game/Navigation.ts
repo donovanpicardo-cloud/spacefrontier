@@ -25,7 +25,7 @@ export function navigationTarget(
   if (inside && p.x > 7 && !["medbay"].includes(station.id))
     return { x: 3, z: -23, phase: "room-exit" };
   if (inside && Math.abs(p.z - destination.z) > 2) {
-    if (Math.abs(p.x) > 1.15) return { x: 0, z: p.z, phase: "aisle" };
+    if (Math.abs(p.x) > .55) return { x: 0, z: p.z, phase: "aisle" };
     return { x: 0, z: destination.z, phase: "hall" };
   }
   return { ...destination, phase: "target" };

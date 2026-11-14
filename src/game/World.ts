@@ -846,11 +846,11 @@ export class World {
     this.guideRouteKey = key;
     this.guideOrigin.set(player.x, player.z);
     const doorway = point.phase === "target" && (station.id === "airlock" || point.z === -8.2 || point.z === -13.4);
-    const radius = doorway ? .65 : point.phase !== "target" ? .8 : station.id === "rocket" ? 4.4 : station.id === "rover" ? 2.9 : 1.8;
+    const radius = point.phase === "aisle" ? .3 : doorway ? .65 : point.phase !== "target" ? .8 : station.id === "rocket" ? 4.4 : station.id === "rover" ? 2.9 : 1.8;
     const foot = new T.Vector3();
     this.guideRoute = walkingRoute(player, point, radius, ({ x, z }) =>
       this.physics.clearFoot(foot.set(x, this.groundHeight(x, z) + .12, z), obstacles));
-    const next = this.guideRoute.find(waypoint => Math.hypot(waypoint.x - player.x, waypoint.z - player.z) > .4) ?? point;
+    const next = this.guideRoute[0] ?? point;
     this.guidePoint.set(next.x, 0, next.z);
     if (!this.guideMarks) {
       this.guideMarks = new T.InstancedMesh(new T.RingGeometry(.13, .24, 12).rotateX(-Math.PI / 2),
