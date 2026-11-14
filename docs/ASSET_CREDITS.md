@@ -1,5 +1,11 @@
 # Asset credits and provenance
 
+## Jezero rover route
+
+- NASA/JPL-Caltech, *Possible Path for Perseverance Rover*, PIA24379. The annotated orbital mosaic depicts a proposed route.
+- Source: https://science.nasa.gov/photojournal/possible-path-for-perseverance-rover/
+- Local image: `public/plates/jezero-route.jpg`, resized to 1200 × 653 for the Mars map lesson.
+
 ## Primary astronaut
 
 - Asset: Astronaut in Spacesuit, rigged variant, published by Grab3D.

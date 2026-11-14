@@ -12,6 +12,7 @@ import {
   type RocketProgress,
 } from "./game/Rocket";
 import { SurfaceMap } from "./game/SurfaceMap";
+import { GreenhouseResearch, MarsRouteActivity, RadiationReadings } from "./game/ScienceActivities";
 import { serviceReward, serviceMessage } from "./simulation/ServiceRewards";
 import React, { useEffect, useRef, useState, useReducer } from "react";
 import { createRoot } from "react-dom/client";
@@ -2308,11 +2309,12 @@ function App() {
                           crop: 0,
                           food: Math.min(100, s.food + 20),
                         }));
-                        toast("Harvest complete · Food reserves +20%.");
+                        toast("Red romaine harvested · Up to 20% food restored.");
                       }}
                     >
-                      Harvest crops · {sim.crop.toFixed(0)}%
+                      Harvest red romaine · {sim.crop.toFixed(0)}%
                     </button>
+                    {sim.irrigation && <GreenhouseResearch />}
                   </div>
                 </div>
                 <EarthRadio
@@ -2333,6 +2335,7 @@ function App() {
             {panel === "map" && (
               <>
                 <h2>Your corner of the cosmos.</h2>
+                {destination === "mars" && <MarsRouteActivity />}
                 <button
                   className="secondary"
                   onClick={() =>
@@ -2669,6 +2672,7 @@ function App() {
                     <a href={greenhouseSource} target="_blank" rel="noreferrer">
                       Canadian Space Agency · Interplanetary Farming
                     </a>
+                    <GreenhouseResearch />
                   </article>
                 )}
                 {destination === "moon" && stormTime !== null && (
@@ -2683,6 +2687,7 @@ function App() {
                     <a href={donkiArchive.url} target="_blank" rel="noreferrer">
                       NASA CCMC · Archived DONKI event
                     </a>
+                    <RadiationReadings exposure={sim.radiation} />
                   </article>
                 )}
                 {sim.health > 0 && (

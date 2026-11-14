@@ -283,3 +283,46 @@
 @media(max-width:650px) {
   .app.in-game .tutorial-card { top: 84px; right: 12px; width: min(280px,calc(100vw - 24px)); max-height: calc(100dvh - 160px); }
 }
+.app .mission-science {
+  margin-block: 14px;
+}
+.app .mission-science summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.app .mission-science figure {
+  margin: 12px 0;
+}
+.app .mission-science img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.app .mission-science figcaption {
+  margin-top: 6px;
+}
+.app .mission-science a {
+  display: block;
+  margin-block: 6px;
+  color: #a9dbfb;
+  text-decoration: underline;
+}
+.app .mission-science-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.app .mission-science-choices [aria-pressed="true"] {
+  border-color: #a9dbfb;
+  background: #23405a;
+}
+.app .radiation-reading {
+  display: grid;
+  grid-template-columns: max-content minmax(24px, 1fr) max-content;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.app .radiation-reading meter {
+  width: 100%;
+}
