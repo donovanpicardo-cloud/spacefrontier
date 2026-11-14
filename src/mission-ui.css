@@ -283,3 +283,13 @@
 @media(max-width:650px) {
   .app.in-game .tutorial-card { top: 84px; right: 12px; width: min(280px,calc(100vw - 24px)); max-height: calc(100dvh - 160px); }
 }
+.training-map {position:relative;min-height:250px}
+.training-map>svg {position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.training-map .survey-site,.training-map .survey-base,.training-map .survey-rover,.training-map .survey-player {width:22px;height:22px;min-width:0;padding:2px;display:grid;place-items:center;transform:translate(-50%,-50%)}
+.training-map .survey-player {color:#fff;filter:drop-shadow(0 0 3px #000);z-index:5;pointer-events:none}
+.map-legend {font-size:12px!important;line-height:1.6}
+.route-choices {display:flex;gap:8px;flex-wrap:wrap}
+.science-note table {width:100%;text-align:left;font-variant-numeric:tabular-nums}
+.science-note td,.science-note th {padding:6px}
+.science-note summary {cursor:pointer;padding:10px 0;color:#8be7d5}
+@media(max-width:600px){.route-choices>button{width:100%}.training-map{min-height:220px}.objective p{font-size:12px}.objective{max-width:calc(100vw - 28px)}}

@@ -297,6 +297,31 @@ export class World {
   repairApproach: { from: T.Vector3; to: T.Vector3; t: number } | null = null;
   guideClock = 0;
   guidePoint = new T.Vector3();
+  trainingTrail: T.Line | null = null;
+  trainingTrailKey = '';
+  setTrainingTrail(points: {x:number;z:number}[]) {
+    const key=JSON.stringify(points);
+    if(key===this.trainingTrailKey) return;
+    this.trainingTrailKey=key;
+    if(this.trainingTrail) {
+      this.scene.remove(this.trainingTrail);
+      this.trainingTrail.geometry.dispose();
+      (this.trainingTrail.material as T.Material).dispose();
+      this.trainingTrail=null;
+    }
+    if(points.length<2) return;
+    const vertices:T.Vector3[]=[];
+    for(let i=1;i<points.length;i++) {
+      const a=points[i-1],b=points[i],n=Math.max(1,Math.ceil(Math.hypot(a.x-b.x,a.z-b.z)));
+      for(let j=0;j<=n;j++) {
+        const x=a.x+(b.x-a.x)*j/n,z=a.z+(b.z-a.z)*j/n;
+        vertices.push(new T.Vector3(x,this.groundHeight(x,z)+0.3,z));
+      }
+    }
+    this.trainingTrail=new T.Line(new T.BufferGeometry().setFromPoints(vertices),new T.LineBasicMaterial({color:0x72fce8,depthTest:false,transparent:true,opacity:0.8}));
+    this.trainingTrail.renderOrder=3;
+    this.scene.add(this.trainingTrail);
+  }
   lastGuide = "";
   recoveryRoom!: RecoveryRoom;
   terrainStream!: TerrainStream;

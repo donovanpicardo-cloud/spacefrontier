@@ -12,6 +12,8 @@ import {
   type RocketProgress,
 } from "./game/Rocket";
 import { SurfaceMap } from "./game/SurfaceMap";
+import { expeditionSite, routePaths, routeNames, startGarden, harvest, travelCost, type RouteId } from './game/Training';
+import { TrainingDebrief } from './game/TrainingDebrief';
 import { serviceReward, serviceMessage } from "./simulation/ServiceRewards";
 import React, { useEffect, useRef, useState, useReducer } from "react";
 import { createRoot } from "react-dom/client";
@@ -117,8 +119,10 @@ type Panel =
   | "rocket"
   | "homecoming"
   | "debrief"
+  | "training-debrief"
   | null;
 function App() {
+  const [trainingDebrief,setTrainingDebrief]=useState<'rover'|'garden'|'storm'>('garden');
   const mount = useRef<HTMLDivElement>(null),
     world = useRef<World | null>(null);
   const [worldEnabled, setWorldEnabled] = useState(false);
@@ -268,6 +272,10 @@ function App() {
   const list = missions(destination);
   const objective = list[Math.min(mission, 4)];
   const greenhouseDecision = mission === 2 && sim.irrigation && !tutorialActive;
+  const garden=sim.training?.garden;
+  const expedition=sim.training?.rover;
+  const drill=sim.training?.storm;
+  useEffect(()=>{if(world.current) world.current.vehicle.expeditionReserve=expedition&&!expedition.returned?expedition.reserve:100;},[expedition?.reserve,expedition?.returned,worldModule]);
   const stormTime = sim.stormSince === null ? null : sim.time - sim.stormSince;
   const radio = useEarthRadio(sim.time, destination);
   const [gatherInfo, setGatherInfo] = useState<GatherInfo | null>(null);
@@ -560,6 +568,12 @@ function App() {
         }
       }
       if (e.code === "KeyQ") world.current?.resources.cancel();
+      if(!v.panel&&!tutorialLive.current.active) {
+        if(e.code==='KeyL'&&(v.sim.training?.garden||v.sim.training?.storm)) {setAllocation(a=>({...a,oxygen:true,greenhouse:!a.greenhouse}));return;}
+        if(e.code==='KeyB'&&v.sim.training?.storm) {setAllocation(a=>({...a,backup:true}));return;}
+        if(e.code==='KeyP'&&v.sim.training) {emergencyPack();return;}
+        if(e.code==='KeyC'&&v.sim.training?.storm?.stage==='finish') {stormChoice('return');return;}
+      }
       if (e.code === "Escape") {
         if (
           world.current &&
@@ -572,7 +586,7 @@ function App() {
         open(v.panel ? null : "pause");
       }
       if (e.code === "Tab" && world.current?.adventure.hold) return;
-      if (e.code === "Tab" && v.panel === "map") return;
+      if (e.code === "Tab" && v.panel) return;
       if (e.code === "Tab") {
         e.preventDefault();
         open(v.panel === "dashboard" ? null : "dashboard");
@@ -609,28 +623,135 @@ function App() {
       ][n],
     );
     if (n === 4) {
-      setSim((s) => ({ ...s, storm: false }));
+      setSim((s) => ({ ...s, storm: false,training:s.training?.storm?{...s.training,storm:{...s.training.storm,stage:'complete',end:s.time,finalBattery:s.battery,finalExposure:s.radiation}}:s.training }));
+      world.current?.setTrainingTrail([]);
       setTimeout(() => open("debrief"), 900);
     } else {
       setMission(n + 1);
       if (n === 3) {
+        if(destination==='moon') {
+          setSim(s=>({...s,training:{...s.training,storm:{stage:'field',warning:null,arrival:null,choice:null,task:0,supplies:0,battery:s.battery,exposure:s.radiation,recovery:0}}}));
+          open(null);
+          world.current?.guideAdventure('solar');
+          return;
+        }
         setSim((s) => ({
           ...s,
           storm: destination === "mars",
-          stormSince: s.time + (destination === "moon" ? SOLAR_DRILL_WARNING : 0),
+          stormSince: s.time,
         }));
-        if (destination === "moon") open("solar-drill");
+
       }
     }
   }
   function chooseGreenhousePlan(plan: GreenhousePlan) {
     if (!greenhouseDecision || done.includes(2)) return;
-    setSim((s) => ({ ...s, greenhousePlan: plan }));
+    setSim((s) => ({ ...(s.training?.garden?s:startGarden(s)), greenhousePlan: plan }));
     setAllocation((a) => ({ ...a, oxygen: true, greenhouse: plan === "grow" }));
-    complete(2);
     open(null);
   }
+  function finishHarvest() {
+    if(!live.current.sim.training?.garden || live.current.sim.crop<100) return;
+    setSim(harvest); complete(2); setTrainingDebrief('garden'); open('training-debrief');
+  }
+  function emergencyPack() {
+    const {garden,storm,rover}=live.current.sim.training??{};
+    if (!(garden&&garden.end===undefined) && !(storm&&storm.stage!=='complete') && !(rover&&!rover.returned&&rover.reserve<20)) return;
+    setSim(s=>{
+      const g=s.training?.garden,d=s.training?.storm,r=s.training?.rover;
+      if(g&&g.end===undefined) return {...s,battery:Math.min(100,s.battery+12),water:Math.max(20,s.water),training:{...s.training,garden:{...g,recovery:g.recovery+1}}};
+      if(d&&d.stage!=='complete') return {...s,battery:Math.max(16,s.battery),parts:Math.max(2,s.parts),training:{...s.training,storm:{...d,recovery:d.recovery+1}}};
+      if(r&&!r.returned&&r.reserve<20) return {...s,training:{...s.training,rover:{...r,reserve:Math.min(100,r.reserve+30),rescue:r.rescue+1}}};
+      return s;
+    });
+    toast('Training emergency pack used; recorded in your debrief.');
+  }
+  function selectRoute(route:RouteId) {
+    const w=world.current;
+    if(!w || w.resources.gather.collected.has(expeditionSite) || live.current.sim.training?.rover) return;
+    setSim(s=>({...s,training:{...s.training,rover:{route,reserve:100,distance:0,last:{x:w.vehicle.state.x,z:w.vehicle.state.z},collected:false,returned:false,rescue:0}}}));
+    findSupplies('salvage',expeditionSite);
+  }
+  function stormChoice(choice:'return'|'finish') {
+    setSim(s=>{
+      const storm=s.training?.storm;
+      if(!storm) return s;
+      const firstChoice=storm.stage==='choice';
+      return {
+        ...s,
+        stormSince:firstChoice?s.time+SOLAR_DRILL_WARNING:s.stormSince,
+        training:{...s.training,storm:{
+          ...storm,
+          warning:firstChoice?s.time:storm.warning,
+          battery:firstChoice?s.battery:storm.battery,
+          exposure:firstChoice?s.radiation:storm.exposure,
+          choice:firstChoice?choice:storm.choice,
+          stage:choice,
+        }},
+      };
+    });
+    world.current?.guideAdventure(choice==='return'?'shelter':'solar');
+    setSupplyGoal(null); open(null);
+  }
+  useEffect(()=>{
+    const w=world.current;
+    if(!w||!playing||tutorialActive) return;
+    const r=sim.training?.rover,d=sim.training?.storm;
+    if(r&&!r.returned) {
+      const now={x:w.vehicle.state.x,z:w.vehicle.state.z};
+      const collected=w.resources.gather.collected.has(expeditionSite);
+      const returned=collected&&Math.hypot(now.x+9,now.z-5)<7;
+      setSim(s=>{
+        const rover=s.training?.rover;
+        if(!rover||rover.returned) return s;
+        const distance=Math.hypot(now.x-rover.last.x,now.z-rover.last.z);
+        if(!distance&&collected===rover.collected&&!returned) return s;
+        const reserve=Math.max(0,rover.reserve-travelCost(rover.last,now,(x,z)=>w.groundHeight(x,z)));
+        return {...s,training:{...s.training,rover:{...rover,last:now,distance:rover.distance+distance,reserve,collected,returned}}};
+      });
+      w.setTrainingTrail(routePaths[r.route]);
+      if(returned){w.setTrainingTrail([]);setSupplyGoal(null);setTrainingDebrief('rover');open('training-debrief');}
+    } else if(d&&d.warning!==null&&d.stage!=='complete') {
+      const p=w.getPosition();
+      const target=inside?{x:0,z:-31}:{x:0,z:-8};
+      w.setTrainingTrail([{x:p[0],z:p[2]},target]);
+      if(d.stage==='finish'&&near==='solar'&&w.keys.has('KeyE')) {
+        const task=d.task+1,finished=task>=10;
+        setSim(s=>({...s,parts:Math.min(20,s.parts+(finished?1:0)),training:{...s.training,storm:{...d,task,stage:finished?'return':'finish',supplies:finished?1:0}}}));
+        if(finished) {toast('Field task finished · 1 spare part. Return to shelter.');w.guideAdventure('shelter');}
+      }
+      if(inside&&near==='shelter'&&d.arrival===null) setSim(s=>{
+        const storm=s.training?.storm;
+        if(!storm||storm.arrival!==null) return s;
+        return {...s,training:{...s.training,storm:{...storm,arrival:s.time,stage:storm.stage==='complete'?'complete':'shelter'}}};
+      });
+    } else w.setTrainingTrail([]);
+  },[sim.time,playing,tutorialActive]);
+  const trainingInstruction = garden&&garden.end===undefined
+    ? sim.crop>=100?'Press E at the greenhouse to harvest.':`Press L to ${allocation.greenhouse?'pause':'restart'} grow lights. Battery ${sim.battery.toFixed(1)}% · oxygen ${sim.oxygen.toFixed(1)}% · crop ${sim.crop.toFixed(0)}%.${sim.battery<8?' Press P for an emergency pack.':''}`
+    : drill&&drill.stage!=='complete'
+      ? drill.stage==='field'||drill.stage==='choice'?'Press E at the outdoor solar panel to open the storm drill.'
+        : drill.stage==='finish'?`Hold E at the solar panel to finish the check · ${10-drill.task}s left. Or press C to abandon and return.`
+        : !inside?'Follow the cyan trail to the airlock. Press E to enter.'
+        : near!=='shelter'?'Walk down the centre aisle to the shelter.'
+        : !sim.shielded?'Press E to reinforce the shelter. Low supplies? Press P.'
+        : !allocation.backup?'Press B to switch on backup power.'
+        : allocation.greenhouse?'Press L to pause grow lights.'
+        : 'Shelter ready. Stay here until the active storm ends.'
+      : expedition&&!expedition.returned
+        ? !vehicleInfo?.driving?`Press E beside the rover to board, or at the marked site to recover supplies. Reserve ${expedition.reserve.toFixed(0)}%.`
+          : `Drive with WASD along the cyan trail ${expedition.collected?'back to the departure point':'to the supply site'}. Space: brake. E: exit. Reserve ${expedition.reserve.toFixed(0)}%.${expedition.reserve<20?' P: emergency reserve.':''}`
+        : null;
   function interact(id: string) {
+    if(!tutorialLive.current.active&&mission===4&&destination==='moon'&&id==='solar'&&live.current.sim.training?.storm) {
+      const d=live.current.sim.training.storm;
+      if(d.stage==='field'||d.stage==='choice') {
+        if(d.stage==='field') setSim(s=>({...s,training:{...s.training,storm:{...d,stage:'choice'}}}));
+        open('solar-drill');
+      }
+      return;
+    }
+    if(id==='greenhouse'&&live.current.sim.training?.garden?.end===undefined&&live.current.sim.crop>=100&&live.current.sim.training?.garden) {finishHarvest();return;}
     if (tutorialLive.current.active) {
       const step = tutorialLive.current.id;
       if (
@@ -904,7 +1025,9 @@ function App() {
         ? "homecoming"
         : v.done.includes(4)
           ? "debrief"
-          : v.mission === 2 && v.sim.irrigation
+          : v.sim.training?.storm?.stage === 'choice'
+            ? "solar-drill"
+          : v.mission === 2 && v.sim.irrigation && !v.sim.training?.garden
             ? "greenhouse"
             : null,
     );
@@ -1423,7 +1546,7 @@ function App() {
                     : objective.name}
             </h2>
             <p>
-              {tutorialActive
+              {trainingInstruction&&!tutorialActive?trainingInstruction:tutorialActive
                 ? "Practice together with Mission Control."
                 : supplyGoal
                   ? sideInstruction ||
@@ -1822,14 +1945,16 @@ function App() {
                   Head to the shelter, reinforce it, and use Systems (Tab) to
                   turn on backup power and pause the grow lights.
                 </p>
-                <button className="primary" onClick={() => open(null)}>
-                  Begin drill <ArrowRight size={18} />
-                </button>
+                <p>Your outdoor parts check is in progress. Finishing takes 10 seconds and recovers 1 spare part, leaving less time to prepare. The clock pauses while you choose.</p>
+                <button className="primary" onClick={() => stormChoice('return')}>Return to shelter now</button>
+                <button className="secondary" onClick={() => stormChoice('finish')}>Finish the short field task</button>
               </>
             )}
+            {panel==='training-debrief'&&<><TrainingDebrief sim={sim} kind={trainingDebrief}/><button className="primary" onClick={()=>open(null)}>Continue mission</button></>}
             {panel === "greenhouse" && (
               <>
                 <h2>Choose a greenhouse power plan</h2>
+                <p>Red romaine ration window · {garden?'Current':'Starting'} battery {garden?sim.battery.toFixed(1):24}% · oxygen {sim.oxygen.toFixed(1)}% · crop {sim.crop.toFixed(0)}%.</p>
                 <p>
                   Irrigation is ready. The grow lights share a battery with
                   oxygen production. What should the outpost prioritize?
@@ -1842,6 +1967,8 @@ function App() {
                   Save power for life support
                 </button>
                 <p>Pause crop growth and give the battery more room to recover.</p>
+                <p>Press L during play to change plans. Growth takes about 38 lit seconds. The training shortage adds 0.65 battery points/second of load with lights on; paused lights recover 0.55 points/second, alongside normal outpost power. All times, costs and yields are game values. Oxygen production stays on.</p>
+                <p>No deadline: paused crops can resume. If charge or water runs low, press P during play for an emergency pack; its use is recorded.</p>
               </>
             )}
             {panel === "destinations" && (
@@ -2347,6 +2474,10 @@ function App() {
                   Find my buggy →
                 </button>
                 <SurfaceMap
+                  destination={destination}
+                  ground={(x,z)=>world.current?.groundHeight(x,z)??0}
+                  expedition={expedition}
+                  onRoute={selectRoute}
                   sites={resourceSites(destination)}
                   collected={
                     world.current?.resources.gather.collected ?? new Set()
@@ -2613,7 +2744,10 @@ function App() {
                     Battery <strong>{sim.battery.toFixed(0)}%</strong>
                   </span>
                 </div>
-                {sim.irrigation && (
+                {garden&&<TrainingDebrief sim={sim} kind="garden"/>}
+                {drill&&<TrainingDebrief sim={sim} kind="storm"/>}
+                {expedition&&<TrainingDebrief sim={sim} kind="rover"/>}
+                {sim.irrigation && !garden && (
                   <article className="science-note">
                     <h3>Greenhouse power debrief</h3>
                     <p>
@@ -2633,7 +2767,7 @@ function App() {
                     </a>
                   </article>
                 )}
-                {destination === "moon" && stormTime !== null && (
+                {destination === "moon" && stormTime !== null && !drill && (
                   <article className="science-note">
                     <h3>Solar storm drill debrief</h3>
                     <p>

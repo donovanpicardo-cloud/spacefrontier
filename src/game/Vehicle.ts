@@ -41,6 +41,7 @@ export class ExplorerVehicle {
   lastEmit = 0;
   hint = "";
   towing = false;
+  expeditionReserve = 100;
   dynamicObstacles: () => T.Box3[] = () => [];
   blockedBy = "Obstacle";
   blockedFor = 0;
@@ -539,7 +540,7 @@ export class ExplorerVehicle {
         this.state,
         input,
         dt,
-        this.towing ? 4 : this.destination === "moon" ? 8 : 6,
+        this.expeditionReserve<=0 ? 0 : this.towing ? 4 : this.destination === "moon" ? 8 : 6,
         (x, z, yaw, fromX, fromZ) => this.canMove(x, z, yaw, fromX, fromZ),
       );
       if (input.throttle && !input.brake && this.state.speed === 0)

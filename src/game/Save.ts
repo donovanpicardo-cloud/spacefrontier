@@ -1,4 +1,5 @@
 import { validRocket, type RocketProgress } from "./Rocket";
+import { validTraining } from './Training';
 import {
   initialSim,
   type Sim,
@@ -120,6 +121,7 @@ export function parseSave(raw: string | null): Save | null {
         ))
     )
       return null;
+    if (!validTraining(v.sim.training)) return null;
     if (new Set(v.done).size !== v.done.length) return null;
     if (v.adventure !== undefined && !validAdventure(v.adventure)) return null;
     if (v.rocket !== undefined && !validRocket(v.rocket)) return null;

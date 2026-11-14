@@ -1,3 +1,4 @@
+import { trainingTick, type Training } from '../game/Training';
 export type Destination = "moon" | "mars";
 export type Allocation = {
   oxygen: boolean;
@@ -10,6 +11,7 @@ export const GROW_LIGHT_LOAD = 0.55;
 export const STORM_DURATION = 45;
 export const SOLAR_DRILL_WARNING = 30;
 export type Sim = {
+  training?: Training;
   greenhousePlan?: GreenhousePlan;
   time: number;
   oxygen: number;
@@ -159,7 +161,7 @@ export function tick(
       ...s.history.slice(-59),
       [s.oxygen, s.battery, s.water, s.food],
     ];
-  return s;
+  return trainingTick(s,a);
 }
 export const missions = (d: Destination) => [
   {
