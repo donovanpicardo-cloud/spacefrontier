@@ -387,7 +387,7 @@ function App() {
             ? `Water collected · up to +${site.amount}%.`
             : site.kind === "battery"
               ? `Power restored · up to +${site.amount}%.`
-              : `Salvage recovered · +${site.amount} spare parts.`,
+              : `Salvage recovered · +${site.amount} spare ${site.amount === 1 ? "part" : "parts"}.`,
         );
       },
     };
@@ -739,7 +739,7 @@ function App() {
         : allocation.greenhouse?'Press L to pause grow lights.'
         : 'Shelter ready. Stay here until the active storm ends.'
       : expedition&&!expedition.returned
-        ? !vehicleInfo?.driving?`Press E beside the rover to board, or at the marked site to recover supplies. Reserve ${expedition.reserve.toFixed(0)}%.`
+        ? !vehicleInfo?.driving?`${expedition.collected?'Press E beside the rover to board and drive back to the departure point.':'Press E beside the rover to board, or at the marked site to recover supplies.'} Reserve ${expedition.reserve.toFixed(0)}%.`
           : `Drive with WASD along the cyan trail ${expedition.collected?'back to the departure point':'to the supply site'}. Space: brake. E: exit. Reserve ${expedition.reserve.toFixed(0)}%.${expedition.reserve<20?' P: emergency reserve.':''}`
         : null;
   function interact(id: string) {

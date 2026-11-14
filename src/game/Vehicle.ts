@@ -270,7 +270,10 @@ export class ExplorerVehicle {
   reset() {
     this.driving = false;
     this.transition = null;
-    const preferred = Math.PI + Math.PI / 6;
+    // Face the canyon route on Mars so the first trail marker is ahead.
+    const preferred = this.destination === "mars"
+      ? Math.atan2(3, -4)
+      : Math.PI + Math.PI / 6;
     const safe = this.clearParking(this.spawn.x, this.spawn.z, preferred);
     const facing = this.departureFacing(safe.x, safe.y, preferred);
     this.state = { x: safe.x, z: safe.y, yaw: facing, speed: 0 };
