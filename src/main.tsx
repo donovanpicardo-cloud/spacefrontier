@@ -743,7 +743,7 @@ function App() {
           : `Drive with WASD along the cyan trail ${expedition.collected?'back to the departure point':'to the supply site'}. Space: brake. E: exit. Reserve ${expedition.reserve.toFixed(0)}%.${expedition.reserve<20?' P: emergency reserve.':''}`
         : null;
   function interact(id: string) {
-    if(!tutorialLive.current.active&&mission===4&&destination==='moon'&&id==='solar'&&live.current.sim.training?.storm) {
+    if(!tutorialLive.current.active&&mission===4&&destination==='moon'&&id==='solar'&&live.current.sim.training?.storm&&live.current.sim.training.storm.stage!=='complete') {
       const d=live.current.sim.training.storm;
       if(d.stage==='field'||d.stage==='choice') {
         if(d.stage==='field') setSim(s=>({...s,training:{...s.training,storm:{...d,stage:'choice'}}}));
