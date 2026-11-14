@@ -1057,7 +1057,7 @@ export class World {
     this.pointerY = e.clientY;
     this.renderer.domElement.setPointerCapture(e.pointerId);
     this.renderer.domElement.classList.add("orbiting");
-    if (e.pointerType === "mouse" && e.button === 0 &&
+    if (e.pointerType === "mouse" && e.button === 0 && !this.state.tutorial &&
         !this.resources.gather.active && !this.adventure.hold && !this.transit)
       this.lock();
   };

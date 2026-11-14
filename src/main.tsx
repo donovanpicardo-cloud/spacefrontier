@@ -93,6 +93,7 @@ import {
   tutorialReducer,
   tutorialSteps,
   tutorialTarget,
+  tutorialCanContinue,
   juniorGoal,
   simulationRuns,
   type TutorialEvent,
@@ -228,6 +229,11 @@ function App() {
   function lessonEvent(e: TutorialEvent) {
     if (tutorialLive.current.active && e.type === tutorialLive.current.id)
       dispatchTutorial(e);
+  }
+  function highlightTutorialMeter(id: "objective" | "oxygen") {
+    setHighlight(id);
+    lessonEvent({ type: id });
+    window.setTimeout(() => setHighlight(""), 4500);
   }
   function speak(text: string, force = false) {
     if ((!narration && !force) || !("speechSynthesis" in window)) return;
@@ -485,6 +491,10 @@ function App() {
     return () => clearInterval(id);
   }, [destination, speed]);
   useEffect(() => {
+    if (tutorialActive && tutorialCanContinue(guideStep.id))
+      world.current?.releaseLook();
+  }, [tutorialActive, guideStep.id, worldModule]);
+  useEffect(() => {
     if (sim.health <= 0 && playing) {
       setRepairing(false);
       open("debrief");
@@ -538,6 +548,16 @@ function App() {
       if (e.code === "KeyK" && tutorialLive.current.active) {
         endTutorial(false);
         return;
+      }
+      if (e.code === "Enter" && tutorialLive.current.active && !v.panel) {
+        const step = tutorialLive.current.id;
+        if (tutorialCanContinue(step)) {
+          e.preventDefault();
+          if (step === "finish") endTutorial(true);
+          else if (step === "help") help();
+          else if (step === "objective" || step === "oxygen") highlightTutorialMeter(step);
+          return;
+        }
       }
       if (e.code === "KeyQ") world.current?.resources.cancel();
       if (e.code === "Escape") {
@@ -1517,11 +1537,7 @@ function App() {
                     ? "Back to menu"
                     : "Start my mission"
               }
-              onEvent={(e) => {
-                setHighlight(e.type);
-                lessonEvent(e);
-                window.setTimeout(() => setHighlight(""), 4500);
-              }}
+              onHighlight={highlightTutorialMeter}
               onHelp={help}
               onRepeat={() => {
                 setStrongerHint(true);

@@ -266,3 +266,20 @@
 .app .tutorial-card .lesson-keys kbd { padding: 7px 10px; min-width: 34px; }
 .app .tutorial-card .lesson-hint { font-size: 13px; padding: 8px; background: #1b2b39; }
 .app .tutorial-card :is(.lesson-actions,.lesson-footer) { margin-top: 8px; }
+
+/* A compact, content-sized lesson card keeps the world in view. */
+.app.in-game .tutorial-card { top: 88px; right: 20px; bottom: auto; width: 300px; height: auto; min-height: 0; padding: 14px 16px; max-height: calc(100dvh - 108px); }
+.app .tutorial-card .guide-avatar, .app .tutorial-card .practice-badge { display: none; }
+.app .tutorial-card .guide-identity { gap: 0; }
+.app .tutorial-card .lesson-progress { margin: 10px 0; }
+.app .tutorial-card h2 { font-size: 22px; margin: 8px 0; }
+.app .tutorial-card p { font-size: 14px; line-height: 1.45; }
+.app .tutorial-card .lesson-keys kbd { font-size: 12px; min-width: 26px; padding: 5px 8px; border-radius: 3px; }
+.app .tutorial-card .lesson-help { padding: 7px 10px; font-size: 12px; border: 1px solid #455765; }
+.app .tutorial-card .lesson-options { margin-top: 10px; font-size: 12px; }
+.app .tutorial-card .lesson-options summary { cursor: pointer; color: #bfd4e3; padding: 4px 0; }
+.app .tutorial-card .lesson-options[open] summary { margin-bottom: 8px; }
+.app .tutorial-card .lesson-options > button { font-size: 12px; padding: 6px 0; }
+@media(max-width:650px) {
+  .app.in-game .tutorial-card { top: 84px; right: 12px; width: min(280px,calc(100vw - 24px)); max-height: calc(100dvh - 160px); }
+}

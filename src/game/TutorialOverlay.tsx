@@ -1,13 +1,12 @@
 import {
   tutorialSteps,
   type TutorialState,
-  type TutorialEvent,
 } from "./Tutorial";
 export function TutorialOverlay(p: {
   state: TutorialState;
   stronger: boolean;
   narration: boolean;
-  onEvent: (e: TutorialEvent) => void;
+  onHighlight: (id: "objective" | "oxygen") => void;
   onHelp: () => void;
   onRepeat: () => void;
   onNarration: () => void;
@@ -26,7 +25,7 @@ export function TutorialOverlay(p: {
           ✦
         </span>
         <span>
-          MISSION CONTROL<strong>Your astronaut lesson</strong>
+          TUTORIAL<strong>Step {p.state.index + 1} of {tutorialSteps.length} · Safe practice</strong>
         </span>
         <span className="practice-badge">SAFE PRACTICE</span>
       </div>
@@ -38,7 +37,7 @@ export function TutorialOverlay(p: {
           <i key={s.id} className={i <= p.state.index ? "learned" : ""} />
         ))}
       </div>
-      <p className="lesson-mission"><strong>Final goal: return to Earth.</strong> Restore the outpost, gather supplies and research, then assemble and launch your return rocket. This lesson teaches the controls first.</p>
+
       <div aria-live="polite" aria-atomic="true">
         <h2>{step.title}</h2>
         <p>{step.text}</p>
@@ -49,11 +48,11 @@ export function TutorialOverlay(p: {
         </div>
       </div>
       {p.stronger && <p className="lesson-hint">💡 {step.hint}</p>}
-      <small>Your air and supplies stay safe while you learn.</small>
+
       {step.id === "objective" && (
         <button
           className="primary"
-          onClick={() => p.onEvent({ type: "objective" })}
+          onClick={() => p.onHighlight("objective")}
         >
           Show my goal ↖
         </button>
@@ -61,7 +60,7 @@ export function TutorialOverlay(p: {
       {step.id === "oxygen" && (
         <button
           className="primary"
-          onClick={() => p.onEvent({ type: "oxygen" })}
+          onClick={() => p.onHighlight("oxygen")}
         >
           Show my air ↙
         </button>
@@ -71,16 +70,18 @@ export function TutorialOverlay(p: {
           {p.finishLabel} →
         </button>
       )}
-      <div className="lesson-actions">
-        <button onClick={p.onRepeat}>↻ Repeat instruction</button>
-        <button onClick={p.onHelp}>? Help me</button>
-      </div>
+      <button className="lesson-help" onClick={p.onHelp}>Help with this step</button>
+      <details className="lesson-options">
+        <summary>Mission goal & options</summary>
+        <p className="lesson-mission"><strong>Final goal: return to Earth.</strong> Restore the outpost, gather supplies and research, then assemble and launch your return rocket. Air and supplies stay safe during practice.</p>
+        <button onClick={p.onRepeat}>Repeat instruction</button>
       <div className="lesson-footer">
         <button onClick={p.onNarration}>
           {p.narration ? "🔊 Voice on" : "🔈 Read aloud"}
         </button>
         <button onClick={p.onSkip}>Skip tutorial · K</button>
       </div>
+      </details>
     </aside>
   );
 }

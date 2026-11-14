@@ -9,9 +9,9 @@ export const tutorialSteps = [
   {
     id: "look",
     title: "Look around",
-    text: "Click the scene and move your mouse to look all the way around. You can also drag or swipe to turn.",
-    keys: ["Move mouse"],
-    hint: "Move your mouse gently left and right. Press Escape whenever you want to pause.",
+    text: "Drag the scene with your mouse or swipe to turn the camera.",
+    keys: ["Drag or swipe"],
+    hint: "Drag the scene gently left and right. Press Escape whenever you want to pause.",
   },
   {
     id: "reset",
@@ -51,33 +51,36 @@ export const tutorialSteps = [
   {
     id: "objective",
     title: "Your next adventure",
-    text: "Your goal always appears at the top left. Press “Show my goal” to find it.",
-    keys: ["Show my goal"],
+    text: "Your goal always appears at the top left. Press Enter to highlight it.",
+    keys: ["Enter"],
     hint: "Look for the card at the top left. It tells you one thing to do next.",
   },
   {
     id: "help",
     title: "Help is always here",
-    text: "Press Help me. Mission Control will show you what to do.",
-    keys: ["Help me"],
+    text: "Press Enter or H to try asking Mission Control for help.",
+    keys: ["Enter", "H"],
     hint: "Use the question-mark button at the top right, or Help me in this lesson. Escape opens Pause and R resets your camera.",
   },
   {
     id: "oxygen",
     title: "Air for your adventure",
-    text: "Your air meter shows how much air is in your suit. Press “Show my air”.",
-    keys: ["Show my air"],
+    text: "Your air meter shows how much air is in your suit. Press Enter to highlight it.",
+    keys: ["Enter"],
     hint: "Your air meter is at the bottom left. It fills up inside your space home.",
   },
   {
     id: "finish",
     title: "You’re ready, explorer!",
     text: "Your final task is to return to Earth. Complete the five outpost missions, gather supplies and sample research, then build all three rocket sections at the Earthbound launch pad. Once ready, launch home. Start my mission begins a fresh mission after practice.",
-    keys: [],
-    hint: "Press Start my mission. You can replay this lesson from Pause.",
+    keys: ["Enter"],
+    hint: "Press Enter to finish. You can replay this lesson from Pause.",
   },
 ] as const;
 export type TutorialId = (typeof tutorialSteps)[number]["id"];
+export function tutorialCanContinue(id: TutorialId) {
+  return id === "objective" || id === "help" || id === "oxygen" || id === "finish";
+}
 export type TutorialEvent = {
   type: TutorialId | "reset-session";
   amount?: number;
