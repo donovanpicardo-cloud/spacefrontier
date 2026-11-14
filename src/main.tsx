@@ -52,6 +52,7 @@ import {
 import type { GatherInfo } from "./game/WorldResources";
 import {
   initialAdventure,
+  sampleSites,
   collectSample,
   buildProject,
   projectProblem,
@@ -210,6 +211,7 @@ function App() {
   const [graphicsReady, setGraphicsReady] = useState(false);
   const [distanceToGoal, setDistanceToGoal] = useState(0);
   const [guideDirection, setGuideDirection] = useState<string | null>(null);
+  const [tripAir, setTripAir] = useState<number | null>(null);
   const [performance, setPerformance] = useState({
     fps: 0,
     calls: 0,
@@ -436,7 +438,8 @@ function App() {
           ? tutorialTarget(guideStep.id)
           : done.includes(4)
             ? rocket.stage === 3 ? "rocket" : "fabricator"
-            : drill?.stage === "field" || drill?.stage === "choice" ? "solar" : objective.target,
+            : drill?.stage === "field" || drill?.stage === "choice" || drill?.stage === "finish" ? "solar" : objective.target,
+        roverTraining: !!expedition && !expedition.returned,
         onAction: lessonEvent,
         restored: {
           solar: sim.repaired,
@@ -637,7 +640,7 @@ function App() {
         if(destination==='moon') {
           setSim(s=>({...s,training:{...s.training,storm:{stage:'field',warning:null,arrival:null,choice:null,task:0,supplies:0,battery:s.battery,exposure:s.radiation,recovery:0}}}));
           open(null);
-          world.current?.guideAdventure('solar');
+          world.current?.focusGuide();
           return;
         }
         setSim((s) => ({
@@ -701,7 +704,7 @@ function App() {
         }},
       };
     });
-    world.current?.guideAdventure(choice==='return'?'shelter':'solar');
+    world.current?.focusGuide();
     setSupplyGoal(null); open(null);
   }
   useEffect(()=>{
@@ -729,7 +732,7 @@ function App() {
       if(d.stage==='finish'&&near==='solar'&&w.keys.has('KeyE')) {
         const task=d.task+1,finished=task>=10;
         setSim(s=>({...s,parts:Math.min(20,s.parts+(finished?1:0)),training:{...s.training,storm:{...d,task,stage:finished?'return':'finish',supplies:finished?1:0}}}));
-        if(finished) {toast('Field task finished · 1 spare part. Return to shelter.');w.guideAdventure('shelter');}
+        if(finished) {toast('Field task finished · 1 spare part. Return to shelter.');w.focusGuide();}
       }
       if(inside&&near==='shelter'&&d.arrival===null) setSim(s=>{
         const storm=s.training?.storm;
@@ -1191,10 +1194,17 @@ function App() {
         const headings = ["↑ Ahead", "↗ Ahead right", "→ Right", "↘ Behind right", "↓ Behind", "↙ Behind left", "← Left", "↖ Ahead left"];
         const heading = Math.round(Math.atan2(right, forward) / (Math.PI / 4));
         setGuideDirection(distance <= 1 ? "Nearby" : headings[(heading + 8) % 8]);
-      } else setGuideDirection(null);
+        const activeMark = w.supplyTarget && !["airlock", "fabricator", "shelter", "medbay", "recovery", "rover"].includes(target.id);
+        const walk = Math.hypot(target.x, target.z + 8.2) * 2;
+        setTripAir(activeMark && !w.vehicle.driving && walk > 10
+          ? Math.ceil((walk * 1.5 / 2.1 + 60) * .025 * speed) : null);
+      } else {
+        setGuideDirection(null);
+        setTripAir(null);
+      }
     }, 500);
     return () => clearInterval(id);
-  }, [playing]);
+  }, [playing, speed]);
   useEffect(() => {
     if (!playing || tutorialActive || done.includes(4)) return;
     const checkpoint = snapshot();
@@ -1294,7 +1304,7 @@ function App() {
     if (action.type === "sample") {
       if (a.samples.includes(action.id)) return;
       commitAdventure(collectSample(a, action.id));
-      if (!w?.supplyTarget || w.supplyTarget === action.id) {
+      if (!w?.supplyTarget || w.supplyTarget === "sample:" + action.id) {
         if (w) w.supplyTarget = null;
         setSupplyGoal(null);
         setSideInstruction(null);
@@ -1613,6 +1623,12 @@ function App() {
                   {guideDirection} · {distanceToGoal} m to next stop
                 </small>
               )}
+            {!panel && !tutorialActive && tripAir !== null && (
+              <p>Round trip on foot uses about {tripAir}% suit air, including time at the stop.
+                {sim.suit <= tripAir + 5 ? " Refill inside the habitat before you go." : " Check your air if you take a detour."}</p>
+            )}
+            {!panel && !tutorialActive && sim.suit < 20 && <button className="secondary" onClick={() => guideSide("airlock", "Habitat airlock", "Suit air is low. Follow the markers inside to refill it.")}>Show the way to refill suit air</button>}
+            {!panel && !tutorialActive && !trainingInstruction && sim.battery < 15 && sim.suit >= 20 && <p>Power is low. Press Tab for Systems. Turn off the grow lights to save power.</p>}
             <div className="mission-dots">
               {list.map((_, i) => (
                 <i
@@ -2602,6 +2618,13 @@ function App() {
                 onBuild={buildReturnRocket}
                 onLaunch={launchReturnRocket}
                 onSupplies={findSupplies}
+                onSample={() => {
+                  const position = world.current?.getPosition() ?? [0, 0, 0];
+                  const sample = sampleSites(destination).filter(s => !adventure.samples.includes(s.id))
+                    .sort((a, b) => Math.hypot(a.x - position[0], a.z - position[2]) - Math.hypot(b.x - position[0], b.z - position[2]))[0];
+                  if (sample) guideSide("sample:" + sample.id, sample.name, "Follow the markers to the rock sample. Press E to scan it.");
+                  else toast("All rock samples are already in your journal.");
+                }}
                 onGuide={(id) => {
                   guideSide(
                     id,

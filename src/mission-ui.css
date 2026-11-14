@@ -293,3 +293,21 @@
 .science-note td,.science-note th {padding:6px}
 .science-note summary {cursor:pointer;padding:10px 0;color:#8be7d5}
 @media(max-width:600px){.route-choices>button{width:100%}.training-map{min-height:220px}.objective p{font-size:12px}.objective{max-width:calc(100vw - 28px)}}
+
+.rocket-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: .65rem;
+  list-style: none;
+  padding: 0;
+}
+.rocket-checklist li {
+  display: grid;
+  gap: .25rem;
+  align-content: start;
+  border: 1px solid #506575;
+  padding: .7rem;
+}
+.rocket-checklist li button {
+  justify-self: start;
+}

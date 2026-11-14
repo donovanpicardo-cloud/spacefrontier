@@ -76,16 +76,18 @@ it("finding a supply or requesting a hint does not steer toward the yellow trail
   expect(w.orbitPitch).toBe(0.6);
 });
 
-it("updates objective distance without drawing a trail or rotating the camera", () => {
+it("draws objective waypoints without rotating the camera", () => {
   const w = Object.assign(Object.create(World.prototype) as World, {
     scene: new Scene(), guideClock: 0, guidePoint: new Vector3(),
+    guideRouteKey: "", guideOrigin: { x: 0, y: 0, set: () => {} },
+    physics: { clearFoot: () => true }, groundHeight: () => 0,
     state: { playing: true, inside: false, guideTarget: "greenhouse" },
     player: { root: { position: new Vector3(4, 0, 6) } },
     navigationSites: () => [{ id: "greenhouse", x: 3, z: -22 }],
     yaw: 1.1, orbitYaw: 1.1, pitch: .3, orbitPitch: .3,
   });
   w.updateGuide(.2);
-  expect(w.guidePoint.toArray()).toEqual([0, 0, -8.2]);
-  expect(w.scene.children).toHaveLength(0);
+  expect(w.guidePoint.distanceTo(new Vector3(0, 0, -8.2))).toBeLessThan(1);
+  expect(w.guideMarks?.count).toBeGreaterThan(0);
   expect([w.yaw, w.orbitYaw, w.pitch, w.orbitPitch]).toEqual([1.1, 1.1, .3, .3]);
 });

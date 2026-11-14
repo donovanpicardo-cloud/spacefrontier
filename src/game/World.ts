@@ -41,7 +41,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { FXAAShader } from "three/addons/shaders/FXAAShader.js";
 import { outpostDetail } from "./environments/OutpostDetail";
-import { navigationTarget } from "./Navigation";
+import { navigationTarget, walkingRoute } from "./Navigation";
 import { CollisionWorld } from "./CollisionWorld";
 import { WorldRepairs, type RepairInfo } from "./WorldRepairs";
 import type { RepairKind } from "./RepairPlan";
@@ -86,6 +86,7 @@ export type WorldState = {
   onReady?: () => void;
   onModel?: (status: "loading" | "ready" | "error") => void;
   guideTarget?: string | null;
+  roverTraining?: boolean;
   junior?: boolean;
   tutorial?: boolean;
   onLookReleased?: () => void;
@@ -297,6 +298,10 @@ export class World {
   repairApproach: { from: T.Vector3; to: T.Vector3; t: number } | null = null;
   guideClock = 0;
   guidePoint = new T.Vector3();
+  guideRoute: { x: number; z: number }[] = [];
+  guideRouteKey = "";
+  guideOrigin = new T.Vector2(Infinity, Infinity);
+  guideMarks?: T.InstancedMesh;
   trainingTrail: T.Line | null = null;
   trainingTrailKey = '';
   setTrainingTrail(points: {x:number;z:number}[]) {
@@ -773,6 +778,7 @@ export class World {
   focusGuide() {
     // Objective guidance is visual only; never change the player’s viewing angle.
     this.lastGuide = "";
+    this.guideRouteKey = "";
   }
   resetPlayer(position: number[] = [0, 0.12, 0]) {
     this.rocket.stop();
@@ -818,15 +824,56 @@ export class World {
     this.doors.forEach((d) => (d.position.x = 0));
     this.resetCamera();
   }
-  updateGuide(dt: number) {
-    // Objective distance remains useful; navigation never draws a trail or steers the view.
+  updateGuide(dt: number, obstacles: T.Box3[] = []) {
     this.guideClock += dt;
     if (this.guideClock < .16) return;
     this.guideClock = 0;
     const station = this.navigationSites().find(s => s.id === (this.supplyTarget || this.state.guideTarget));
-    if (!station) return;
+    if (!station || this.state.paused || this.state.repairing || this.transit || this.vehicle?.driving || this.state.roverTraining) {
+      if (this.guideMarks) this.guideMarks.visible = false;
+      this.guideRouteKey = "";
+      if (station) {
+        const point = navigationTarget(this.player.root.position, this.state.inside, station);
+        this.guidePoint.set(point.x, 0, point.z);
+      }
+      return;
+    }
     const point = navigationTarget(this.player.root.position, this.state.inside, station);
-    this.guidePoint.set(point.x, 0, point.z);
+    const player = this.player.root.position;
+    const key = [station.id, point.phase, Math.round(point.x), Math.round(point.z), this.state.inside].join("/");
+    if (key === this.guideRouteKey && Math.hypot(this.guideOrigin.x - player.x, this.guideOrigin.y - player.z) < 1.5 &&
+        (!this.guideRoute.length || Math.hypot(this.guidePoint.x - player.x, this.guidePoint.z - player.z) > .65)) return;
+    this.guideRouteKey = key;
+    this.guideOrigin.set(player.x, player.z);
+    const doorway = point.phase === "target" && (station.id === "airlock" || point.z === -8.2 || point.z === -13.4);
+    const radius = doorway ? .65 : point.phase !== "target" ? .8 : station.id === "rocket" ? 4.4 : station.id === "rover" ? 2.9 : 1.8;
+    const foot = new T.Vector3();
+    this.guideRoute = walkingRoute(player, point, radius, ({ x, z }) =>
+      this.physics.clearFoot(foot.set(x, this.groundHeight(x, z) + .12, z), obstacles));
+    const next = this.guideRoute[0] ?? point;
+    this.guidePoint.set(next.x, 0, next.z);
+    if (!this.guideMarks) {
+      this.guideMarks = new T.InstancedMesh(new T.RingGeometry(.13, .24, 12).rotateX(-Math.PI / 2),
+        new T.MeshBasicMaterial({ color: 0xffd788, side: T.DoubleSide }), 36);
+      this.guideMarks.frustumCulled = false;
+      this.scene.add(this.guideMarks);
+    }
+    const matrix = new T.Matrix4();
+    let count = 0;
+    let previous = { x: player.x, z: player.z };
+    for (const waypoint of this.guideRoute) {
+      const distance = Math.hypot(waypoint.x - previous.x, waypoint.z - previous.z);
+      const steps = Math.max(1, Math.ceil(distance / 1.6));
+      for (let i = 1; i <= steps && count < 36; i++) {
+        const x = T.MathUtils.lerp(previous.x, waypoint.x, i / steps);
+        const z = T.MathUtils.lerp(previous.z, waypoint.z, i / steps);
+        this.guideMarks.setMatrixAt(count++, matrix.makeTranslation(x, this.groundHeight(x, z) + .16, z));
+      }
+      previous = waypoint;
+    }
+    this.guideMarks.count = count;
+    this.guideMarks.instanceMatrix.needsUpdate = true;
+    this.guideMarks.visible = count > 0;
   }
   beginRepair(kind: RepairKind) {
     this.resources.cancel();
@@ -1814,7 +1861,7 @@ export class World {
           ? 0.7 + Math.sin(this.clock.elapsedTime * 1.6) * 0.04
           : 0.04;
     });
-    this.updateGuide(dt);
+    this.updateGuide(dt, dynamic);
     // Snap the shadow volume to texel increments while preserving the sun direction.
     const texel = 56 / this.sun.shadow.mapSize.x;
     const sx = Math.round(p.position.x / texel) * texel;

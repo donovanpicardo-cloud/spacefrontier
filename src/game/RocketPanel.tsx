@@ -11,9 +11,17 @@ export function RocketPanel(p: {
   onLaunch: () => void;
   onGuide: (id: string) => void;
   onSupplies: (kind: "salvage" | "battery" | "ice") => void;
+  onSample: () => void;
 }) {
   const next = rocketStages[p.rocket.stage];
-  const supply = next && (p.sim.parts < next.parts ? "salvage" : p.sim.battery < next.battery ? "battery" : p.sim.water < next.water ? "ice" : null);
+  const resources = [
+    { key: "parts", label: "Spare parts", have: p.sim.parts, unit: "", action: "Mark spare parts", mark: () => p.onSupplies("salvage") },
+    { key: "battery", label: "Power", have: p.sim.battery, unit: "%", action: "Mark a power station", mark: () => p.onSupplies("battery") },
+    { key: "water", label: "Water", have: p.sim.water, unit: "%", action: "Mark a water deposit", mark: () => p.onSupplies("ice") },
+    { key: "oxygen", label: "Oxygen", have: p.sim.oxygen, unit: "%", hint: "Use Tab to turn on oxygen production. It needs water and power." },
+    { key: "food", label: "Food", have: p.sim.food, unit: "%", hint: "Grow crops and harvest them from Systems (Tab)." },
+    { key: "research", label: "Research", have: p.research, unit: "", action: "Mark an unscanned rock sample", mark: p.onSample },
+  ] as const;
   return (
     <div className="expedition-panel rocket-project">
       <div className="expedition-kicker">EARTHBOUND / YOUR JOURNEY HOME</div>
@@ -38,31 +46,27 @@ export function RocketPanel(p: {
           </div>
         ))}
       </div>
-      <div className="expedition-reserves">
-        <span>
-          PARTS<strong>{Math.floor(p.sim.parts * 10) / 10}</strong>
-        </span>
-        <span>
-          POWER<strong>{Math.floor(p.sim.battery)}%</strong>
-        </span>
-        <span>
-          WATER<strong>{Math.floor(p.sim.water)}%</strong>
-        </span>
-        <span>
-          RESEARCH<strong>{p.research}</strong>
-        </span>
-      </div>
       {next ? (
         <article className="project-card">
           <h3>{next.name}</h3>
           <p>{next.description}</p>
-          <p className="rocket-cost">
-            {next.parts} parts · {next.battery}% power
-            {next.water ? ` · ${next.water}% water` : ""}
-            {next.oxygen ? ` · ${next.oxygen}% oxygen` : ""}
-            {next.food ? ` · ${next.food}% food` : ""}
-            {next.research ? " · 1 research" : ""}
-          </p>
+          <ul className="rocket-checklist" aria-label="Rocket supply checklist">
+            {resources.map(item => {
+              const total = rocketStages.slice(p.rocket.stage).reduce((sum, stage) => sum + stage[item.key], 0);
+              if (!total) return null;
+              const cost = next[item.key];
+              const available = Math.floor(item.have * 10) / 10;
+              const missing = Math.ceil(Math.max(0, total - item.have) * 10) / 10;
+              return <li key={item.key}>
+                <strong>{item.label}</strong>
+                <span>{available}{item.unit} available · {cost ? `${cost}${item.unit} for this section` : "Needed later"}</span>
+                <span>{missing ? `${missing}${item.unit} more for the remaining build` : "Enough for the remaining build"}</span>
+                {missing > 0 && ("mark" in item
+                  ? <button className="secondary" onClick={item.mark}>{item.action}</button>
+                  : <small>{item.hint}</small>)}
+              </li>;
+            })}
+          </ul>
           <button
             className="primary"
             disabled={
@@ -82,14 +86,6 @@ export function RocketPanel(p: {
             >
               Show the way to the fabricator
             </button>
-          )}
-          {supply && (
-            <button className="secondary" onClick={() => p.onSupplies(supply)}>
-              {supply === "salvage" ? "Show me where to find spare parts" : supply === "battery" ? "Show me a power station" : "Show me a water deposit"}
-            </button>
-          )}
-          {next.research > p.research && (
-            <p>Press J to open your journal. Pick a rock sample to mark it, then press E near the sample to scan it.</p>
           )}
         </article>
       ) : (
