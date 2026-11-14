@@ -12,7 +12,7 @@ import {
   type RocketProgress,
 } from "./game/Rocket";
 import { SurfaceMap } from "./game/SurfaceMap";
-import { expeditionSite, routePaths, routeNames, startGarden, harvest, travelCost, type RouteId } from './game/Training';
+import { expeditionSite, routePaths, routeNames, gardenStartingBattery, gardenStartingCrop, startGarden, harvest, travelCost, type RouteId } from './game/Training';
 import { TrainingDebrief } from './game/TrainingDebrief';
 import { serviceReward, serviceMessage } from "./simulation/ServiceRewards";
 import React, { useEffect, useRef, useState, useReducer } from "react";
@@ -1954,7 +1954,7 @@ function App() {
             {panel === "greenhouse" && (
               <>
                 <h2>Choose a greenhouse power plan</h2>
-                <p>Red romaine ration window · {garden?'Current':'Starting'} battery {garden?sim.battery.toFixed(1):24}% · oxygen {sim.oxygen.toFixed(1)}% · crop {sim.crop.toFixed(0)}%.</p>
+                <p>Red romaine ration window · {garden?'Current':'Starting'} battery {garden?sim.battery.toFixed(1):gardenStartingBattery}% · oxygen {sim.oxygen.toFixed(1)}% · crop {garden?sim.crop.toFixed(0):gardenStartingCrop}%.</p>
                 <p>
                   Irrigation is ready. The grow lights share a battery with
                   oxygen production. What should the outpost prioritize?

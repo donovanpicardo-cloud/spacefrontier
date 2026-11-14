@@ -31,8 +31,11 @@ export type Training = {
   garden?: {start:number; battery:number; oxygen:number; water:number; food:number; lit:number; paused:number; recovery:number; harvested:boolean; end?:number; finalBattery?:number; finalOxygen?:number; finalWater?:number; finalFood?:number};
   storm?: {stage:'field'|'choice'|'return'|'finish'|'shelter'|'complete'; warning:number|null; arrival:number|null; choice:'return'|'finish'|null; task:number; supplies:number; battery:number; exposure:number; end?:number; finalBattery?:number; finalExposure?:number; recovery:number};
 };
+export const gardenStartingBattery = 24;
+export const gardenStartingCrop = 25;
+
 export function startGarden(s:Sim):Sim {
-  return {...s,battery:24,crop:25,training:{...s.training,garden:{start:s.time,battery:24,oxygen:s.oxygen,water:s.water,food:s.food,lit:0,paused:0,recovery:0,harvested:false}}};
+  return {...s,battery:gardenStartingBattery,crop:gardenStartingCrop,training:{...s.training,garden:{start:s.time,battery:gardenStartingBattery,oxygen:s.oxygen,water:s.water,food:s.food,lit:0,paused:0,recovery:0,harvested:false}}};
 }
 export function trainingTick(s:Sim,a:Allocation):Sim {
   const g=s.training?.garden;

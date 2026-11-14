@@ -1619,6 +1619,9 @@ export class World {
             ? "recovery-room-project"
             : null);
       const near =
+        (inside && Math.hypot(p.position.x, p.position.z + 13) < 1.9
+          ? "airlock"
+          : null) ||
         (!riding &&
         Math.hypot(p.position.x - rocketPad.x, p.position.z - rocketPad.z) < 5.7
           ? "rocket"

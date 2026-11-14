@@ -201,6 +201,9 @@ export function buildTerrain(
   let count = 0,
     largeCount = 0;
   const colliders: T.Mesh[] = [];
+  const fieldSites = [...resourceSites(d), ...sampleSites(d), ...robotSites(d), recoveryBay];
+  rocky.computeBoundingBox();
+  const rockBounds = new T.Box3();
   for (let i = 0; i < 2800 && count < 2200; i++) {
     const x = (hash(i + 1) - 0.5) * 250,
       z = (hash(i + 2040) - 0.5) * 250;
@@ -213,12 +216,7 @@ export function buildTerrain(
       (Math.abs(x) < 8 && z < -7 && z > -38) ||
       (x > 7 && x < 27 && z > -21 && z < 5) ||
       (Math.abs(x) < 4 && z > -8 && z < 10) ||
-      [
-        ...resourceSites(d),
-        ...sampleSites(d),
-        ...robotSites(d),
-        recoveryBay,
-      ].some((s) => Math.hypot(x - s.x, z - s.z) < 3)
+      fieldSites.some((s) => Math.hypot(x - s.x, z - s.z) < 3)
     )
       continue;
     const scale =
@@ -237,6 +235,13 @@ export function buildTerrain(
       hash(i + 2) * 0.4,
     );
     dummy.updateMatrix();
+    if (i < 60) {
+      rockBounds.copy(rocky.boundingBox!).applyMatrix4(dummy.matrix);
+      if (fieldSites.some((site) =>
+        site.x > rockBounds.min.x - 3 && site.x < rockBounds.max.x + 3 &&
+        site.z > rockBounds.min.z - 3 && site.z < rockBounds.max.z + 3
+      )) continue;
+    }
     if (i < 60) largeRocks.setMatrixAt(largeCount++, dummy.matrix);
     else rocks.setMatrixAt(count++, dummy.matrix);
     if (scale > 1.7) {
