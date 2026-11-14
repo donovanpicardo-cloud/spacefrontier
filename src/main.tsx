@@ -1193,7 +1193,7 @@ function App() {
         const forward = -dx * Math.sin(w.yaw) - dz * Math.cos(w.yaw);
         const headings = ["↑ Ahead", "↗ Ahead right", "→ Right", "↘ Behind right", "↓ Behind", "↙ Behind left", "← Left", "↖ Ahead left"];
         const heading = Math.round(Math.atan2(right, forward) / (Math.PI / 4));
-        setGuideDirection(distance <= 1 ? "Nearby" : headings[(heading + 8) % 8]);
+        setGuideDirection(Math.hypot(dx, dz) < .4 ? "Nearby" : headings[(heading + 8) % 8]);
         const activeMark = w.supplyTarget && !["airlock", "fabricator", "shelter", "medbay", "recovery", "rover"].includes(target.id);
         const walk = Math.hypot(target.x, target.z + 8.2) * 2;
         setTripAir(activeMark && !w.vehicle.driving && walk > 10
@@ -1291,7 +1291,10 @@ function App() {
     }
   }
   function guideSide(id: string, name: string, text: string) {
-    if (!world.current?.guideAdventure(id)) return;
+    if (!world.current?.guideAdventure(id)) {
+      toast("The surface is still loading. Try marking this stop again in a moment.");
+      return;
+    }
     setSupplyGoal(name);
     setSideInstruction(text);
     open(null);
@@ -2618,6 +2621,7 @@ function App() {
                 onBuild={buildReturnRocket}
                 onLaunch={launchReturnRocket}
                 onSupplies={findSupplies}
+                navigationReady={graphicsReady}
                 onSample={() => {
                   const position = world.current?.getPosition() ?? [0, 0, 0];
                   const sample = sampleSites(destination).filter(s => !adventure.samples.includes(s.id))

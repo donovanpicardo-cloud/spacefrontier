@@ -12,6 +12,7 @@ export function RocketPanel(p: {
   onGuide: (id: string) => void;
   onSupplies: (kind: "salvage" | "battery" | "ice") => void;
   onSample: () => void;
+  navigationReady: boolean;
 }) {
   const next = rocketStages[p.rocket.stage];
   const resources = [
@@ -62,7 +63,7 @@ export function RocketPanel(p: {
                 <span>{available}{item.unit} available · {cost ? `${cost}${item.unit} for this section` : "Needed later"}</span>
                 <span>{missing ? `${missing}${item.unit} more for the remaining build` : "Enough for the remaining build"}</span>
                 {missing > 0 && ("mark" in item
-                  ? <button className="secondary" onClick={item.mark}>{item.action}</button>
+                  ? <button className="secondary" disabled={!p.navigationReady} onClick={item.mark}>{item.action}</button>
                   : <small>{item.hint}</small>)}
               </li>;
             })}

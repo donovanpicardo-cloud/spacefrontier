@@ -850,7 +850,7 @@ export class World {
     const foot = new T.Vector3();
     this.guideRoute = walkingRoute(player, point, radius, ({ x, z }) =>
       this.physics.clearFoot(foot.set(x, this.groundHeight(x, z) + .12, z), obstacles));
-    const next = this.guideRoute[0] ?? point;
+    const next = this.guideRoute.find(waypoint => Math.hypot(waypoint.x - player.x, waypoint.z - player.z) > .4) ?? point;
     this.guidePoint.set(next.x, 0, next.z);
     if (!this.guideMarks) {
       this.guideMarks = new T.InstancedMesh(new T.RingGeometry(.13, .24, 12).rotateX(-Math.PI / 2),
