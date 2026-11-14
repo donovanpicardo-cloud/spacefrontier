@@ -62,7 +62,7 @@ export function rocketProblem(r: RocketProgress, s: Sim, research: number) {
   for (const key of ["parts", "battery", "water", "oxygen", "food"] as const)
     if (s[key] < cost[key])
       return `Need ${cost[key]}${key === "parts" ? " parts" : `% ${key === "battery" ? "power" : key}`}`;
-  return research < cost.research ? "Need 1 research data from a sample" : null;
+  return research < cost.research ? "Scan a rock sample to earn 1 research point" : null;
 }
 export function assembleRocket(r: RocketProgress, s: Sim, research: number) {
   if (rocketProblem(r, s, research)) return null;

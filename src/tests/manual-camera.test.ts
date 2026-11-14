@@ -85,7 +85,7 @@ it("updates objective distance without drawing a trail or rotating the camera", 
     yaw: 1.1, orbitYaw: 1.1, pitch: .3, orbitPitch: .3,
   });
   w.updateGuide(.2);
-  expect(w.guidePoint.toArray()).toEqual([0, 0, -8]);
+  expect(w.guidePoint.toArray()).toEqual([0, 0, -8.2]);
   expect(w.scene.children).toHaveLength(0);
   expect([w.yaw, w.orbitYaw, w.pitch, w.orbitPitch]).toEqual([1.1, 1.1, .3, .3]);
 });

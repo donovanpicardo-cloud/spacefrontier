@@ -209,6 +209,7 @@ function App() {
   );
   const [graphicsReady, setGraphicsReady] = useState(false);
   const [distanceToGoal, setDistanceToGoal] = useState(0);
+  const [guideDirection, setGuideDirection] = useState<string | null>(null);
   const [performance, setPerformance] = useState({
     fps: 0,
     calls: 0,
@@ -432,7 +433,9 @@ function App() {
         tutorial: tutorialActive,
         guideTarget: tutorialActive
           ? tutorialTarget(guideStep.id)
-          : null,
+          : done.includes(4)
+            ? rocket.stage === 3 ? "rocket" : "fabricator"
+            : drill?.stage === "field" || drill?.stage === "choice" ? "solar" : objective.target,
         onAction: lessonEvent,
         restored: {
           solar: sim.repaired,
@@ -739,7 +742,7 @@ function App() {
     : drill&&drill.stage!=='complete'
       ? drill.stage==='field'||drill.stage==='choice'?'Press E at the outdoor solar panel to open the storm drill.'
         : drill.stage==='finish'?`Hold E at the solar panel to finish the check · ${10-drill.task}s left. Or press C to abandon and return.`
-        : !inside?'Follow the cyan trail to the airlock. Press E to enter.'
+        : !inside?'Follow the direction to the airlock. Press E to enter.'
         : near!=='shelter'?'Walk down the centre aisle to the shelter.'
         : !sim.shielded?'Press E to reinforce the shelter. Low supplies? Press P.'
         : !allocation.backup?'Press B to switch on backup power.'
@@ -754,7 +757,7 @@ function App() {
             : !allocation.backup
               ? "Press B to switch on backup power."
               : !inside
-                ? "Follow the trail to the habitat. Press E at the airlock."
+                ? "Follow the direction to the habitat. Press E at the airlock."
                 : near !== "shelter"
                   ? "Walk down the center aisle to the shelter."
                   : !sim.shielded
@@ -912,7 +915,7 @@ function App() {
     } else {
       if (!tutorialLive.current.active && live.current.sim.parts < 1) {
         toast(
-          "No spare parts remain. Try a checkpoint or start a new mission.",
+          "You need 1 spare part. Press M and open Nearby supplies to find some.",
         );
         return;
       }
@@ -1104,7 +1107,7 @@ function App() {
       beginMission();
       toast(
         completed
-          ? "You earned your Explorer patch! Follow the trail to the habitat door."
+          ? "You earned your Explorer patch! Follow the direction on your goal card to the habitat door."
           : "Ready when you are! Help me is always here.",
       );
     }
@@ -1145,7 +1148,7 @@ function App() {
     setSupplyGoal(site.name);
     open(null);
     toast(
-      `${site.name}: locate the site and follow the equipment’s own instructions. H returns to your mission.`,
+      `${site.name}. Follow the direction on your goal card, then press E at the equipment.`,
     );
   }
   useEffect(() => {
@@ -1179,10 +1182,15 @@ function App() {
         .find((s) => s.id === (w?.supplyTarget || w?.state.guideTarget));
       if (w && target) {
         const p = w.getPosition();
-        setDistanceToGoal(
-          Math.round(Math.hypot(w.guidePoint.x - p[0], w.guidePoint.z - p[2])),
-        );
-      }
+        const dx = w.guidePoint.x - p[0], dz = w.guidePoint.z - p[2];
+        const distance = Math.round(Math.hypot(dx, dz));
+        setDistanceToGoal(distance);
+        const right = dx * Math.cos(w.yaw) - dz * Math.sin(w.yaw);
+        const forward = -dx * Math.sin(w.yaw) - dz * Math.cos(w.yaw);
+        const headings = ["↑ Ahead", "↗ Ahead right", "→ Right", "↘ Behind right", "↓ Behind", "↙ Behind left", "← Left", "↖ Ahead left"];
+        const heading = Math.round(Math.atan2(right, forward) / (Math.PI / 4));
+        setGuideDirection(distance <= 1 ? "Nearby" : headings[(heading + 8) % 8]);
+      } else setGuideDirection(null);
     }, 500);
     return () => clearInterval(id);
   }, [playing]);
@@ -1578,9 +1586,11 @@ function App() {
                 ? "Practice together with Mission Control."
                 : supplyGoal
                   ? sideInstruction ||
-                    `${supplyGoal}. Each rig has its own controls. H returns to your mission.`
+                    `${supplyGoal}. Follow the direction below. Press E at the equipment or H to return to your mission.`
                   : done.includes(4)
-                    ? "Explore, recover robots or build your return rocket. J · Journal  /  U · Projects"
+                    ? rocket.stage === 3
+                      ? "Follow the direction to the launch pad. Press E beside the rocket."
+                      : "Press U, then choose Earthbound to see what you need for your rocket."
                     : greenhouseDecision
                       ? "Choose a power plan at the greenhouse, or open Systems with Tab."
                       : objective.task}
@@ -1594,10 +1604,9 @@ function App() {
                   </strong>
                 )}
             </p>
-            {!panel &&
-              tutorialActive && tutorialTarget(guideStep.id) && (
+            {!panel && guideDirection && (
                 <small className="goal-distance">
-                  ✦ {distanceToGoal} m to next stop
+                  {guideDirection} · {distanceToGoal} m to next stop
                 </small>
               )}
             <div className="mission-dots">

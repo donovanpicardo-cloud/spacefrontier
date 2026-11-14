@@ -21,6 +21,7 @@ export function RocketPanel(p: {
       <p>
         Build three sections at the workbench inside the habitat. Finish all
         five outpost missions, then go outside to the launch pad.
+        You can build one section at a time and come back with more supplies.
       </p>
       <div
         className="rocket-blueprint"
@@ -84,7 +85,7 @@ export function RocketPanel(p: {
           )}
           {supply && (
             <button className="secondary" onClick={() => p.onSupplies(supply)}>
-              {supply === "salvage" ? "Mark spare parts on my trail" : supply === "battery" ? "Mark a power station on my trail" : "Mark a water deposit on my trail"}
+              {supply === "salvage" ? "Show me where to find spare parts" : supply === "battery" ? "Show me a power station" : "Show me a water deposit"}
             </button>
           )}
           {next.research > p.research && (

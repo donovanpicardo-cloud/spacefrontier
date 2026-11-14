@@ -91,12 +91,14 @@ describe("mission recovery", () => {
     });
     expect(navigationTarget({ x: 15, z: -4 }, false, greenhouse)).toEqual({
       x: 0,
-      z: -8,
+      z: -8.2,
       phase: "target",
     });
     expect(
       navigationTarget({ x: 0, z: -22 }, true, { id: "solar", x: 15, z: -4 }),
-    ).toEqual({ x: 0, z: -13, phase: "hall" });
+    ).toEqual({ x: 0, z: -13.4, phase: "hall" });
+    expect(navigationTarget({ x: 0, z: -15 }, true, { id: "airlock", x: 0, z: -10 }))
+      .toEqual({ x: 0, z: -13.4, phase: "target" });
   });
   it("accepts existing version-one saves without a difficulty field", () => {
     expect(parseSave(JSON.stringify(save))).toEqual(save);

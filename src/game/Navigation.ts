@@ -11,9 +11,11 @@ export function navigationTarget(
     "medbay",
   ].includes(station.id);
   const destination =
-    inside !== interior
-      ? { x: 0, z: inside ? -13 : -8 }
-      : { x: station.x, z: station.z };
+    station.id === "airlock"
+      ? { x: 0, z: inside ? -13.4 : -8.2 }
+      : inside !== interior
+        ? { x: 0, z: inside ? -13.4 : -8.2 }
+        : { x: station.x, z: station.z };
   if (inside && station.id === "medbay") {
     if (Math.abs(p.z + 23) > 0.28)
       return { x: p.x > 6.5 ? p.x : 0, z: -23, phase: "room-align" };
