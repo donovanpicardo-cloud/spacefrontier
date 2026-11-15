@@ -180,3 +180,4 @@ export class Gathering {
     this.collected = new Set(ids.filter((id) => resourceIds.includes(id)));
   }
 }
+
