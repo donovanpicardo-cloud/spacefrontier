@@ -28,3 +28,4 @@ it("keeps new roof geometry above the cabin and within a practical triangle budg
   expect(vessel.boundingBox!.max.y).toBeLessThanOrEqual(2.36);
   expect(Array.from(vessel.attributes.position.array).every(Number.isFinite)).toBe(true);
 });
+
