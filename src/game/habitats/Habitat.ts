@@ -558,4 +558,3 @@ export function updateHabitatScreens(
     (screen.material as T.MeshStandardMaterial).map!.needsUpdate = true;
   }
 }
-
