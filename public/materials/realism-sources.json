@@ -40,5 +40,19 @@
     "license": "CC0",
     "source": "https://polyhaven.com/a/sandy_gravel_02",
     "md5": "bbd5bd1358d0a3f7dbdee52707c126c1"
+  },
+  {
+    "file": "nasa-moon-regolith-Diffuse.jpg",
+    "source": "https://science.nasa.gov/resource/apollo-11-bootprint/",
+    "url": "https://assets.science.nasa.gov/content/dam/science/psd/lunar-science/2023/09/GPN-2001-000014.jpg",
+    "credit": "NASA / Edwin ‘Buzz’ Aldrin, Apollo 11, AS11-40-5878",
+    "processing": "Soil-only crop, low-frequency lighting reduced, color balanced for the game terrain."
+  },
+  {
+    "file": "nasa-mars-regolith-Diffuse.jpg",
+    "source": "https://science.nasa.gov/resource/gravel-covered-martian-surface/",
+    "url": "https://assets.science.nasa.gov/content/dam/science/psd/mars/downloadable_items/3/6/36082_PIA16018_malin_06rocks_wo_ano1.jpg",
+    "credit": "NASA / JPL-Caltech / MSSS, Curiosity MARDI, PIA16018",
+    "processing": "Gravel-only crop, low-frequency lighting reduced, color balanced for the game terrain."
   }
 ]

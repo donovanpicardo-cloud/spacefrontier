@@ -7,7 +7,7 @@ function surfaceMap(asset: string, kind: string) {
   let map = maps.get(key);
   if (!map) {
     map = new T.TextureLoader().load(`/materials/${key}.jpg`);
-    map.wrapS = map.wrapT = T.RepeatWrapping;
+    map.wrapS = map.wrapT = asset.startsWith("nasa-") ? T.MirroredRepeatWrapping : T.RepeatWrapping;
     map.anisotropy = 8;
     if (kind === "Diffuse") map.colorSpace = T.SRGBColorSpace;
     maps.set(key, map);
@@ -24,7 +24,8 @@ export function landscapeMaterial(destination: Destination, cliff = false) {
   });
   material.onBeforeCompile = shader => {
     for (const [name, asset] of [["soil", "sandy_gravel_02"], ["rock", "rock_face_03"]]) {
-      shader.uniforms[name + "Color"] = { value: surfaceMap(asset, "Diffuse") };
+      const colorAsset = name === "soil" && !cliff ? `nasa-${destination}-regolith` : asset;
+      shader.uniforms[name + "Color"] = { value: surfaceMap(colorAsset, "Diffuse") };
       shader.uniforms[name + "Normal"] = { value: surfaceMap(asset, "nor_gl") };
       shader.uniforms[name + "Rough"] = { value: surfaceMap(asset, "Rough") };
     }
@@ -63,15 +64,20 @@ export function landscapeMaterial(destination: Destination, cliff = false) {
       vec3 weights = terrainWeights(baseNormal);
       vec3 rockUV = terrainPoint * ${cliff ? ".12" : ".22"};
       vec2 soilUV = terrainPoint.xz * .20;
-      vec3 soil = texture2D(soilColor, soilUV).rgb;
+      ${cliff ? "vec3 soil = texture2D(soilColor, soilUV).rgb;" : `
+      vec2 photographUV = terrainPoint.xz * ${destination === "moon" ? "1.85" : "1.25"};
+      vec2 rotatedUV = mat2(.6, -.8, .8, .6) * photographUV * .73 + vec2(.37, .61);
+      float soilBlend = texture2D(soilRough, terrainPoint.xz * .034).g;
+      vec3 soil = mix(texture2D(soilColor, photographUV).rgb,
+        texture2D(soilColor, rotatedUV).rgb, smoothstep(.24, .76, soilBlend));
+      `}
       vec3 stone = stoneColor(rockUV, weights);
       float exposure = ${cliff ? "1." : "1. - smoothstep(.55, .92, abs(baseNormal.y))"};
-      vec3 albedo = mix(soil, stone, exposure);
-      // Retain photographic values; only change the destination's mineral hue.
-      float value = dot(albedo, vec3(.2126,.7152,.0722));
+      float value = dot(stone, vec3(.2126,.7152,.0722));
       ${destination === "moon"
-        ? "albedo = mix(vec3(value) * vec3(1.02,1.,.97), albedo, .06) * 1.28;"
-        : "albedo = mix(vec3(value) * vec3(1.42,.82,.52), albedo * vec3(1.12,.86,.7), .3) * 1.45;"}
+        ? "stone = mix(vec3(value) * vec3(1.02,1.,.97), stone, .06) * 1.28;"
+        : "stone = mix(vec3(value) * vec3(1.42,.82,.52), stone * vec3(1.12,.86,.7), .3) * 1.45;"}
+      vec3 albedo = mix(soil, stone, exposure);
       float broad = texture2D(soilRough, terrainPoint.xz * .018).g;
       diffuseColor.rgb *= albedo * mix(.8, 1.08, broad);
     `);
@@ -84,12 +90,12 @@ export function landscapeMaterial(destination: Destination, cliff = false) {
     shader.fragmentShader = shader.fragmentShader.replace("#include <normal_fragment_begin>", `
       #include <normal_fragment_begin>
       vec3 grain = texture2D(soilNormal, soilUV).xyz * 2. - 1.;
-      vec3 soilN = normalize(baseNormal + vec3(grain.x,0.,grain.y) * .85);
+      vec3 soilN = normalize(baseNormal + vec3(grain.x,0.,grain.y) * .28);
       vec3 rockN = stoneNormal(rockUV, baseNormal, weights);
       vec3 surfaceN = normalize(mix(soilN, rockN, exposure));
       normal = normalize((viewMatrix * vec4(surfaceN,0.)).xyz) * faceDirection;
     `);
   };
-  material.customProgramCacheKey = () => `photographic-geology-v3-${destination}-${cliff}`;
+  material.customProgramCacheKey = () => `photographic-geology-v4-${destination}-${cliff}`;
   return material;
 }
