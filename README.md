@@ -166,4 +166,3 @@ Game audio now covers movement, tools, vehicles, habitats, radio, the crash and 
 ## Campaign control recovery
 
 Graphics warm-up now tolerates materials replaced during model loading and cannot hold movement, driving or repairs indefinitely. Resources wait for the world to be ready. Both five-objective Moon and Mars campaigns were replayed through their A-grade debriefs, including normal buggy controls and every campaign repair. See docs/CAMPAIGN_PLAYTHROUGH_QA.md for the reproduced fault, fixes and verification scope. Reload an older open game tab to receive updates; browser saves are retained.
-
