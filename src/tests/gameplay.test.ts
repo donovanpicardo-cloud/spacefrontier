@@ -114,3 +114,4 @@ it("selects distinct takeoff, rising, falling and landing animation phases", () 
   expect(jumpPhase(true, 0, 0.2, 0)).toBe("Jump_Land");
   expect(jumpPhase(true, 0, 0, 0)).toBeNull();
 });
+
