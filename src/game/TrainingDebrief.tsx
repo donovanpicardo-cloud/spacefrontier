@@ -25,4 +25,3 @@ export function TrainingDebrief({sim,kind}:{sim:Sim;kind:'rover'|'garden'|'storm
  {link(research.event,'NASA · September 2017 event archive')}{link(research.donki,'NASA · DONKI overview')}{link(research.radlab,'NASA · RadLab overview')}{link(research.radApi,'NASA · RadLab API and units')}{link(radlabSample.query,'NASA · Bundled sample query')}</details></>}
  </article>;
 }
-
