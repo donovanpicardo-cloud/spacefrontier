@@ -8,3 +8,4 @@ export function airlockDoorOpen(
   const first = entering ? 0 : 1;
   return index === first ? t < 0.38 : t > 0.62 && otherSlide <= 0.08;
 }
+
