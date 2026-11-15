@@ -91,3 +91,4 @@ it("draws objective waypoints without rotating the camera", () => {
   expect(w.guideMarks?.count).toBeGreaterThan(0);
   expect([w.yaw, w.orbitYaw, w.pitch, w.orbitPitch]).toEqual([1.1, 1.1, .3, .3]);
 });
+
