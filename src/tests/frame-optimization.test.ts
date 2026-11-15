@@ -92,4 +92,3 @@ describe("scenery batching preserves the world while avoiding hidden-object upda
     }
   });
 });
-
