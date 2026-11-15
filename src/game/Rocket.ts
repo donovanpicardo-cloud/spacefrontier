@@ -110,3 +110,4 @@ export function flightPhase(t: number) {
           ? "earth"
           : "complete";
 }
+
