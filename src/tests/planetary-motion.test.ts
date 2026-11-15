@@ -115,3 +115,4 @@ describe("planetary jumps and field expeditions", () => {
     expect(repairPlan("moon", "greenhouse")[0].count).toBe(2);
   });
 });
+
