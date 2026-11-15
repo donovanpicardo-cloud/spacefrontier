@@ -7,4 +7,3 @@ Native browser checks at 65% volume measured nonzero footsteps (RMS 0.0080), imp
 Automated tests cover footstep cadence at 30/60/144 Hz, no footsteps while airborne/driving/paused, jump and landing transitions, exact crash and rocket cue boundaries, replay, pause, airlocks and rate-limited warnings. Existing gameplay tests remain required.
 
 Material changes retain terrain heights and collisions: trilinear filtering, anisotropic sampling, gentler normal detail with distance fading, blended terrain scales, and restrained painted-metal shading. Medium uses lightweight FXAA; School/Low keep direct rendering and existing pixel budgets. High/Ultra keep their MSAA/AO path. Browser checks cover Moon and Mars loading, shader errors, and persistent audio controls. Cross-device listening and GPU profiling remain limited to the current browser.
-
