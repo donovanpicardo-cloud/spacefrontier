@@ -208,3 +208,4 @@
 .arrival-flight, .arrival-landed { background: transparent; pointer-events: none; }
 .arrival-flight .arrival-shade, .arrival-landed .arrival-shade { display: none; }
 .arrival-preparing { background: #040507; }
+
