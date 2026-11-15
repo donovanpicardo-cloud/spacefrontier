@@ -44,4 +44,3 @@ describe("campaign-wide authored material rendering", () => {
     stop();
   });
 });
-
