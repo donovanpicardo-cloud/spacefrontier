@@ -169,3 +169,4 @@ export function habitatSkin(scene: T.Scene, doors: T.Mesh[]) {
   root.add(fasteners);
   return root;
 }
+
