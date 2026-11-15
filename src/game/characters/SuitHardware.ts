@@ -50,3 +50,4 @@ export function fitLifeSupportPack(suit: T.Object3D) {
   suit.add(pack);
   spine.attach(pack);
 }
+
