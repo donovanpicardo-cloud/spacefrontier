@@ -75,3 +75,7 @@ The ceramic coating, panel seams, captive fasteners, barcode markings, inspectio
 This revision supersedes the procedural ceramic and terrain-detail descriptions above. Terrain now uses Poly Haven [Rock Face 03](https://polyhaven.com/a/rock_face_03) and [Sandy Gravel 02](https://polyhaven.com/a/sandy_gravel_02), distributed under [CC0](https://polyhaven.com/license). Color and OpenGL normal maps are 2K; roughness maps are 1K. Source URLs and MD5 hashes are recorded in `public/materials/realism-sources.json`. Rock Face 03 credits Dario Barresi and Rico Cilliers. These Earth analog materials are artistically adapted for the fictional lunar/Martian environments.
 
 Habitat coatings reuse the previously credited Blue Metal Plate photographs, including normal and roughness maps. Pressure hoops, radiator fins, cable protection, equipment housings and service signage are original authored geometry/artwork. All assets are hosted with the game.
+
+## Moon and Mars ground detail
+
+The close-range albedo layers `moon-surface-detail-Diffuse.jpg` and `mars-surface-detail-Diffuse.jpg` are 1024×1024 game artwork generated with OpenAI ImageGen. The lunar layer depicts gray dust and angular mineral chips. The Martian layer depicts rust-colored sand ripples and dark basalt gravel. These layers blend with the NASA photo crops and the previously credited Poly Haven rock, normal, and roughness textures. The NASA crops are credited in `public/materials/realism-sources.json`.
