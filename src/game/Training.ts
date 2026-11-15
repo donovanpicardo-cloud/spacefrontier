@@ -61,3 +61,4 @@ export function validTraining(t:unknown):boolean {
   if(v.storm && (!['field','choice','return','finish','shelter','complete'].includes(v.storm.stage)||![null,'return','finish'].includes(v.storm.choice)||!['task','supplies','battery','exposure','recovery'].every(k=>finite(v.storm![k as keyof typeof v.storm]))||![v.storm.warning,v.storm.arrival].every(x=>x===null||finite(x))||(v.storm.end!==undefined&&!['end','finalBattery','finalExposure'].every(k=>finite(v.storm![k as keyof typeof v.storm]))))) return false;
   return true;
 }
+
