@@ -18,3 +18,4 @@ export function modelClarity(root: T.Object3D) {
     }
   });
 }
+
