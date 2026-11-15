@@ -15,4 +15,3 @@ export const radlabSample = {
  query:'https://visualization.osdr.nasa.gov/radlab/api/?spacecraft=ISS&instrument=DosTel&timestamp%3E=2022-04-01T23%3A00&timestamp%3C2022-04-01T23%3A05&absorbed_dose_rate&format=json',
  readings:[['23:00:00',9.815504],['23:00:33',9.835079],['23:02:13',7.949537],['23:03:53',6.228811]] as const,
 };
-
