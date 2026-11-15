@@ -46,4 +46,3 @@ New planet expeditions now enter the safe tutorial after arrival instead of bypa
 HUD and world labels use solid instrument backgrounds rather than translucent gradients and blur. The landing camera and first cinematic frame are initialized/rendered before removing the loading cover; reduced motion finishes after reveal rather than being overwritten by the flight phase.
 
 Verification: 160 tests across 26 files and production build pass. New tests assert first-frame render ordering for normal and reduced-motion landings. Browser checks covered Moon arrival into automatic tutorial, walking/look/reset lesson progression, Mars reduced-motion startup, tutorial skip into the mission and readable opaque labels. No console errors observed. The entire eleven-step lesson was not replayed end to end in this revision.
-
