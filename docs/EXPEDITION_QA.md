@@ -35,3 +35,4 @@
 
 The full Mars campaign and the life-support repair camera have not been manually replayed end to end in this update. Their interaction/completion paths are covered by automated 3D equipment checks. Long driving sessions, all terrain slopes, mobile/controller input and performance across devices remain unverified. Driving and hand-reach animation are authored game approximations, not a physics or motion-capture simulation.
 
+
