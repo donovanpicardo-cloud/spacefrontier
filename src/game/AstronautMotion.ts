@@ -50,3 +50,4 @@ export function ballisticStep(velocity: number, gravity: number, dt: number) {
     velocity: velocity - gravity * dt,
   };
 }
+
