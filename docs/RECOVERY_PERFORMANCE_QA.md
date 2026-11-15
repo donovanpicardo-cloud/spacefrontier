@@ -34,3 +34,4 @@ Final preview check: walked into the recovery room after camera corrections; its
 
 Installed verification: 37 changed files plus README were copied into C:\Users\donov\Desktop\NASA-SPACE-GAME with hash verification after comparing the original source to round8-backup. The latest existing Moon save opened at Survive the darkness, logged no browser warnings/errors, and was left paused. Its mission progress and resource levels were preserved; the isolated port-5180 test save was not copied into it.
 
+
