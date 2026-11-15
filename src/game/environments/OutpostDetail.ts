@@ -91,4 +91,3 @@ export function outpostDetail(scene: T.Scene, mars: boolean) {
   root.add(new T.Mesh(new T.TubeGeometry(curve, 32, 0.045, 6, false), gold));
   return root;
 }
-
