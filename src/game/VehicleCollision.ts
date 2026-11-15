@@ -25,3 +25,4 @@ export function chassisOverlaps(
     Math.abs(dx * s + dz * c) < length + bx * as + bz * ac - gap
   );
 }
+
