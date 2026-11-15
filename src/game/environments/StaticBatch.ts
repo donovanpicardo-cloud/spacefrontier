@@ -106,3 +106,4 @@ export function disposeBatchSources(scene: T.Object3D) {
     sources.length = 0;
   });
 }
+
