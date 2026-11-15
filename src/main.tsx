@@ -1593,6 +1593,7 @@ function App() {
       {!playing && <ArrivalIntro
         onFilm={(quiet, show, finish) => { void world.current?.filmLanding(quiet, show, finish); }}
         onSkip={() => world.current?.skipLanding()}
+        flightTime={() => world.current?.wreck.time ?? 0}
         ready={graphicsReady && modelStatus !== "loading"}
         saved={saved}
         reducedMotion={reducedMotion}

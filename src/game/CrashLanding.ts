@@ -72,6 +72,11 @@ export class CrashLanding {
   private sparks: T.Points;
   private exhaust = new T.Group();
   private flame: T.Mesh;
+  private plumeLight: T.PointLight;
+  private impactMark: T.Mesh<T.BufferGeometry, T.ShaderMaterial>;
+  private wreckDebris: T.InstancedMesh;
+  private damage = { value: 1 };
+  private readonly mars: boolean;
   private fragmentRest = new T.Quaternion().setFromAxisAngle(
     T.Object3D.DEFAULT_UP,
     1,
@@ -83,16 +88,22 @@ export class CrashLanding {
     private ground: (x: number, z: number) => number,
     register: (box: T.Box3, geometry?: T.BufferGeometry, matrix?: T.Matrix4) => void,
   ) {
+    this.mars = destination === "mars";
     const site = this.site = crashSite(destination);
     const strike = this.strike = new T.Vector3(site.x - 1.4, 0, site.z + 1.6);
     this.root.visible = false;
     scene.add(this.root);
-    const points = new Float32Array(180 * 3);
+    this.impactMark = this.makeImpactMark();
+    scene.add(this.impactMark);
+    this.wreckDebris = this.makeWreckDebris();
+    scene.add(this.wreckDebris);
+    const points = new Float32Array((this.mars ? 620 : 360) * 3);
     for (let i = 0; i < points.length; i += 3) {
-      const angle = Math.random() * Math.PI * 2,
-        radius = Math.random();
+      const sample = i / 3;
+      const angle = sample * 2.399963,
+        radius = Math.sqrt((sample + .5) / (points.length / 3));
       points[i] = Math.cos(angle) * radius;
-      points[i + 1] = Math.sin(radius * Math.PI) * Math.random();
+      points[i + 1] = Math.sin(radius * Math.PI) * (.25 + .75 * Math.abs(Math.sin(sample * 1.414)));
       points[i + 2] = Math.sin(angle) * radius;
     }
     const geometry = new T.BufferGeometry();
@@ -101,7 +112,7 @@ export class CrashLanding {
       geometry,
       new T.PointsMaterial({
         color: destination === "moon" ? 0xb7b7b5 : 0xbf886c,
-        size: 0.09,
+        size: this.mars ? .21 : .085,
         transparent: true,
         depthWrite: false,
       }),
@@ -129,17 +140,28 @@ export class CrashLanding {
     this.sparks.visible = false;
     scene.add(this.sparks);
     this.flame = new T.Mesh(
-      new T.ConeGeometry(0.5, 3, 12),
-      new T.MeshBasicMaterial({
-        color: 0x99dcff,
+      new T.CylinderGeometry(.34, .86, 3.4, 20, 8, true),
+      new T.ShaderMaterial({
+        uniforms: { tint: { value: new T.Color(this.mars ? 0xff9b5b : 0x8ecfff) } },
+        vertexShader: `varying vec2 plumeUV;
+          void main() { plumeUV = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
+        fragmentShader: `uniform vec3 tint; varying vec2 plumeUV;
+          void main() {
+            float bands = .7 + .3 * sin(plumeUV.y * 39. + sin(plumeUV.x * 18.));
+            gl_FragColor = vec4(mix(tint, vec3(1., .93, .76), pow(plumeUV.y, 5.)),
+              smoothstep(0., .22, plumeUV.y) * bands * .55);
+          }`,
+        side: T.DoubleSide,
         transparent: true,
-        opacity: 0.8,
         depthWrite: false,
         blending: T.AdditiveBlending,
       }),
     );
     this.flame.position.y = -2;
     this.flame.userData.noContact = true;
+    this.plumeLight = new T.PointLight(this.mars ? 0xff9b59 : 0x93cfff, 0, 12, 2);
+    this.plumeLight.position.set(0, -1.8, 0);
+    this.exhaust.add(this.plumeLight);
     this.exhaust.add(this.flame);
     this.root.add(this.exhaust);
     this.exhaust.visible = false;
@@ -207,9 +229,7 @@ export class CrashLanding {
         );
         this.root.add(model);
         this.root.updateWorldMatrix(true, true);
-        model.traverse((o) => {
-          if (o instanceof T.Mesh) o.castShadow = o.receiveShadow = true;
-        });
+        this.finishHull(model);
         // Keep each folding array or lunar strut assembly together when its joint fails.
         const assemblies =
           destination === "mars"
@@ -275,6 +295,96 @@ export class CrashLanding {
         for (const piece of this.fragments) batchStatic(piece.mesh);
       });
   }
+  private finishHull(model: T.Object3D) {
+    const materials = new Set<T.MeshStandardMaterial>();
+    model.traverse(object => {
+      if (!(object instanceof T.Mesh)) return;
+      object.castShadow = object.receiveShadow = true;
+      for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+        if (material instanceof T.MeshStandardMaterial) materials.add(material);
+      }
+    });
+    const ground = this.ground(this.site.x, this.site.z);
+    for (const material of materials) {
+      material.onBeforeCompile = shader => {
+        shader.uniforms.crashDamage = this.damage;
+        shader.uniforms.crashGround = { value: ground };
+        shader.uniforms.crashDust = { value: new T.Color(this.mars ? 0x8d4a31 : 0x605a51) };
+        shader.vertexShader = `varying vec3 crashPosition;\n` + shader.vertexShader.replace(
+          "#include <worldpos_vertex>", `#include <worldpos_vertex>
+          crashPosition = (modelMatrix * vec4(transformed, 1.)).xyz;`);
+        shader.fragmentShader = `varying vec3 crashPosition;
+          uniform float crashDamage, crashGround; uniform vec3 crashDust;\n` +
+          shader.fragmentShader.replace("#include <color_fragment>", `#include <color_fragment>
+            vec3 p = crashPosition;
+            float grit = fract(sin(dot(floor(p * 87.), vec3(12.9898, 78.233, 43.77))) * 43758.5453);
+            float smear = sin(p.z * 12. + sin(p.x * 3.) * 3. + p.y * 8.);
+            float contact = 1. - smoothstep(.04, 2.05, p.y - crashGround + smear * .26);
+            float grime = crashDamage * contact * (.32 + grit * .44);
+            diffuseColor.rgb = mix(diffuseColor.rgb, crashDust * (.60 + grit * .55), grime);
+            float scrape = smoothstep(.91, .99, smear) * step(.68, grit) * contact * crashDamage;
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.51, .46, .39), scrape * .5);
+          `);
+      };
+      material.customProgramCacheKey = () => "crash-hull-weathering";
+    }
+  }
+  private makeImpactMark() {
+    const geometry = new T.PlaneGeometry(11, 14, 28, 34).rotateX(-Math.PI / 2);
+    const positions = geometry.attributes.position;
+    const centerX = this.site.x - .65, centerZ = this.site.z + .75;
+    for (let i = 0; i < positions.count; i++) {
+      const x = centerX + positions.getX(i), z = centerZ + positions.getZ(i);
+      positions.setXYZ(i, x, this.ground(x, z) + .036, z);
+    }
+    const material = new T.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      uniforms: { amount: { value: 1 }, tint: { value: new T.Color(this.mars ? 0x583021 : 0x2e2a24) } },
+      vertexShader: `varying vec2 markUV;
+        void main() { markUV = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
+      fragmentShader: `varying vec2 markUV; uniform vec3 tint; uniform float amount;
+        void main() {
+          vec2 p = markUV - .5;
+          p.x += p.y * .55;
+          float noise = fract(sin(dot(floor(markUV * 210.), vec2(31.57, 71.13))) * 43758.54);
+          float core = 1. - smoothstep(.16, .52, length(p * vec2(2.9, 1.35)) + noise * .065);
+          float furrows = .7 + .3 * sin(p.x * 181. + noise * 1.8);
+          gl_FragColor = vec4(tint, core * amount * (.22 + noise * .34) * furrows);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }`,
+    });
+    const mark = new T.Mesh(geometry, material);
+    mark.userData.noCollision = true;
+    return mark;
+  }
+  private makeWreckDebris() {
+    const shards = new T.InstancedMesh(
+      new T.BoxGeometry(1, 1, 1),
+      new T.MeshStandardMaterial({ roughness: .81, metalness: .36 }),
+      32,
+    );
+    shards.userData.noCollision = true;
+    shards.receiveShadow = true;
+    const transform = new T.Object3D();
+    const colors = this.mars ? [0x68503b, 0x252938, 0xa49987] : [0x9c783a, 0x353535, 0xa39b88];
+    for (let i = 0; i < shards.count; i++) {
+      const angle = i * 2.399963;
+      const distance = 1 + 7 * ((i * .618034) % 1) ** 1.6;
+      const x = this.site.x + Math.cos(angle) * distance * .65 - distance * .19;
+      const z = this.site.z + Math.sin(angle) * distance * .45 + distance * .55;
+      transform.position.set(x, this.ground(x, z) + .04, z);
+      transform.rotation.set(Math.sin(angle * 3) * .13, angle, Math.cos(angle) * .17);
+      transform.scale.set(.08 + (i % 5) * .048, .018 + (i % 4) * .007, .10 + (i % 7) * .045);
+      transform.updateMatrix();
+      shards.setMatrixAt(i, transform.matrix);
+      shards.setColorAt(i, new T.Color(colors[i % colors.length]));
+    }
+    return shards;
+  }
   private rotateFragment(piece: Fragment, progress: number) {
     piece.mesh.quaternion.copy(this.impactRotation);
     piece.mesh.rotateX(piece.spin.x * progress);
@@ -286,6 +396,9 @@ export class CrashLanding {
     );
   }
   start(finished: () => void) {
+    this.damage.value = 0;
+    this.impactMark.visible = false;
+    this.wreckDebris.visible = false;
     for (const piece of this.fragments) {
       this.root.add(piece.mesh);
       piece.mesh.position.copy(piece.socket);
@@ -305,10 +418,16 @@ export class CrashLanding {
     const t = this.elapsed;
     const left = Math.max(0, 1 - t / impact);
     const settle = Math.max(0, t - impact);
+    this.damage.value = T.MathUtils.smoothstep(settle, 0, .65);
+    this.impactMark.visible = t >= impact;
+    this.wreckDebris.visible = settle >= .3;
+    this.impactMark.material.uniforms.amount.value = this.damage.value;
     const failure = T.MathUtils.smoothstep(t, 2, 6);
     const vibration = failure * Math.min(1, left * 6);
     this.exhaust.visible = t < impact;
-    this.flame.visible = t < 2 || (t < 6 && Math.sin(t * 31) > 0.5);
+    this.flame.visible = t < 2 || (t < 6 && Math.sin(t * 31) > 0.5)
+      || (t > 8 && t < impact && Math.sin(t * 17) > -.32);
+    this.plumeLight.intensity = this.flame.visible ? 22 * (.8 + .2 * Math.sin(t * 31)) : 0;
     this.flame.scale.set(1, 0.8 + Math.sin(t * 43) * 0.2, 1);
     this.sparks.visible = t > 2 && t < impact + 1.8;
     if (this.sparks.visible) {
@@ -376,20 +495,24 @@ export class CrashLanding {
         this.rotateFragment(piece, u);
       }
     }
-    this.dust.visible = settle > 0 && settle < 2.7;
+    const dustTime = this.mars ? 4.8 : 2.45;
+    this.dust.visible = settle > 0 && settle < dustTime;
     const { x, z } = this.site;
     this.dust.position.set(x, this.ground(x, z) + 0.08, z);
-    this.dust.scale.set(1 + settle * 4, 0.35 + settle * 1.1, 1 + settle * 4);
+    const spread = 1 + settle * (this.mars ? 3.5 : 6);
+    const height = this.mars ? .45 + settle * 1.25 : .24 + 1.25 * Math.sin(Math.PI * Math.min(1, settle / dustTime));
+    this.dust.scale.set(spread, height, spread * (this.mars ? .9 : 1.2));
     (this.dust.material as T.PointsMaterial).opacity = Math.max(
       0,
-      0.8 - settle * 0.3,
+      .85 * (1 - settle / dustTime),
     );
     const shake =
       t < impact
         ? Math.sin(t * 31) * vibration * 0.1
         : Math.sin(settle * 38) * Math.exp(-settle * 4) * 0.9;
+    const reveal = T.MathUtils.smoothstep(settle, .7, 5);
     camera.position
-      .set(6 + left * 4 + shake, 2.3 + left * 4, 9 + left * 5)
+      .set(6 + left * 4 + shake + reveal * 3, 2.3 + left * 4 + reveal * 2.5, 9 + left * 5 + reveal * 3)
       .add(this.root.position);
     camera.position.y = Math.max(
       camera.position.y,

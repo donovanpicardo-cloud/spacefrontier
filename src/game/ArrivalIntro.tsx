@@ -8,6 +8,7 @@ import "./arrival.css";
 type Props = {
   onFilm: (quiet: boolean, show: () => void, finish: () => void) => void;
   onSkip: () => void;
+  flightTime: () => number;
   ready: boolean;
   saved: boolean;
   reducedMotion: boolean;
@@ -28,9 +29,8 @@ export function ArrivalIntro(props: Props) {
   const beat = arrivalBeat(seconds, destination);
   useEffect(() => {
     if (phase !== "flight") return;
-    const start = performance.now();
     const timer = window.setInterval(
-      () => setSeconds((performance.now() - start) / 1000),
+      () => setSeconds(callbacks.current.flightTime()),
       100,
     );
     return () => clearInterval(timer);
@@ -98,7 +98,7 @@ export function ArrivalIntro(props: Props) {
             aria-hidden="true"
           />
           <div className="arrival-flight-meta">
-            <span>FRONTIER / {destination.toUpperCase()} ARRIVAL</span>
+            <span>FRONTIER / {destination.toUpperCase()} ARRIVAL · FICTIONAL SIMULATION</span>
             <span>{beat.chapter}</span>
           </div>
           <div className="arrival-film-caption" role="status">
