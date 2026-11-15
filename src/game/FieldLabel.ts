@@ -55,4 +55,3 @@ export function drawFieldLabel(label: FieldLabel, title: string, subtitle: strin
   ctx.fill();
   map.needsUpdate = true;
 }
-
