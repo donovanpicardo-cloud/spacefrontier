@@ -99,4 +99,3 @@ export function landscapeMaterial(destination: Destination, cliff = false) {
   material.customProgramCacheKey = () => `photographic-geology-v4-${destination}-${cliff}`;
   return material;
 }
-
