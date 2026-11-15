@@ -46,4 +46,3 @@ Terrain material: Terrain Red 01, Rob Tuytel / Poly Haven, CC0. Source and check
 ## Limits
 
 This is a substantially expanded stylized browser game, not a claim of AAA production quality. The robots and vehicles are authored procedural models, towing is a simplified rigid connection, and the astronaut uses source walk/run clips plus authored poses and hand reach. The full Mars campaign and every terrain boundary have not been manually replayed in this pass; shared planet parameters and repair stances/exits are covered by tests. School hardware, mobile/controller input, extended sessions and cross-browser performance require broader verification.
-
