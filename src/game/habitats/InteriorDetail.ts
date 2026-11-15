@@ -384,4 +384,3 @@ export function interiorDetail(scene: T.Scene) {
   }
   return k;
 }
-
