@@ -47,3 +47,4 @@ export function applyEngineeringFinish(material: T.MeshStandardMaterial) {
   material.customProgramCacheKey = () => key + "-photographic-coating-v2";
   material.needsUpdate = true;
 }
+
