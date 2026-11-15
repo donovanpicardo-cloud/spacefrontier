@@ -190,3 +190,4 @@ export function buildLunarVehicle(root: T.Group) {
   batchStatic(fixed);
   return { wheels, steering, control };
 }
+
