@@ -38,4 +38,3 @@ export function arrivalBeat(seconds: number, destination: Destination) {
     text: "MISSION CONTROL · We have your beacon. Reach the outpost. We’ll guide you from here.",
   };
 }
-
