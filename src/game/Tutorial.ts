@@ -134,3 +134,4 @@ export function juniorGoal(mission: number, destination: "moon" | "mars") {
   }
   return juniorGoals[mission] || "Explore your space home.";
 }
+
