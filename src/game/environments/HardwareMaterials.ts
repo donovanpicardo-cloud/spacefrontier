@@ -46,4 +46,3 @@ export function hardwareMaterials() {
   industrialSurface(orange);
   return { paint, navy, metal, tread, rubber, orange };
 }
-
