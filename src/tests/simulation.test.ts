@@ -121,4 +121,3 @@ describe("life-support conservation and power", () => {
     expect(gravity.moon).toBeLessThan(gravity.mars);
   });
 });
-
