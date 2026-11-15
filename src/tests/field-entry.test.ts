@@ -11,4 +11,3 @@ it("uses the opening E only to enter the rig; later E presses still operate its 
   resources.extraction.update(0.1,0,false,3);
   expect(resources.extraction.fault).toBe("Relay tripped. ");
 });
-
