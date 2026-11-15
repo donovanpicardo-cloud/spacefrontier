@@ -135,4 +135,3 @@ export class FrameDiagnostics {
     if (this.query) this.gl.deleteQuery(this.query);
   }
 }
-
