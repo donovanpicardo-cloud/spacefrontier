@@ -34,3 +34,4 @@ export function SurfaceMap(p:{sites:ResourceSite[];collected:Set<string>;player:
  <div className="survey-list">{matches.map(s=><button className="secondary" key={s.id} onClick={()=>p.onSelect(s)}>{s.name}<small>{Math.round(Math.hypot(s.x-p.player[0],s.z-p.player[2]))} m · {s.amount} {s.kind==='salvage'?'parts':'%'}</small></button>)}</div>
  </details></>;
 }
+
