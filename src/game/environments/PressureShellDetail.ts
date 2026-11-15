@@ -45,3 +45,4 @@ export function pressureShellDetail(root: T.Group, paint: T.Material, metal: T.M
   const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;map.anisotropy=8;
   add(new T.PlaneGeometry(1.9,.3),new T.MeshStandardMaterial({map,roughness:.7,metalness:.15}),0,4.73,-9.19);
 }
+
