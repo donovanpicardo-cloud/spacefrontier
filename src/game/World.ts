@@ -1986,4 +1986,3 @@ export class World {
     this.renderer.domElement.remove();
   }
 }
-
