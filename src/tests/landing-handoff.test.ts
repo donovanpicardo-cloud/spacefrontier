@@ -21,4 +21,3 @@ it.each([false, true])("renders the cinematic before revealing it (reduced motio
   expect(events).toEqual(quiet ? ["start","camera","render","show","skip","finish"] : ["start","camera","render","show"]);
   expect(w.player.root.visible).toBe(false);
 });
-
