@@ -431,4 +431,3 @@ export function buildSky(scene: T.Scene, d: Destination) {
   earth.rotation.set(.17, -.55, .34);
   scene.add(earth);
 }
-
