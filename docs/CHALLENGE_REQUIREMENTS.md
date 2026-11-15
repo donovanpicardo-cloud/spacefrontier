@@ -36,4 +36,3 @@ This is a significantly expanded browser prototype, not a production AAA game. R
 ## Earthbound and final frame-performance pass
 
 See FRAME_ROCKET_QA.md for the current 116-test validation, source-preserving scene optimization, manual camera, expanded finite supplies and return-to-Earth ending. The return flight is authored fiction with a NASA Earth Observatory globe, not a required real-flight simulation or a NASA mission claim. The earlier challenge mapping and its remaining child/hardware testing and unpublished-resources limitations still apply.
-
