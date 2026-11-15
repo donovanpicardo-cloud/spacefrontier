@@ -70,3 +70,4 @@ console.log(JSON.stringify({ originalBytes: original.length, optimizedBytes: byt
   geometry: "All vertex attributes, triangle topology/winding, nodes and transforms verified unchanged",
   textures: "Duplicate textures shared; lossless WebP, maximum 1024px",
 }, null, 2));
+
