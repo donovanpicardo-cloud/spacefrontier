@@ -24,3 +24,4 @@ The portable purifier and direct transfer to outpost reserves are gameplay simpl
 `npm run build`: TypeScript and production build pass. The pre-existing Three.js bundle-size advisory remains.
 
 Browser preview checks: collected a lunar battery cache, reloaded and confirmed one remaining battery site, followed the ice trail and collected water. Drove Luna Buggy at 7.6 m/s and Mars Scout at 5.6 m/s across open terrain, braked, and exited the lunar vehicle. Checked markers and the supply map. Full exploration of every rock/terrain boundary and every site has not been manually completed; long driving and cross-device profiling remain future verification.
+
