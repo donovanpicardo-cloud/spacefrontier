@@ -18,7 +18,7 @@ import { RenderBudget, renderRatio } from "./RenderBudget";
 import { suitMovement } from "./MovementTuning";
 import * as T from "three";
 import { HabitatLighting } from "./HabitatLighting";
-import { horizontalStep, ballisticStep } from "./AstronautMotion";
+import { horizontalStep, ballisticStep, followsSlope } from "./AstronautMotion";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import type { Destination } from "../simulation/engine";
 import { createAstronaut, animateAstronaut } from "./characters/Astronaut";
@@ -1477,7 +1477,11 @@ export class World {
           terrain,
           dynamic,
         ).floor;
-        grounded = p.position.y <= ground + 0.01;
+        if (followsSlope(onGround, this.velocity, floorBefore - ground,
+          Math.hypot(p.position.x - xBefore, p.position.z - zBefore))) {
+          p.position.y = ground;
+        }
+        grounded = p.position.y <= ground + 0.01 && this.velocity <= 0;
         if (
           (this.keys.has("Space") ||
             this.touchJumpBuffer > 0 ||
@@ -1520,6 +1524,7 @@ export class World {
           p.position.y = vertical.floor;
           this.velocity = 0;
         }
+        grounded = p.position.y <= vertical.floor + 0.001 && this.velocity <= 0;
         if (this.transit) {
           this.transit.t += dt / 4;
           const t = Math.min(1, this.transit.t);

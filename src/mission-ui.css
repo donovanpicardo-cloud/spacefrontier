@@ -311,3 +311,29 @@
 .rocket-checklist li button {
   justify-self: start;
 }
+/* Flight-computer labels: opaque surfaces, squared edges and instrument typography. */
+.app.app :is(.objective,.suit,.location,.telemetry,.tutorial-card,.vehicle-hud,.world-repair-hud,.radio-status,.notification,.interact,.trail-caption,.model-status,.practice-badge,.lesson-hint,.recovery-status,.field-instrument,.panel,.settings-panel,.modal,.explorer-tools button) {
+  background: #09131e;
+  background-image: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  border: 1px solid #385568;
+  border-left: 2px solid #83dcef;
+  border-radius: 0;
+  color: #edf6fc;
+  text-shadow: none;
+}
+.app.app :is(.eyebrow,.expedition-kicker,.guide-identity,.suit-row > span,.goal-distance,.telemetry,.radio-status,.trail-caption,.model-status,.practice-badge,kbd) {
+  font-family: 'Consolas', 'SFMono-Regular', monospace;
+  letter-spacing: .09em;
+  color: #98deef;
+  font-variant-numeric: tabular-nums;
+}
+.app.app :is(.eyebrow,.expedition-kicker,.guide-identity,.suit-row > span) { text-transform: uppercase; }
+.app.app :is(.objective,.tutorial-card) h2 { font-weight: 600; letter-spacing: .01em; }
+.app.app :is(.primary,.secondary,kbd,.lesson-actions button,.field-instrument button) { border-radius: 2px; box-shadow: none; }
+.app.app :is(.panel,.settings-panel,.modal) { border-top: 2px solid #83dcef; }
+.app.app :is(.objective,.tutorial-card,.interact)::before,
+.app.app :is(.objective,.tutorial-card,.interact)::after { box-shadow: none; backdrop-filter: none; background-image: none; }
+

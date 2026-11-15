@@ -69,6 +69,19 @@ function baseTerrainHeight(x: number, z: number, d: Destination) {
   );
   let h = fbm(x * 0.028, z * 0.028) * 6 + fbm(x * 0.16, z * 0.16) * 0.55;
   if (d === "moon") {
+    // Nearby cells only: dense small impacts without scanning a planet-wide list.
+    const cellX = Math.floor(x / 20), cellZ = Math.floor(z / 20);
+    for (let ix = cellX - 1; ix <= cellX + 1; ix++) {
+      for (let iz = cellZ - 1; iz <= cellZ + 1; iz++) {
+        const seed = ix * 173 + iz * 7919;
+        const cx = (ix + 0.2 + hash(seed) * 0.6) * 20;
+        const cz = (iz + 0.2 + hash(seed + 23) * 0.6) * 20;
+        const r = 2.2 + hash(seed + 53) * 3.4;
+        const q = Math.hypot(x - cx, z - cz) / r;
+        if (q < 1.5) h += r * (0.11 * Math.exp(-(((q - 1) / 0.19) ** 2))
+          - 0.17 * Math.exp(-((q / 0.72) ** 4)));
+      }
+    }
     for (const [cx, cz, r] of craters) {
       const q = Math.hypot(x - cx, z - cz) / r;
       h +=
@@ -76,6 +89,14 @@ function baseTerrainHeight(x: number, z: number, d: Destination) {
         Math.exp(-Math.pow(q / 0.76, 4)) * r * 0.19;
     }
   } else {
+    // Wind-shaped dune crests and elongated, eroded rocky ridges.
+    const dunePhase = x * 0.24 + z * 0.09 + noise(x * 0.025, z * 0.025) * 2;
+    const duneField = T.MathUtils.smoothstep(noise(x * 0.012 + 30, z * 0.014), -0.5, 0.5);
+    // Keep the surveyed rover lesson's grades and reserve budget unchanged.
+    const landformMask = T.MathUtils.smoothstep(Math.max(-85 - x, x + 5, -z, z - 58), 0, 16);
+    h += Math.pow(0.5 + 0.5 * Math.sin(dunePhase), 2) * duneField * 2.4 * landformMask;
+    const ridge = Math.exp(-((Math.sin(x * 0.037 + z * 0.014 + noise(x * 0.012, z * 0.021)) / 0.24) ** 2));
+    h += ridge * (1 - duneField) * (3.5 + noise(x * 0.18, z * 0.16) * 0.7) * landformMask;
     h +=
       Math.sin(x * 0.1 + Math.sin(z * 0.035) * 3) * 0.75 +
       Math.pow(Math.abs(noise(x * 0.018, z * 0.04)), 2) * 7;
@@ -190,7 +211,8 @@ export function buildTerrain(
   const rocky = rockGeometry(2),
     lowRock = rockGeometry(1);
   const material = landscapeMaterial(d, true);
-  const rocks = new T.InstancedMesh(lowRock, material, 2200);
+  const rockCount = d === "moon" ? 3800 : 2800;
+  const rocks = new T.InstancedMesh(lowRock, material, rockCount);
   const largeRocks = new T.InstancedMesh(rocky, material, 60);
   largeRocks.userData.surfaceRock = true;
   largeRocks.castShadow = largeRocks.receiveShadow = true;
@@ -204,7 +226,7 @@ export function buildTerrain(
   const fieldSites = [...resourceSites(d), ...sampleSites(d), ...robotSites(d), recoveryBay];
   rocky.computeBoundingBox();
   const rockBounds = new T.Box3();
-  for (let i = 0; i < 2800 && count < 2200; i++) {
+  for (let i = 0; i < rockCount + 900 && count < rockCount; i++) {
     const x = (hash(i + 1) - 0.5) * 250,
       z = (hash(i + 2040) - 0.5) * 250;
     if (

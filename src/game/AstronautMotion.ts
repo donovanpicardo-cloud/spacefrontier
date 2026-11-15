@@ -1,4 +1,9 @@
 export type HorizontalVelocity = { x: number; z: number };
+/** Follow continuous downhill ground, but leave ledges and jumps ballistic. */
+export function followsSlope(onGround: boolean, velocity: number, drop: number, distance: number) {
+  return onGround && velocity <= 0 && drop >= 0 &&
+    drop <= Math.min(0.35, distance * 1.6 + 0.02);
+}
 /** Boots accelerate/brake on the ground. In flight there is no magic air brake. */
 export function horizontalStep(
   v: HorizontalVelocity,

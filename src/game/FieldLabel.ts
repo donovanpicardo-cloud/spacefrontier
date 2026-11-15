@@ -17,19 +17,25 @@ export function fieldLabel(width: number, height = width / 4) {
   return label;
 }
 
-export function drawFieldLabel(label: FieldLabel, title: string, subtitle: string, accent = "#d8ad75") {
+export function drawFieldLabel(label: FieldLabel, title: string, subtitle: string, accent = "#83dcef") {
   const map = label.material.map!;
   const ctx = (map.image as HTMLCanvasElement).getContext("2d")!;
   ctx.clearRect(0, 0, 768, 192);
   ctx.beginPath();
-  ctx.roundRect(10, 10, 748, 158, 6);
-  ctx.fillStyle = "#17212b";
+  ctx.moveTo(10, 10);
+  ctx.lineTo(734, 10);
+  ctx.lineTo(758, 34);
+  ctx.lineTo(758, 168);
+  ctx.lineTo(34, 168);
+  ctx.lineTo(10, 144);
+  ctx.closePath();
+  ctx.fillStyle = "#09131e";
   ctx.fill();
-  ctx.strokeStyle = "#51616e";
+  ctx.strokeStyle = "#517487";
   ctx.lineWidth = 3;
   ctx.stroke();
   ctx.beginPath();
-  ctx.roundRect(37, 44, 79, 88, 4);
+  ctx.rect(37, 44, 79, 88);
   ctx.fillStyle = "#263544";
   ctx.fill();
   ctx.beginPath();
@@ -42,16 +48,20 @@ export function drawFieldLabel(label: FieldLabel, title: string, subtitle: strin
   ctx.fillStyle = accent;
   ctx.fill();
   ctx.fillStyle = "#f6f4f0";
-  ctx.font = "600 47px system-ui, sans-serif";
-  ctx.fillText(title, 144, 85, 572);
+  ctx.font = "600 43px monospace";
+  ctx.fillText(title.toUpperCase(), 144, 85, 572);
   ctx.fillStyle = "#c0c1c2";
-  ctx.font = "500 29px system-ui, sans-serif";
+  ctx.font = "500 28px monospace";
   ctx.fillText(subtitle, 146, 126, 566);
   ctx.beginPath();
   ctx.moveTo(374, 168);
   ctx.lineTo(384, 182);
   ctx.lineTo(394, 168);
-  ctx.fillStyle = "#17212b";
+  ctx.fillStyle = "#09131e";
   ctx.fill();
+  ctx.fillStyle = accent;
+  ctx.fillRect(37, 20, 90, 4);
+  ctx.fillRect(700, 147, 30, 3);
+  ctx.fillRect(682, 147, 10, 3);
   map.needsUpdate = true;
 }
