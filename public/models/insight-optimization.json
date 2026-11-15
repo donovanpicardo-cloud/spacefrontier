@@ -7,4 +7,3 @@
   "modifications": "Duplicate textures shared; lossless WebP with maximum 1024px dimensions; lossless Meshopt geometry compression. No mesh simplification or vertex quantization.",
   "verification": "Round-trip decoding preserves every vertex attribute, triangle topology and winding, node name, hierarchy and transform."
 }
-
