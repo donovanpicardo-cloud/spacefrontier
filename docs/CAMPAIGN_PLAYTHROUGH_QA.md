@@ -34,3 +34,4 @@ An already protected shelter still displayed the purchase prompt. Its prompt and
 - Debrief: A grade, 5/5 objectives, 100% crew health, 86% water, 35% battery.
 
 The main campaign checks above do not claim exhaustive coverage of every optional gathering site, research project or return-rocket expedition. The visible scenes and physics were exercised in the current browser; this is not a guarantee of frame rate on other computers.
+
