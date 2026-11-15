@@ -93,3 +93,4 @@ it("registers separate final-pose hull pieces instead of a solid box across empt
   expect(boxes.every(box => !box.containsPoint(center))).toBe(true);
   expect(boxes.every(box => box.min.y >= -1e-6)).toBe(true);
 });
+
