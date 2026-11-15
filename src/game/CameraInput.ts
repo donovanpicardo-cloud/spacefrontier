@@ -18,4 +18,3 @@ export function shoulderFraming(distance: number) {
   const tight = MathUtils.clamp((2.9 - distance) / 1.3, 0, 1);
   return { fov: 52 + tight * 30, aimDrop: tight * 0.36 };
 }
-
