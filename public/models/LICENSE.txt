@@ -12,4 +12,3 @@ Base mesh and textures generated with an AI image-to-3D tool (Meshy), then clean
 checked in Blender.
 If your platform requires disclosure of AI-generated content (for example Steam), this asset counts as
 AI-assisted.
-
