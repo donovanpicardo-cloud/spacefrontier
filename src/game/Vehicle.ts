@@ -624,3 +624,4 @@ export class ExplorerVehicle {
     this.emit();
   }
 }
+
