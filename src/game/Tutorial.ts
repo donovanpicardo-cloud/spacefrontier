@@ -78,6 +78,19 @@ export const tutorialSteps = [
   },
 ] as const;
 export type TutorialId = (typeof tutorialSteps)[number]["id"];
+export const touchLesson: Record<TutorialId, { text: string; hint: string }> = {
+  move: { text: "Drag the Move stick to walk a few steps. Your air and supplies are safe during practice.", hint: "Push the Move stick up to walk forward." },
+  look: { text: "Swipe the scene to turn the camera.", hint: "Swipe left or right across the terrain." },
+  reset: { text: "Tap Reset to put the camera behind your astronaut.", hint: "Look for Reset in the top row." },
+  jump: { text: "Tap Jump, then wait until your boots touch down.", hint: "The Moon’s weaker gravity lets you stay in the air longer." },
+  marker: { text: "Use the Move stick to follow the trail to the solar panels.", hint: "Watch the distance on your goal card shrink as you walk." },
+  repair: { text: "Tap the action button when you reach the panels, then follow the repair instructions.", hint: "On the Moon, drag plugs to matching shapes. On Mars, sweep dust away with your finger." },
+  airlock: { text: "Follow the trail to the door and tap Cycle airlock.", hint: "Wait for the pressure cycle to bring you inside." },
+  objective: { text: "Tap Show my goal to find your mission objective.", hint: "Your goal card shows your next stop." },
+  help: { text: "Tap Help with this step to ask Mission Control for a hint.", hint: "The question-mark button also asks for help." },
+  oxygen: { text: "Tap Show my air to find the suit air meter.", hint: "Your suit refills inside the habitat." },
+  finish: { text: "Restore the outpost, gather supplies, and build a rocket to return to Earth. Tap the button below to leave practice.", hint: "You can replay the tutorial from Pause." },
+};
 export function tutorialCanContinue(id: TutorialId) {
   return id === "objective" || id === "help" || id === "oxygen" || id === "finish";
 }

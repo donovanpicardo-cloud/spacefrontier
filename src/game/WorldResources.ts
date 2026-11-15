@@ -1,14 +1,16 @@
 import { drawFieldLabel, fieldLabel, type FieldLabel } from "./FieldLabel";
 import * as T from "three";
 import type { Destination } from "../simulation/engine";
-import { Gathering, resourceSites, resourceTitles, type ResourceSite } from "./Resources";
+import { Gathering, resourceSites, resourceTitles, type ResourceKind, type ResourceSite } from "./Resources";
 import { Extraction } from "./Extraction";
 import { resourceRig, type ResourceRig } from "./ResourceRigs";
 import { batchStatic } from "./environments/StaticBatch";
 export type GatherInfo = {
   name: string;
+  kind: ResourceKind;
   progress: number;
   instruction: string;
+  touchInstruction: string;
   controls: string;
   heat?: number;
   voltage?: number;
@@ -145,8 +147,10 @@ export class WorldResources {
     this.lastProgress = key;
     this.status({
       name: site.name,
+      kind: site.kind,
       progress: Math.max(0, Math.min(1, task.progress)),
       instruction: task.instruction(),
+      touchInstruction: task.instruction(true),
       controls: task.controls,
       ...(site.kind === "battery" && task.stage === 0 ? { voltage: Math.round(task.voltage), band: task.targetVoltage } : {}),
       ...(site.kind === "ice" ? { heat: task.heat } : {}),

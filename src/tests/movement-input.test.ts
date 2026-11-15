@@ -4,6 +4,24 @@ import { updateMovementInput, sprintHeld } from "../game/MovementInput";
 import { horizontalStep } from "../game/AstronautMotion";
 import { CollisionWorld } from "../game/CollisionWorld";
 import { ExplorerVehicle } from "../game/Vehicle";
+import { joystickAxes } from "../game/TouchInput";
+
+describe("touch movement", () => {
+  it("ignores center drift and clamps long diagonal drags", () => {
+    expect(joystickAxes(3, 4, 40)).toEqual({ x: 0, y: 0 });
+    const { x, y } = joystickAxes(100, -100, 40);
+    expect(Math.hypot(x, y)).toBeCloseTo(1);
+    expect(x).toBeCloseTo(-y);
+  });
+
+  it("walks more slowly when the stick is only partly deflected", () => {
+    const stick = joystickAxes(0, -20, 40);
+    const full = horizontalStep({ x: 0, z: 0 }, { x: 0, z: -1 }, 0, true, true, false, 1 / 60);
+    const partial = horizontalStep({ x: 0, z: 0 }, { x: stick.x, z: stick.y }, 0, true, true, false, 1 / 60);
+    expect(partial.z).toBeCloseTo(full.z * stick.y * -1);
+    expect(Math.abs(partial.z)).toBeLessThan(Math.abs(full.z));
+  });
+});
 
 describe("sprint input across crash handoff and focus changes", () => {
   it.each(["ShiftLeft", "ShiftRight"])(

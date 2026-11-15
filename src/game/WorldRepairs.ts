@@ -455,13 +455,26 @@ export class WorldRepairs {
     const p = this.localPoint(e, camera, canvas);
     if (!p) return;
     if (this.step.type === "cables") {
-      const i = this.plugs.findIndex(
-        (o, i) =>
-          !this.connected.has(i) &&
-          Math.hypot(o.position.x - p.x, o.position.y - p.y) < 0.15,
-      );
-      if (i < 0) return;
-      this.selected = i;
+      if (e.pointerType === "touch") {
+        let distance = 0.20;
+        let closest = -1;
+        this.plugs.forEach((plug, index) => {
+          const offset = Math.hypot(plug.position.x - p.x, plug.position.y - p.y);
+          if (this.connected.has(index) || offset >= distance) return;
+          distance = offset;
+          closest = index;
+        });
+        if (closest < 0) return;
+        this.selected = closest;
+      } else {
+        const i = this.plugs.findIndex(
+          (o, i) =>
+            !this.connected.has(i) &&
+            Math.hypot(o.position.x - p.x, o.position.y - p.y) < 0.15,
+        );
+        if (i < 0) return;
+        this.selected = i;
+      }
     } else if (this.step.type === "valves") {
       const i = this.wheels.findIndex(
         (o) => Math.hypot(o.position.x - p.x, o.position.y - p.y) < 0.23,

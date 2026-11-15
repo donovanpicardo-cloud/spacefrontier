@@ -1,0 +1,259 @@
+.touch-game {
+  --touch-top: max(8px, env(safe-area-inset-top));
+  --touch-left: max(12px, env(safe-area-inset-left));
+  --touch-right: max(12px, env(safe-area-inset-right));
+  --touch-bottom: max(12px, env(safe-area-inset-bottom));
+  --stick-size: clamp(100px, 25vw, 142px);
+  min-height: 0;
+}
+
+.touch-game button { touch-action: manipulation; }
+.touch-game .overlay {
+  padding: var(--touch-top) var(--touch-right) var(--touch-bottom) var(--touch-left);
+}
+.touch-game .overlay .panel {
+  max-height: calc(100dvh - var(--touch-top) - var(--touch-bottom));
+  overscroll-behavior: contain;
+}
+.touch-game .panel-top button { min-width: 44px; min-height: 44px; }
+.touch-game .arrival-skip {
+  right: var(--touch-right);
+  top: var(--touch-top);
+  min-height: 44px;
+}
+.touch-game .arrival-bottom {
+  bottom: var(--touch-bottom);
+  left: var(--touch-left);
+  right: var(--touch-right);
+}
+
+.touch-game.in-game > :is(header, .telemetry, .compass, .model-status, .reticle) {
+  display: none;
+}
+.touch-game.in-game .touch-tools {
+  position: absolute;
+  z-index: 5;
+  top: var(--touch-top);
+  left: var(--touch-left);
+  right: var(--touch-right);
+  display: flex;
+  gap: 5px;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+.touch-game .touch-tools button,
+.touch-game .touch-hold,
+.touch-game .touch-gather > button,
+.touch-game .touch-training-actions > button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 1px solid #c0dee480;
+  border-radius: 10px;
+  background: #101c2bec;
+  color: #ecf7ff;
+  font: 600 13px/1.15 system-ui, sans-serif;
+  pointer-events: auto;
+}
+.touch-game .touch-hold {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.touch-game :is(.touch-hold, .touch-tools button):active,
+.touch-game .touch-tools button[aria-pressed="true"] {
+  background: #cae9ef;
+  color: #10222c;
+}
+
+.touch-movement {
+  position: absolute;
+  z-index: 5;
+  bottom: var(--touch-bottom);
+  left: var(--touch-left);
+  right: var(--touch-right);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  pointer-events: none;
+}
+.touch-joystick {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--stick-size);
+  aspect-ratio: 1;
+  border: 1px solid #c0dee4a0;
+  border-radius: 50%;
+  background: #101c2b9c;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.touch-stick {
+  display: block;
+  width: 46%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid #e5f5f8;
+  background: #a6d4e3c9;
+  pointer-events: none;
+}
+.touch-stick-label {
+  position: absolute;
+  bottom: 5px;
+  color: #fff;
+  font: 600 12px system-ui, sans-serif;
+  pointer-events: none;
+}
+.touch-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+}
+.touch-game .touch-actions button {
+  width: 50px;
+  height: 50px;
+}
+.touch-game .touch-actions button:last-child {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #d0e4eb;
+  color: #10222c;
+}
+.touch-game .touch-actions button:last-child:active { background: #fff; }
+
+.app.touch-game.in-game .objective {
+  top: calc(var(--touch-top) + 50px);
+  left: var(--touch-left);
+  width: min(310px, calc(100vw - var(--touch-left) - var(--touch-right)));
+  max-width: none;
+  max-height: 27dvh;
+  overflow: auto;
+  padding: 8px 11px;
+}
+.app.touch-game.in-game .objective h2 { font-size: 17px; margin: 3px 0; }
+.app.touch-game.in-game .objective p { font-size: 12px; margin: 3px 0; }
+.touch-game .objective .mission-dots { display: none; }
+.touch-training-actions:not(:empty) { margin-top: 6px; display: flex; gap: 5px; }
+.app.touch-game.in-game .suit {
+  display: block;
+  top: auto;
+  left: auto;
+  right: var(--touch-right);
+  bottom: calc(var(--touch-bottom) + 72px);
+  width: 117px;
+  padding: 7px 9px;
+  pointer-events: none;
+}
+.touch-game .suit .eyebrow { display: none; }
+.touch-game .suit-row { margin: 0; }
+.touch-game .suit-row + .suit-row { margin-top: 4px; }
+.app.touch-game.in-game .tutorial-card {
+  top: calc(var(--touch-top) + 50px);
+  right: var(--touch-right);
+  left: auto;
+  bottom: auto;
+  width: min(280px, calc(100vw - var(--touch-left) - var(--touch-right)));
+  max-height: min(40dvh, calc(100dvh - var(--touch-top) - var(--touch-bottom) - var(--stick-size) - 58px));
+  padding: 9px 11px;
+  overscroll-behavior: contain;
+}
+.app.touch-game .tutorial-card h2 { font-size: 17px; margin: 4px 0; }
+.app.touch-game .tutorial-card p { font-size: 13px; margin-bottom: 6px; }
+.app.touch-game .tutorial-card .lesson-progress { margin: 5px 0; }
+.app.touch-game .tutorial-card :is(button, summary) { min-height: 44px; }
+.app.touch-game .tutorial-card summary { display: flex; align-items: center; }
+.touch-game.learning:not(.highlight-objective) .objective { display: none; }
+.app.touch-game.learning.highlight-objective .objective,
+.app.touch-game.learning .objective:has(.goal-distance) {
+  display: block;
+  width: min(220px, 40vw);
+}
+.touch-game.learning:not(.highlight-objective) .objective:has(.goal-distance) .eyebrow,
+.touch-game.learning:not(.highlight-objective) .objective:has(.goal-distance) :is(h2, p) {
+  display: none;
+}
+.app.touch-game.learning .objective:has(.goal-distance) ~ .tutorial-card {
+  width: min(280px, calc(60vw - var(--touch-left) - var(--touch-right) - 5px));
+}
+
+.app.touch-game.in-game :is(.interact, .touch-solar-action) {
+  position: absolute;
+  z-index: 6;
+  inset: auto var(--touch-right) calc(var(--touch-bottom) + 132px) auto;
+  transform: none;
+  width: max-content;
+  max-width: min(290px, calc(100vw - var(--touch-left) - var(--touch-right)));
+  min-height: 48px;
+  padding: 8px 12px;
+  gap: 7px;
+  white-space: normal;
+  text-align: left;
+}
+.touch-game .touch-solar-action { padding: 0; }
+.app.touch-game.in-game :is(.world-repair-hud, .vehicle-hud, .recovery-status) {
+  top: auto;
+  left: auto;
+  bottom: calc(var(--touch-bottom) + 120px);
+  right: var(--touch-right);
+  width: min(340px, calc(100vw - var(--touch-left) - var(--touch-right)));
+  max-width: none;
+  padding: 9px 11px;
+}
+.app.touch-game.in-game .world-repair-hud { bottom: var(--touch-bottom); z-index: 5; }
+.touch-game .world-repair-hud > button { min-height: 44px; margin: 5px 5px 0 0; pointer-events: auto; }
+.touch-game .touch-gather { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.app.touch-game.in-game .vehicle-hud {
+  bottom: calc(var(--touch-bottom) + var(--stick-size) + 5px);
+  right: auto;
+  left: var(--touch-left);
+  width: min(185px, 43vw);
+}
+.touch-game .vehicle-hud strong { font-size: 13px; gap: 5px; }
+.touch-game .vehicle-hud strong span { font-size: 12px; white-space: nowrap; }
+.touch-game .vehicle-hud small { font-size: 11px; }
+.app.touch-game.in-game .notification {
+  z-index: 4;
+  top: auto;
+  bottom: calc(var(--touch-bottom) + var(--stick-size) + 62px);
+  max-width: min(330px, calc(100vw - var(--touch-left) - var(--touch-right)));
+  pointer-events: none;
+}
+.touch-game.in-game:is(.gathering, .repairing) .suit,
+.touch-game.in-game:is(.gathering, .repairing) .notification,
+.touch-game.in-game.menu-open :is(.objective, .suit, .notification, .vehicle-hud, .recovery-status) {
+  visibility: hidden;
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .touch-game { --stick-size: 100px; }
+  .app.touch-game.in-game .objective {
+    top: var(--touch-top);
+    max-width: 40vw;
+    max-height: 34dvh;
+  }
+  .app.touch-game.in-game .tutorial-card {
+    max-width: 40vw;
+    max-height: min(43dvh, calc(100dvh - 130px));
+  }
+  .app.touch-game.in-game .interact,
+  .app.touch-game.in-game .touch-solar-action {
+    inset: auto calc(var(--touch-right) + 125px) calc(var(--touch-bottom) + 6px) auto;
+    max-width: 35vw;
+  }
+  .app.touch-game.in-game .notification {
+    bottom: calc(var(--touch-bottom) + 105px);
+    max-width: 43vw;
+  }
+  .app.touch-game.in-game .world-repair-hud { width: min(270px, 36vw); }
+}
+
+@media (max-width: 360px) {
+  .touch-game.in-game .touch-tools { gap: 2px; }
+  .touch-game .touch-tools button { padding-inline: 5px; }
+}

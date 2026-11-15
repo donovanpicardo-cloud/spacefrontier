@@ -109,22 +109,23 @@ export class Extraction {
     }
     return this.finished;
   }
-  instruction() {
+  instruction(touch = false) {
+    const drill = touch ? "Drill / pump" : "E";
     if (this.kind === "ice")
       return this.stage === 0
         ? this.overheated
-          ? "Tool is hot! Release E until it cools. Your drilling progress is safe."
-          : "Hold E to drill the buried seam. Release E when the tool turns orange to cool it."
-        : "Ice exposed! Release E, then hold E to pump it through your purifier.";
+          ? `Tool is hot! Release ${drill} until it cools. Your drilling progress is safe.`
+          : `Hold ${drill} to drill the buried seam. Release when the tool turns orange to cool it.`
+        : `Ice exposed! Release ${drill}, then hold it to pump water.`;
     if (this.kind === "battery")
       return this.stage === 0
-        ? `Cell ${this.cell + 1}/3 · ${Math.round(this.voltage)} V. ${this.stable >= 1.2 ? "Stable! Press E to latch this cell." : this.fault + "Hold " + (this.targetVoltage - 6) + "–" + (this.targetVoltage + 6) + " V for 1.2 s (" + this.stable.toFixed(1) + " s)."}`
-        : "Pack charged! Press E to unplug and take the battery.";
+        ? `Cell ${this.cell + 1}/3 · ${Math.round(this.voltage)} V. ${this.stable >= 1.2 ? (touch ? "Stable! Tap Latch / unplug." : "Stable! Press E to latch this cell.") : this.fault + "Hold " + (this.targetVoltage - 6) + "–" + (this.targetVoltage + 6) + " V for 1.2 s (" + this.stable.toFixed(1) + " s)."}`
+        : touch ? "Pack charged! Tap Latch / unplug." : "Pack charged! Press E to unplug and take the battery.";
     return this.stage === 0
-      ? "Hold W to lift the circuit cartridge above the retaining rail."
+      ? `Hold ${touch ? "Lift" : "W"} to raise the circuit cartridge above the retaining rail.`
       : this.stage === 1
-        ? "Keep it raised. Hold D to slide the cartridge out to the green tray."
-        : "Hold S to lower the cartridge onto the green recovery tray.";
+        ? `Hold ${touch ? "Slide out" : "D"} to slide the cartridge out to the green tray.`
+        : `Hold ${touch ? "Lower" : "S"} to lower the cartridge onto the green recovery tray.`;
   }
   get controls() {
     return this.kind === "ice"

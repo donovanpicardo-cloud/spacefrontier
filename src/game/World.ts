@@ -3,6 +3,7 @@ import { dressOutpost } from "./environments/OutpostCladding";
 import { isSharedPaintMap, paintedMap, paintScene } from "./environments/PainterlyMaterials";
 import { warmGraphics } from "./GraphicsWarmup";
 import { sprintHeld, updateMovementInput } from "./MovementInput";
+import type { TouchKey } from "./TouchInput";
 import { gameAudio } from "./GameAudio";
 import type { AudioFrame } from "./AudioDirector";
 import { groundMeshHeight } from "./VehicleTerrain";
@@ -208,6 +209,36 @@ export class World {
   state: WorldState;
   destination: Destination;
   keys = new Set<string>();
+  private touchKeys = new Set<TouchKey>();
+  private touchMovement = { x: 0, forward: 0 };
+  private touchJumpBuffer = 0;
+  private canvasTouch: number | null = null;
+
+  setTouchMovement(x: number, forward: number) {
+    this.touchMovement = { x, forward };
+  }
+
+  setTouchKey(key: TouchKey, held: boolean) {
+    if (!held) {
+      this.touchKeys.delete(key);
+      return;
+    }
+    if (!this.state.playing || this.state.paused || this.touchKeys.has(key)) return;
+    this.touchKeys.add(key);
+    if (this.resources.gather.active) this.resources.key(key);
+    if (key === "Space" && !this.vehicle.driving && !this.vehicle.transition)
+      this.touchJumpBuffer = 0.25;
+  }
+
+  inputHeld(key: TouchKey) {
+    return this.keys.has(key) || this.touchKeys.has(key);
+  }
+
+  clearTouchInput() {
+    this.touchKeys.clear();
+    this.setTouchMovement(0, 0);
+    this.touchJumpBuffer = 0;
+  }
   yaw = 0.32;
   pitch = 0.1;
   distance = 7.2;
@@ -510,6 +541,7 @@ export class World {
     document.addEventListener("visibilitychange", this.visibilityChange);
     document.addEventListener("pointerlockchange", this.lockChange);
     this.renderer.domElement.addEventListener("pointerdown", this.pointerDown);
+    this.renderer.domElement.addEventListener("lostpointercapture", this.canvasCaptureLost);
     this.renderer.domElement.addEventListener(
       "pointermove",
       this.repairPointerMove,
@@ -544,6 +576,8 @@ export class World {
     this.framePacer.deadline = performance.now();
     this.frameCount = this.frameTime = 0;
     this.keys.clear();
+    this.clearTouchInput();
+    if (this.canvasTouch !== null) this.pointerUp();
   };
   drivingSurface(x: number, z: number) {
     const mesh = Math.abs(x) <= 325 && Math.abs(z) <= 325 ? this.terrainSurface
@@ -1061,6 +1095,7 @@ export class World {
   blur = () => {
     this.jumpRequestedUntil = 0;
     this.keys.clear();
+    this.clearTouchInput();
     this.resources.cancel();
     this.adventure.cancel();
     this.pointerUp();
@@ -1098,6 +1133,10 @@ export class World {
   }
   pointerDown = (e: PointerEvent) => {
     if (!this.state.playing || this.state.paused) return;
+    if (e.pointerType === "touch") {
+      if (this.canvasTouch !== null) return;
+      this.canvasTouch = e.pointerId;
+    }
     if (this.adventure.hold) {
       if (e.button === 0 && this.adventure.hold.type === "robot") {
         this.renderer.domElement.setPointerCapture(e.pointerId);
@@ -1134,9 +1173,11 @@ export class World {
       this.lock();
   };
   pointerUp = (e?: PointerEvent) => {
+    if (e?.pointerType === "touch" && e.pointerId !== this.canvasTouch) return;
+    this.canvasTouch = null;
     this.adventure.releaseTrack(e?.pointerId);
     if (this.repairs?.active) {
-      if (e && this.repairs.held)
+      if (e?.type === "pointerup" && this.repairs.held)
         this.repairs.pointerMove(e, this.camera, this.renderer.domElement);
       this.repairs.pointerUp();
     }
@@ -1144,8 +1185,12 @@ export class World {
     this.puzzleOrbit = false;
     this.renderer.domElement.classList.remove("orbiting");
   };
+  canvasCaptureLost = (e: PointerEvent) => {
+    if (e.pointerType === "touch") this.pointerUp(e);
+  };
   contextMenu = (e: Event) => e.preventDefault();
   repairPointerMove = (e: PointerEvent) => {
+    if (e.pointerType === "touch" && e.pointerId !== this.canvasTouch) return;
     if (this.adventure.hold?.type === "robot" && this.state.playing && !this.state.paused) {
       if (e.buttons & 1) this.dragTrack(e, false);
       return;
@@ -1163,7 +1208,9 @@ export class World {
     )
       this.repairs.pointerMove(e, this.camera, this.renderer.domElement);
   };
-  mouse = (e: MouseEvent) => this.handleLook(e);
+  mouse = (e: MouseEvent) => {
+    if (this.canvasTouch === null) this.handleLook(e);
+  };
   handleLook(e: MouseEvent) {
     if (
       this.repairs.active &&
@@ -1191,7 +1238,7 @@ export class World {
       this.orbitPitch,
       dx,
       dy,
-      this.state.sensitivity,
+      this.state.sensitivity * (touch ? 1.8 : 1),
     );
     this.orbitYaw = v.yaw;
     this.orbitPitch = v.pitch;
@@ -1333,13 +1380,20 @@ export class World {
     }
     if (active) {
       const wasRiding = this.vehicle.driving || !!this.vehicle.transition;
+      const forward = T.MathUtils.clamp(
+        Number(this.keys.has("KeyW")) - Number(this.keys.has("KeyS")) + this.touchMovement.forward,
+        -1, 1,
+      );
+      const strafe = T.MathUtils.clamp(
+        Number(this.keys.has("KeyD")) - Number(this.keys.has("KeyA")) + this.touchMovement.x,
+        -1, 1,
+      );
       this.vehicle.update(
         dt,
         {
-          throttle:
-            Number(this.keys.has("KeyW")) - Number(this.keys.has("KeyS")),
-          steer: Number(this.keys.has("KeyA")) - Number(this.keys.has("KeyD")),
-          brake: this.keys.has("Space"),
+          throttle: forward,
+          steer: -strafe,
+          brake: this.inputHeld("Space"),
         },
         p,
       );
@@ -1358,10 +1412,6 @@ export class World {
       let ground = this.groundHeight(p.position.x, p.position.z) + 0.12,
         grounded = true;
       if (!riding) {
-        const forward =
-          Number(this.keys.has("KeyW")) - Number(this.keys.has("KeyS"));
-        const strafe =
-          Number(this.keys.has("KeyD")) - Number(this.keys.has("KeyA"));
         const terrainBefore =
           this.groundHeight(p.position.x, p.position.z) + 0.12;
         const floorBefore = this.physics.vertical(
@@ -1384,7 +1434,7 @@ export class World {
           this.yaw,
           onGround,
           enabled,
-          sprintHeld(this.keys),
+          sprintHeld(this.keys) || this.touchKeys.has("Shift"),
           dt,
         );
         this.horizontalVelocity = { x: motion.x, z: motion.z };
@@ -1430,6 +1480,7 @@ export class World {
         grounded = p.position.y <= ground + 0.01;
         if (
           (this.keys.has("Space") ||
+            this.touchJumpBuffer > 0 ||
             performance.now() < this.jumpRequestedUntil) &&
           grounded &&
           !this.state.repairing &&
@@ -1439,11 +1490,13 @@ export class World {
           !this.repairApproach
         ) {
           this.jumpRequestedUntil = 0;
+          this.touchJumpBuffer = 0;
           this.velocity = suitMovement(this.destination).jumpSpeed;
           this.jumped = true;
           this.takeoff = 0.14;
           this.keys.delete("Space");
         }
+        this.touchJumpBuffer = Math.max(0, this.touchJumpBuffer - dt);
         const flight = ballisticStep(
           this.velocity,
           suitMovement(this.destination).gravity,
@@ -1609,10 +1662,10 @@ export class World {
       if (!this.repairApproach)
         this.resources.update(
           dt,
-          this.keys.has("KeyE") && !riding,
+          this.inputHeld("KeyE") && !riding,
           p.position,
-          Number(this.keys.has("KeyD")) - Number(this.keys.has("KeyA")),
-          Number(this.keys.has("KeyW")) - Number(this.keys.has("KeyS")),
+          Number(this.inputHeld("KeyD")) - Number(this.inputHeld("KeyA")),
+          Number(this.inputHeld("KeyW")) - Number(this.inputHeld("KeyS")),
         );
       if (this.resources.gather.active) {
         const site = this.resources.sites.find(
@@ -1943,6 +1996,7 @@ export class World {
     );
     window.removeEventListener("pointerup", this.pointerUp);
     window.removeEventListener("pointercancel", this.pointerUp);
+    this.renderer.domElement.removeEventListener("lostpointercapture", this.canvasCaptureLost);
     this.renderer.domElement.removeEventListener(
       "pointermove",
       this.repairPointerMove,

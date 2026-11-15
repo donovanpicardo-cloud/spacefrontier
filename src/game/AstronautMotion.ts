@@ -13,8 +13,8 @@ export function horizontalStep(
   if (!enabled) return { x: 0, z: 0, dx: 0, dz: 0 };
   const length = Math.hypot(input.x, input.z),
     speed = sprint ? 4.5 : 2.1;
-  const x = length ? (input.x / length) * speed : 0,
-    z = length ? (input.z / length) * speed : 0;
+  const scale = speed / Math.max(1, length);
+  const x = input.x * scale, z = input.z * scale;
   const targetX = x * Math.cos(yaw) + z * Math.sin(yaw),
     targetZ = z * Math.cos(yaw) - x * Math.sin(yaw);
   if (!grounded) {

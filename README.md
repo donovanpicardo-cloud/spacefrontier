@@ -4,7 +4,9 @@ A browser-based third-person astronaut adventure and educational outpost simulat
 
 ## Play the live game
 
-[Open FRONTIER in your browser](https://spacefrontier.vercel.app). Use a computer with a keyboard and mouse.
+[Open FRONTIER in your browser](https://spacefrontier.vercel.app). Play with a keyboard and mouse or use the on-screen controls on a phone or tablet.
+
+On iPhone and iPad, drag the **Move** stick with your left thumb and swipe the terrain to look around. Tap **Jump** or hold **Run** on foot. In a rover, the stick steers and **Brake** stops the vehicle. Use the action button that appears near doors, rovers, or equipment. **Map**, **Systems**, and **Pause** are at the top of the screen. Open **Pause → Earthbound** when you’re ready to build the return rocket.
 
 1. Choose **Visit the Moon** or **Visit Mars**. Keep **Junior Explorer** selected in the briefing and choose **Launch mission**. The first-time tutorial lets you practice while your supplies are safe.
 2. Follow the on-screen objective and its trail. Use **WASD** to move, the **mouse** to look around, **Space** to jump, and **E** to use equipment. Press **H** for help, **M** for the map, and **Esc** to pause.
@@ -43,7 +45,7 @@ The tutorial keeps the mouse cursor visible; click Skip tutorial or press K. Ski
 
 Junior Explorer uses easier resource consumption, minimum safety reserves, checkpoint retry, larger interaction zones, hands-on cable, valve and filter repairs, automatically enabled greenhouse lights after irrigation repair, and one-button emergency power preparation at the shelter. Specialist retains manual systems management. Autosaves are local to this browser, every 30 seconds and on objective changes. Try again returns to the most recent in-memory objective checkpoint.
 
-These features are designed for young players; they have not been usability-tested with children. Keyboard and mouse are supported; controller and touch gameplay are not advertised.
+These features are designed for young players; they have not been usability-tested with children. Keyboard, mouse, and touch controls are supported.
 
 Choose New mission → Moon or Mars → briefing → Launch mission. Move your mouse to look around; no held mouse button is required. Launch/resume request captured mouse look where the browser permits it; free mouse movement over the world works as a fallback. Escape pauses and releases the cursor for menus. WASD moves; Shift sprints; Space jumps; E interacts; F toggles the lamp; R resets the camera; H gives help; scroll zooms; Tab opens systems; M opens the map; J opens the journal.
 

@@ -1,11 +1,13 @@
 import {
   tutorialSteps,
+  touchLesson,
   type TutorialState,
 } from "./Tutorial";
 export function TutorialOverlay(p: {
   state: TutorialState;
   stronger: boolean;
   narration: boolean;
+  touch: boolean;
   onHighlight: (id: "objective" | "oxygen") => void;
   onHelp: () => void;
   onRepeat: () => void;
@@ -15,6 +17,7 @@ export function TutorialOverlay(p: {
   finishLabel: string;
 }) {
   const step = tutorialSteps[p.state.index];
+  const copy = p.touch ? touchLesson[step.id] : step;
   return (
     <aside
       className={"tutorial-card" + (p.stronger ? " extra-help" : "")}
@@ -40,14 +43,14 @@ export function TutorialOverlay(p: {
 
       <div aria-live="polite" aria-atomic="true">
         <h2>{step.title}</h2>
-        <p>{step.text}</p>
-        <div className="lesson-keys">
+        <p>{copy.text}</p>
+        {!p.touch && <div className="lesson-keys">
           {step.keys.map((k) => (
             <kbd key={k}>{k}</kbd>
           ))}
-        </div>
+        </div>}
       </div>
-      {p.stronger && <p className="lesson-hint">💡 {step.hint}</p>}
+      {p.stronger && <p className="lesson-hint">💡 {copy.hint}</p>}
 
       {step.id === "objective" && (
         <button
@@ -79,7 +82,7 @@ export function TutorialOverlay(p: {
         <button onClick={p.onNarration}>
           {p.narration ? "🔊 Voice on" : "🔈 Read aloud"}
         </button>
-        <button onClick={p.onSkip}>Skip tutorial · K</button>
+        <button onClick={p.onSkip}>{p.touch ? "Skip tutorial" : "Skip tutorial · K"}</button>
       </div>
       </details>
     </aside>

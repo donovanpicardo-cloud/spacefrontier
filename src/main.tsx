@@ -88,6 +88,7 @@ import "./play.css";
 import "./expedition.css";
 import "./field-guide.css";
 import "./mission-ui.css";
+import "./touch.css";
 import type { RepairKind } from "./game/RepairPlan";
 import type { RepairInfo } from "./game/WorldRepairs";
 import type { VehicleInfo, VehicleSave } from "./game/Vehicle";
@@ -97,11 +98,14 @@ import {
   tutorialSteps,
   tutorialTarget,
   tutorialCanContinue,
+  touchLesson,
   juniorGoal,
   simulationRuns,
   type TutorialEvent,
 } from "./game/Tutorial";
 import { TutorialOverlay } from "./game/TutorialOverlay";
+import { HoldControl, TouchGather, TouchMovement } from "./game/TouchControls";
+import type { TouchKey } from "./game/TouchInput";
 import { parseSave, readLocal, writeLocal, type Save } from "./game/Save";
 type Panel =
   | "destinations"
@@ -123,6 +127,13 @@ type Panel =
   | "training-debrief"
   | null;
 function App() {
+  const [touch, setTouch] = useState(() => matchMedia("(any-pointer: coarse)").matches);
+  useEffect(() => {
+    const query = matchMedia("(any-pointer: coarse)");
+    const update = () => setTouch(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
   const [trainingDebrief,setTrainingDebrief]=useState<'rover'|'garden'|'storm'>('garden');
   const mount = useRef<HTMLDivElement>(null),
     world = useRef<World | null>(null);
@@ -158,7 +169,7 @@ function App() {
     [muted, setMuted] = useState(() => readLocal("frontier-audio-muted") === "true"),
     [sensitivity, setSensitivity] = useState(1),
     [reducedMotion, setReducedMotion] = useState(false),
-    [quality, setQuality] = useState("High"),
+    [quality, setQuality] = useState(() => touch ? "School computer" : "High"),
     [speed, setSpeed] = useState(1),
     [saved, setSaved] = useState(() => !!parseSave(readLocal("frontier-save")));
   const [tutorialActive, setTutorialActive] = useState(false);
@@ -317,7 +328,7 @@ function App() {
     setPanel(p);
     if (p !== "repair") world.current?.cancelRepair();
     if (p !== null) world.current?.releaseLook();
-    if (p === null && live.current.playing && !tutorialLive.current.active)
+    if (!touch && p === null && live.current.playing && !tutorialLive.current.active)
       world.current?.lock();
   }
   useEffect(() => {
@@ -641,7 +652,7 @@ function App() {
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [playing, muted, tutorialActive, tutorial.index, mission, narration]);
+  }, [playing, muted, tutorialActive, tutorial.index, mission, narration, touch]);
   function complete(n: number) {
     if (tutorialLive.current.active) return;
     if (done.includes(n)) return;
@@ -755,7 +766,7 @@ function App() {
       const p=w.getPosition();
       const target=inside?{x:0,z:-31}:{x:0,z:-8};
       w.setTrainingTrail([{x:p[0],z:p[2]},target]);
-      if(d.stage==='finish'&&near==='solar'&&w.keys.has('KeyE')) {
+      if(d.stage==='finish'&&near==='solar'&&w.inputHeld('KeyE')) {
         const task=d.task+1,finished=task>=10;
         setSim(s=>({...s,parts:Math.min(20,s.parts+(finished?1:0)),training:{...s.training,storm:{...d,task,stage:finished?'return':'finish',supplies:finished?1:0}}}));
         if(finished) {toast('Field task finished · 1 spare part. Return to shelter.');w.focusGuide();}
@@ -1015,9 +1026,9 @@ function App() {
     setRepairing(false);
     setFlashlight(false);
     world.current?.resetPlayer(atWreck ? survivorPosition : undefined);
-    world.current?.lock();
+    if (!touch) world.current?.lock();
     toast(
-      "WASD to move. Click the terrain for mouse look. Escape pauses.",
+      touch ? "Drag Move to walk. Swipe the terrain to look around." : "WASD to move. Click the terrain for mouse look. Escape pauses.",
     );
   }
   function start() {
@@ -1147,15 +1158,15 @@ function App() {
     setSupplyGoal(null);
     if (world.current) world.current.supplyTarget = null;
     const text = tutorialActive
-      ? guideStep.hint
-      : trainingInstruction
-        ? trainingInstruction
+      ? (touch ? touchLesson[guideStep.id].hint : guideStep.hint)
+      : trainingCopy
+        ? trainingCopy
       : done.includes(4)
         ? rocket.stage === 3
-          ? "Go to the launch pad and press E to board. Check your suit air first."
-          : "Press U, then choose Earthbound to see what the next rocket section needs."
+          ? touch ? "Go to the launch pad and tap the rocket action button to board. Check your suit air first." : "Go to the launch pad and press E to board. Check your suit air first."
+          : touch ? "Open Pause and choose Earthbound to see what the next rocket section needs." : "Press U, then choose Earthbound to see what the next rocket section needs."
       : greenhouseDecision
-        ? "Choose a power plan at the greenhouse, or open Systems with Tab."
+        ? "Choose a power plan at the greenhouse, or open Systems."
         : juniorGoal(mission, destination);
     setStrongerHint(true);
     toast(text);
@@ -1178,19 +1189,19 @@ function App() {
     setSupplyGoal(site.name);
     open(null);
     toast(
-      `${site.name}. Follow the direction on your goal card, then press E at the equipment.`,
+      `${site.name}. Follow the direction on your goal card, then ${touch ? "tap the action button at the equipment" : "press E at the equipment"}.`,
     );
   }
   useEffect(() => {
     if (!tutorialActive) return;
     setStrongerHint(false);
-    speak(guideStep.text);
+    speak(touch ? touchLesson[guideStep.id].text : guideStep.text);
     const hint = window.setTimeout(() => setStrongerHint(true), 18000);
     return () => {
       clearTimeout(hint);
       window.speechSynthesis?.cancel();
     };
-  }, [tutorialActive, tutorial.index, lessonKey, narration]);
+  }, [tutorialActive, tutorial.index, lessonKey, narration, touch]);
   useEffect(() => {
     if (!playing) return;
     const id = window.setInterval(() => {
@@ -1528,11 +1539,29 @@ function App() {
     return () => window.clearInterval(timer);
   }, [inFlight, destination]);
   const p = power(sim, allocation, destination, adventure.upgrades);
+  const setTouchKey = (key: TouchKey, held: boolean) => world.current?.setTouchKey(key, held);
+  const touchSolarCheck = touch && drill?.stage === "finish" && near === "solar";
+  const defaultDrivingHint = "W/S drive · A/D steer · Space brake · E get out";
+  const drivingHint = vehicleInfo?.hint || defaultDrivingHint;
+  const trainingCopy = touch ? trainingInstruction
+    ?.replace(/Press E (?:at|beside)/g, "Use the action button at")
+    .replace(/Press E to/g, "Use the action button to")
+    .replace(/Hold E at the solar panel/g, "Hold Check panels")
+    .replace(/Or press C to abandon and return\./g, "Or tap Return to shelter.")
+    .replace(/Press L to/g, "Open Systems to")
+    .replace(/Press B to/g, "Open Systems to")
+    .replace(/Press P for/g, "Tap Emergency supplies for")
+    .replace(/Low supplies\? Press P\./g, "Low supplies? Tap Emergency supplies.")
+    .replace(/Drive with WASD/g, "Drive with the stick")
+    .replace(/Space: brake\. E: exit\./g, "Use Brake to stop and the action button to exit.")
+    .replace(/P: emergency reserve\./g, "Tap Emergency supplies for reserve.") : trainingInstruction;
   return (
     <div
       className={
         "app edition-" + destination + " " +
         (playing ? "in-game" : "in-menu") +
+        (touch ? " touch-game" : "") +
+        (panel && panel !== "repair" ? " menu-open" : "") +
         (inFlight ? " in-flight" : "") +
         (tutorialActive ? " learning" : "") +
         (repairing ? " repairing" : "") +
@@ -1626,17 +1655,17 @@ function App() {
                     : objective.name}
             </h2>
             <p>
-              {trainingInstruction&&!tutorialActive?trainingInstruction:tutorialActive
+              {trainingCopy&&!tutorialActive?trainingCopy:tutorialActive
                 ? "Practice together with Mission Control."
                 : supplyGoal
                   ? sideInstruction ||
-                    `${supplyGoal}. Follow the direction below. Press E at the equipment or H to return to your mission.`
+                    `${supplyGoal}. Follow the direction below. ${touch ? "Use the action button at the equipment or tap Help to return to your mission." : "Press E at the equipment or H to return to your mission."}`
                   : done.includes(4)
                     ? rocket.stage === 3
-                      ? "Follow the direction to the launch pad. Press E beside the rocket."
-                      : "Press U, then choose Earthbound to see what you need for your rocket."
+                      ? touch ? "Follow the trail to the launch pad and tap the rocket action button." : "Follow the direction to the launch pad. Press E beside the rocket."
+                      : touch ? "Open Pause and choose Earthbound to see what you need for your rocket." : "Press U, then choose Earthbound to see what you need for your rocket."
                     : greenhouseDecision
-                      ? "Choose a power plan at the greenhouse, or open Systems with Tab."
+                      ? "Choose a power plan at the greenhouse, or open Systems."
                       : objective.task}
               {mission === 4 &&
                 !done.includes(4) &&
@@ -1660,8 +1689,17 @@ function App() {
             {!panel && !tutorialActive && sim.suit < 20 && <button className="secondary" onClick={() => guideSide("airlock", "Habitat airlock", "Suit air is low. Follow the markers inside to refill it.")}>Show the way to refill suit air</button>}
             {!panel && !tutorialActive && !trainingInstruction && sim.battery < 15 && sim.suit >= 20 && (
               <p>{allocation.greenhouse
-                ? "Power is low. Press Tab for Systems and turn off the grow lights."
-                : "The grow lights are already off. Press M, open Nearby supplies, and choose Power to find a charging station."}</p>
+                ? "Power is low. Open Systems and turn off the grow lights."
+                : "The grow lights are already off. Open Map, then choose Power under Nearby supplies to find a charging station."}</p>
+            )}
+            {touch && !panel && !tutorialActive && (
+              <div className="touch-training-actions">
+                {drill?.stage === "finish" && <button onClick={() => stormChoice("return")}>Return to shelter</button>}
+                {((expedition && !expedition.returned && expedition.reserve < 20) ||
+                  (garden && garden.end === undefined && sim.battery < 8) ||
+                  (mission === 4 && !done.includes(4) && (sim.battery < 15 || sim.parts < 1))) &&
+                  <button onClick={emergencyPack}>Emergency supplies</button>}
+              </div>
             )}
             <div className="mission-dots">
               {list.map((_, i) => (
@@ -1714,7 +1752,7 @@ function App() {
               </div>
             ))}
           </div>
-          <div className="controls">
+          {!touch && <div className="controls">
             <span>
               <kbd>W A S D</kbd> Move <kbd>SHIFT</kbd> Sprint <kbd>SPACE</kbd>{" "}
               Jump
@@ -1724,8 +1762,20 @@ function App() {
               <kbd>ESC</kbd> Pause
             </span>
             <small>MOVE MOUSE TO LOOK · ESC TO PAUSE</small>
-          </div>
-          {!panel && (
+          </div>}
+          {touch && !panel && !inFlight && (
+            <div className="touch-tools" role="group" aria-label="Mission controls">
+              {!tutorialActive && <>
+                <button onClick={() => open("map")}>Map</button>
+                <button onClick={() => open("dashboard")}>Systems</button>
+                <button aria-pressed={flashlight} onClick={() => setFlashlight((on) => !on)}>Light</button>
+              </>}
+              <button aria-label="Reset camera" onClick={() => world.current?.resetCamera()}>Reset</button>
+              <button aria-label="Help" onClick={help}><CircleHelp size={20} /></button>
+              <button aria-label="Pause" onClick={() => open("pause")}><Pause size={20} /></button>
+            </div>
+          )}
+          {!touch && !panel && (
             <div className="explorer-tools">
               <button aria-label="Help me" title="Help me" onClick={help}>
                 <CircleHelp size={19} aria-hidden="true" />
@@ -1739,12 +1789,13 @@ function App() {
               </button>
             </div>
           )}
-          {tutorialActive && !panel && (
+          {tutorialActive && !panel && !(touch && airlockInfo) && (
             <TutorialOverlay
               key={lessonKey}
               state={tutorial}
               stronger={strongerHint}
               narration={narration}
+              touch={touch}
               finishLabel={
                 practiceReturn.current
                   ? "Back to my mission"
@@ -1756,7 +1807,7 @@ function App() {
               onHelp={help}
               onRepeat={() => {
                 setStrongerHint(true);
-                speak(guideStep.text, true);
+                speak(touch ? touchLesson[guideStep.id].text : guideStep.text, true);
               }}
               onNarration={() => {
                 setNarration((n) => !n);
@@ -1766,17 +1817,21 @@ function App() {
               onSkip={() => endTutorial(false)}
             />
           )}
-          {near && !fieldInfo && !panel && !airlockInfo && !gatherInfo && (
+          {touchSolarCheck && !panel && !gatherInfo && !inFlight &&
+            <div className="touch-solar-action">
+              <HoldControl onHold={(held) => setTouchKey("KeyE", held)}>Hold Check panels</HoldControl>
+            </div>}
+          {near && !fieldInfo && !panel && !airlockInfo && !gatherInfo && !touchSolarCheck && (
             <button
               className={
                 "interact" +
                 (near.startsWith("resource:") ? " resource-interact" : "")
               }
               onClick={() => {
-                if (!near.startsWith("resource:")) interact(near);
+                if (touch || !near.startsWith("resource:")) interact(near);
               }}
               onPointerDown={(e) => {
-                if (near.startsWith("resource:")) {
+                if (!touch && near.startsWith("resource:")) {
                   e.currentTarget.setPointerCapture(e.pointerId);
                   interact(near);
                   if (world.current) world.current.resources.buttonHeld = true;
@@ -1790,7 +1845,7 @@ function App() {
                 world.current?.adventure.cancel();
               }}
             >
-              <kbd>E</kbd>
+              {!touch && <kbd>E</kbd>}
               <span>
                 {fieldInfo
                   ? "Field instrument active"
@@ -1840,6 +1895,14 @@ function App() {
             {inside ? "FRONTIER HABITAT" : "SURFACE EXPLORATION"}{" "}
             <span>{(world.current?.getPosition()[0] ?? 0).toFixed(0)} E</span>
           </div>
+          {touch && !panel && !inFlight && !rocket.arrived && !repairing && !gatherInfo && !fieldInfo && !airlockInfo && (
+            <TouchMovement
+              driving={!!(vehicleInfo?.driving || vehicleInfo?.boarding)}
+              onMove={(x, y) => world.current?.setTouchMovement(x, y)}
+              onKey={setTouchKey}
+              onClear={() => world.current?.clearTouchInput()}
+            />
+          )}
         </>
       )}
       {playing && panel === "repair" && repairInfo && (
@@ -1853,10 +1916,13 @@ function App() {
             {repairInfo.steps > 1
               ? "Stage " + repairInfo.step + " / " + repairInfo.steps + " · "
               : ""}
-            Drag with the mouse, or press Space to pick up or drop and use the
-            arrow keys to move. For wires and valves, press 1, 2, or 3 to select.
-            Press Esc to stop.
+            {touch ? "Drag the equipment directly on the screen." :
+              "Drag with the mouse, or press Space to pick up or drop and use the arrow keys to move. For wires and valves, press 1, 2, or 3 to select. Press Esc to stop."}
           </small>
+          {touch && <button className="secondary" onClick={() => {
+            setRepairing(false);
+            open(null);
+          }}>Stop repair</button>}
         </aside>
       )}
       {playing && !panel && world.current?.inRecoveryRoom() && !gatherInfo && (
@@ -1877,7 +1943,7 @@ function App() {
       {playing && !panel && gatherInfo && (
         <aside className="world-repair-hud" aria-live="polite">
           <strong>{gatherInfo.name}</strong>
-          <span>{gatherInfo.instruction}</span>
+          <span>{touch ? gatherInfo.touchInstruction : gatherInfo.instruction}</span>
           <div
             className="repair-progress"
             role="progressbar"
@@ -1908,7 +1974,8 @@ function App() {
               <span>{Math.round(gatherInfo.heat * 100)}%</span>
             </label>
           )}
-          <small>{gatherInfo.controls}</small>
+          {!touch && <small>{gatherInfo.controls}</small>}
+          {touch && <TouchGather kind={gatherInfo.kind} onKey={setTouchKey} onCancel={() => world.current?.resources.cancel()} />}
         </aside>
       )}
       {playing &&
@@ -1921,8 +1988,10 @@ function App() {
               <span>{vehicleInfo.speed.toFixed(1)} m/s</span>
             </strong>
             <small>
-              {vehicleInfo.hint ||
-                "W/S drive · A/D steer · Space brake · E get out"}
+              {touch ? drivingHint
+                .replace(defaultDrivingHint, "Use the stick to drive and Brake to stop")
+                .replace("Hold Space", "Hold Brake")
+                .replace("reverse with S", "pull the stick down to reverse") : drivingHint}
             </small>
             {vehicleInfo.pressurized && (
               <small>Pressurized cabin · suit air recharging</small>
@@ -1945,12 +2014,12 @@ function App() {
               <i style={{left: fieldInfo.scanWindow[0] * 100 + "%", width: (fieldInfo.scanWindow[1] - fieldInfo.scanWindow[0]) * 100 + "%"}} />
               <span ref={scanMarker} />
             </div>
-            <button onClick={() => world.current?.adventure.capturePulse()}>Capture pulse · E</button>
+            <button onClick={() => world.current?.adventure.capturePulse()}>{touch ? "Capture pulse" : "Capture pulse · E"}</button>
           </>}
           {fieldInfo && <button onClick={() => world.current?.adventure.cancel()}>Cancel</button>}
           <small>
             {airlockInfo
-              ? "Both doors are interlocked · Escape pauses safely"
+              ? touch ? "Both doors are interlocked · use Pause if you need a break" : "Both doors are interlocked · Escape pauses safely"
               : "Cancel to return to exploration."}
           </small>
         </aside>
@@ -2122,7 +2191,14 @@ function App() {
                 <h2>Your outpost. Your responsibility.</h2>
                 <p>Reach the airlock, restore power, grow food, and protect your crew through an environmental emergency.</p>
                 <div className="brief-grid">
-                  {[
+                  {(touch ? [
+                    ["MOVE", "Drag the stick to walk or steer a rover"],
+                    ["SWIPE", "Drag the terrain to look around"],
+                    ["JUMP / BRAKE", "Jump on foot or stop a moving rover"],
+                    ["ACTION", "Tap the button shown near doors, equipment and vehicles"],
+                    ["MAP / SYSTEMS", "Find supplies or manage habitat power"],
+                    ["PAUSE", "Find your journal, outpost projects and return rocket"],
+                  ] : [
                     ["W A S D", "Move relative to camera"],
                     ["MOUSE", "Move mouse to look around"],
                     ["SHIFT", "Sprint"],
@@ -2139,7 +2215,7 @@ function App() {
                     ],
                     ["SCROLL", "Adjust shoulder camera"],
                     ["TAB / M / J / U", "Systems / map / journal / outpost"],
-                  ].map(([a, b]) => (
+                  ]).map(([a, b]) => (
                     <div key={a}>
                       <kbd>{a}</kbd>
                       <span>{b}</span>
@@ -2147,8 +2223,8 @@ function App() {
                   ))}
                 </div>
                 <p className="science-note">
-                  Press Escape to release the mouse. Your astronaut stays
-                  visible throughout exploration and repairs.
+                  {touch ? "The tutorial lets you practise while your supplies are safe." :
+                    "Press Escape to release the mouse. Your astronaut stays visible throughout exploration and repairs."}
                 </p>
                 <button className="primary" onClick={start}>
                   Launch mission <ArrowUpRight size={19} />
@@ -2731,13 +2807,13 @@ function App() {
                         className="secondary"
                         onClick={() => open("journal")}
                       >
-                        Explorer journal · J
+                        {touch ? "Explorer journal" : "Explorer journal · J"}
                       </button>
                       <button
                         className="secondary"
                         onClick={() => open("outpost")}
                       >
-                        Outpost projects · U
+                        {touch ? "Outpost projects" : "Outpost projects · U"}
                       </button>
                     </>
                   )}
@@ -2757,7 +2833,7 @@ function App() {
                       className="secondary"
                       onClick={() => findSupplies()}
                     >
-                      Find needed supplies · G
+                      {touch ? "Find needed supplies" : "Find needed supplies · G"}
                     </button>
                   )}
                   <button
@@ -2767,7 +2843,7 @@ function App() {
                       open(null);
                     }}
                   >
-                    Reset camera · R
+                    {touch ? "Reset camera" : "Reset camera · R"}
                   </button>
                   {!tutorialActive && (
                     <button
