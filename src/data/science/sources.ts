@@ -61,4 +61,3 @@ export const sources = [
   },
 ];
 export const gravity = { moon: 1.62, mars: 3.71 };
-
