@@ -61,4 +61,3 @@ export function paintScene(scene: T.Scene) {
     observed.clear();
   };
 }
-
