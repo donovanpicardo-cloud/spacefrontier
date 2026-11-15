@@ -227,3 +227,4 @@ describe("open exploration and efficient rendering", () => {
     expect(suspensionSupport(0, 0, 0, () => 0, p).height).toBeGreaterThan(0.7);
   });
 });
+
