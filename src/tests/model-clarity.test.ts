@@ -24,3 +24,4 @@ describe("model clarity", () => {
     expect(renderRatio("School computer",3840,2160,2)**2*3840*2160).toBeCloseTo(1000000);
   });
 });
+
