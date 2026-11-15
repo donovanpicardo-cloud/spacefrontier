@@ -445,4 +445,3 @@ export function animateAstronaut(
     s.repair ? 0.12 : Math.sin(s.time * 0.5) * 0.025 * (1 - weight),
   );
 }
-
