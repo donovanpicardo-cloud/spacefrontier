@@ -68,3 +68,4 @@ export function vaultedHabitat(root: T.Group, skin: T.Material, metal: T.Materia
     add(new T.TubeGeometry(new T.CatmullRomCurve3(points),64,.025,6,false),dark);
   }
 }
+
