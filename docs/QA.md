@@ -72,3 +72,4 @@ Using the in-app browser against the local Vite server:
 ## Verification limits
 
 The full Mars campaign was not independently replayed end to end; it shares the tested interaction and progression code with Moon, with different gravity, environment and storm generation reduction. Mouse pointer-lock orbit, wheel zoom, all camera collision angles, all graphics presets and sustained performance were not exhaustively tested across browsers. No claim of 60 FPS, AAA asset quality, scientific certification, complete master-brief coverage or official challenge-rubric compliance is made.
+
