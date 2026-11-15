@@ -395,3 +395,4 @@ describe("airlock and rescue scene", () => {
     vi.unstubAllGlobals();
   });
 });
+
