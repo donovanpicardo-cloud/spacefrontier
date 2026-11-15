@@ -6,3 +6,4 @@ export const stations = [
   { id: "shelter", name: "Emergency shelter", x: 0, z: -31 },
   { id: "fabricator", name: "Fabrication station", x: 3, z: -15 },
 ];
+
