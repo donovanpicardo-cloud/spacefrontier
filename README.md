@@ -2,6 +2,17 @@
 
 A browser-based third-person astronaut adventure and educational outpost simulation. Built with React, TypeScript, Three.js and Vite. No backend, login or API keys.
 
+## Play the live game
+
+[Open FRONTIER in your browser](https://spacefrontier.vercel.app). Use a computer with a keyboard and mouse.
+
+1. Choose **Visit the Moon** or **Visit Mars**. Keep **Junior Explorer** selected in the briefing and choose **Launch mission**. The first-time tutorial lets you practice while your supplies are safe.
+2. Follow the on-screen objective and its trail. Use **WASD** to move, the **mouse** to look around, **Space** to jump, and **E** to use equipment. Press **H** for help, **M** for the map, and **Esc** to pause.
+3. Cycle through the airlock, repair the outpost systems, and reach the shelter during the emergency. If the game assigns a rover supply run, board with **E**, drive with **WASD**, and use **Space** to brake before getting out.
+4. To finish the expedition, press **U** and choose **Earthbound**. Use the fabricator to build the return rocket, then follow the game's guidance to the launch pad. Get out of the rover before boarding.
+
+If you stop partway through, choose **Continue saved mission** from the opening screen in the same browser.
+
 ## Run
 
 Requires Node.js 22.12 or newer within Node 22.x, matching the Vercel build runtime pinned in `package.json`.
@@ -17,10 +28,6 @@ npm run preview
 Open the Local URL printed by Vite. For deployment, run `npm run build` and deploy `dist/` to Netlify or Vercel (framework: Vite). The app uses only the root route; no server functions are needed.
 
 ## Live game and automatic deployment
-
-Play at https://spacefrontier.vercel.app.
-
-Source: https://github.com/donovanpicardo-cloud/nasa-space-game (private).
 
 Vercel is connected to this repository. Pushing a commit to `main` automatically runs the test suite and production build before publishing the game. Either check failing prevents publication. Local file saves become live after they are committed and pushed. Codex should run `npm test` and `npm run build`, then commit and push completed changes as described in `AGENTS.md`. Ask to keep work local when you do not want it published.
 
