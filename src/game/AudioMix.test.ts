@@ -17,4 +17,3 @@ describe("audio mix", () => {
     expect(motorMix(1000, true)).toEqual(motorMix(8, true));
   });
 });
-
