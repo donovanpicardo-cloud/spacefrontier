@@ -91,3 +91,4 @@ export function groundMeshHeight(mesh: T.Mesh, x: number, z: number) {
   return u + v <= 1 ? vertices.getY(i) * (1 - u - v) + u * d + v * b
     : vertices.getY(i + columns + 1) * (u + v - 1) + (1 - u) * b + (1 - v) * d;
 }
+
