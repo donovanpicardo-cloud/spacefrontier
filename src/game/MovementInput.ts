@@ -19,3 +19,4 @@ export function updateMovementInput(
 export function sprintHeld(keys: ReadonlySet<string>) {
   return keys.has("Shift") || keys.has("ShiftLeft") || keys.has("ShiftRight");
 }
+
