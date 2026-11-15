@@ -24,4 +24,3 @@ describe("opening cinematic", () => {
     expect(arrivalBeat(8, "mars").text).toContain("Entry trajectory");
   });
 });
-
