@@ -528,3 +528,4 @@ export class WorldAdventure {
     return { look, position: look.clone().add(offset) };
   }
 }
+
