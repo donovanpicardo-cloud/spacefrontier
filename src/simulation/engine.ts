@@ -202,4 +202,3 @@ export const missions = (d: Destination) => [
       "Prioritizing essential loads and shielding buys time during environmental emergencies.",
   },
 ];
-
