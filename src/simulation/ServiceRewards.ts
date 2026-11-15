@@ -44,3 +44,4 @@ export function serviceMessage(before: Sim, after: Sim, kind: RepairKind) {
     .map((k) => `+${Math.round(after[k] - before[k])}% ${names[k]}`);
   return `${kind === "greenhouse" ? "Hydroponics" : kind === "life" ? "Life support" : "Solar power"} restored · ${gains.join(" · ") || "reserves already full"} · 1 spare part used.`;
 }
+
