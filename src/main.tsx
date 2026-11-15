@@ -507,6 +507,32 @@ function App() {
     return () => clearInterval(id);
   }, [destination, speed]);
   useEffect(() => {
+    if (!playing || panel !== null || tutorialActive || inFlight || rocket.arrived) return;
+    let lastInput = window.performance.now();
+    const recordInput = () => { lastInput = window.performance.now(); };
+    const pauseWhenIdle = () => {
+      if (live.current.sim.health <= 0) return;
+      const w = world.current;
+      if (!document.hidden && (w?.keys.size || window.performance.now() - lastInput < 60_000)) return;
+      w?.keys.clear();
+      w?.releaseLook();
+      setPanel("pause");
+      toast("Game paused while you were away.");
+    };
+    window.addEventListener("keydown", recordInput);
+    window.addEventListener("pointerdown", recordInput);
+    window.addEventListener("pointermove", recordInput);
+    document.addEventListener("visibilitychange", pauseWhenIdle);
+    const timer = window.setInterval(pauseWhenIdle, 1000);
+    return () => {
+      window.removeEventListener("keydown", recordInput);
+      window.removeEventListener("pointerdown", recordInput);
+      window.removeEventListener("pointermove", recordInput);
+      document.removeEventListener("visibilitychange", pauseWhenIdle);
+      window.clearInterval(timer);
+    };
+  }, [playing, panel, tutorialActive, inFlight, rocket.arrived]);
+  useEffect(() => {
     if (tutorialActive && tutorialCanContinue(guideStep.id))
       world.current?.releaseLook();
   }, [tutorialActive, guideStep.id, worldModule]);
