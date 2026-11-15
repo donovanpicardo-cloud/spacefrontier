@@ -81,3 +81,4 @@ describe("post-crash buggy departure", () => {
     expect(vehicle.state.speed).toBeGreaterThan(3);
   });
 });
+
