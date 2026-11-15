@@ -95,3 +95,4 @@ export function vehicleDetail(root: T.Group, wheels: T.Group[], mars: boolean) {
   }
   batchStatic(detail);
 }
+
