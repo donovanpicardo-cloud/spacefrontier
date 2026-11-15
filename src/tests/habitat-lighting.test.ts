@@ -51,3 +51,4 @@ describe("base transition lighting", () => {
     expect(lighting.slots[0].intensity).toBeGreaterThan(30);
   });
 });
+
