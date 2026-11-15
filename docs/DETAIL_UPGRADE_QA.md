@@ -33,3 +33,4 @@ Final browser checks: the lunar buggy reached 7.8 m/s, braked to zero and began 
 
 Installed check: 53 changed files plus README were copied to C:\Users\donov\Desktop\NASA-SPACE-GAME with SHA-256 verification after confirming the original source still matched round7-backup. Port 5173 loaded the existing Moon Power the outpost save, rendered the updated habitat/annex and tangled solar leads, and logged no warnings/errors. The game was left paused. Browser QA used the separate port 5180 save, not the user's mission.
 
+
