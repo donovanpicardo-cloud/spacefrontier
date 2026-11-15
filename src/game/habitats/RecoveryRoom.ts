@@ -116,4 +116,3 @@ export class RecoveryRoom {
     return recoveryRoomContains(p, this.built);
   }
 }
-
