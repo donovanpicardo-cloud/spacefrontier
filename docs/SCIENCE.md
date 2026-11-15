@@ -24,3 +24,4 @@ Moon radio round trip is about 2.6 seconds (about 1.3 seconds each way). NASA de
 ## Jump motion
 
 Planet fact panels retain natural gravity: Moon 1.62 m/s² and Mars 3.71 m/s². Following the requested space-game movement change, the controller uses assisted game-feel values: effective downward acceleration 5 / 7.5 m/s², launch speed 3.7 m/s, and gentle in-air directional acceleration. Releasing controls preserves momentum. These jump trajectories are gameplay approximations, not a reproduction of unassisted astronaut motion. Hydroponics/filtration repair reserve bonuses, medical-room treatment and forgiving boulder suspension are also deliberate educational game abstractions.
+
