@@ -5,4 +5,3 @@ export const suitMovement = (destination: Destination) => ({
   jumpSpeed: 3.7,
   airAcceleration: 2.2,
 });
-
