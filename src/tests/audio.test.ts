@@ -131,4 +131,3 @@ describe("gameplay-driven sound", () => {
     expect(flight(36)).toEqual(["success"]);
   });
 });
-
