@@ -1658,7 +1658,11 @@ function App() {
                 {sim.suit <= tripAir + 5 ? " Refill inside the habitat before you go." : " Check your air if you take a detour."}</p>
             )}
             {!panel && !tutorialActive && sim.suit < 20 && <button className="secondary" onClick={() => guideSide("airlock", "Habitat airlock", "Suit air is low. Follow the markers inside to refill it.")}>Show the way to refill suit air</button>}
-            {!panel && !tutorialActive && !trainingInstruction && sim.battery < 15 && sim.suit >= 20 && <p>Power is low. Press Tab for Systems. Turn off the grow lights to save power.</p>}
+            {!panel && !tutorialActive && !trainingInstruction && sim.battery < 15 && sim.suit >= 20 && (
+              <p>{allocation.greenhouse
+                ? "Power is low. Press Tab for Systems and turn off the grow lights."
+                : "The grow lights are already off. Press M, open Nearby supplies, and choose Power to find a charging station."}</p>
+            )}
             <div className="mission-dots">
               {list.map((_, i) => (
                 <i
