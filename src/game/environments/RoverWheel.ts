@@ -48,4 +48,3 @@ export function fenderGeometry(radius: number, width: number) {
   ].map(([r, x]) => new T.Vector2(r, x));
   return new T.LatheGeometry(points, 40, Math.PI + .39, Math.PI - .78).rotateZ(-Math.PI / 2);
 }
-
