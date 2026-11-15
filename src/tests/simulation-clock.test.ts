@@ -23,4 +23,3 @@ describe("resource and gameplay time", () => {
     expect(c.poll(0.75, true, 4)).toBe(1);
   });
 });
-
