@@ -174,4 +174,3 @@ export class ArrivalScene {
     this.renderer.domElement.remove();
   }
 }
-
