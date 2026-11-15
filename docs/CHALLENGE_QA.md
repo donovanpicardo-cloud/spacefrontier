@@ -39,4 +39,3 @@ No physical school laptop, child participant, mobile/gamepad controls or browser
 The official Resources tab is scheduled for November 13; re-audit published materials then. The event banner asks participants not to start project work before the hackathon, so confirm entry eligibility for this existing project with organisers. These do not prevent continuing development locally.
 
 Installed verification: the original project at port 5173 loaded its existing Moon save at Power the outpost, produced no browser warnings/errors, and was left safely paused. The temporary playtest tab was closed.
-
