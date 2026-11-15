@@ -315,4 +315,3 @@ export function resourceRig(kind: ResourceKind): ResourceRig {
   root.userData.structure = structure;
   return { root, moving, dial, indicator, component, ice };
 }
-
