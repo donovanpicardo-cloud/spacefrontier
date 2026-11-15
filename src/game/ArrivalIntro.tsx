@@ -174,4 +174,3 @@ export function ArrivalIntro(props: Props) {
     </section>
   );
 }
-
