@@ -429,3 +429,4 @@ describe("vehicle save compatibility", () => {
       expect(parseSave(JSON.stringify({ ...base, vehicle }))).toBeNull();
   });
 });
+
