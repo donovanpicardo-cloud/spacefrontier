@@ -37,3 +37,4 @@ assert.equal(createHash("sha256").update(signature(decoded)).digest("hex"), befo
   "Geometry, hierarchy or animation data changed");
 if (upgraded.length) await writeFile(target, output);
 console.log(JSON.stringify({target, upgraded, bytes:output.length, geometry:"Verified unchanged"}));
+
