@@ -84,3 +84,4 @@ export function cableStart(index: number, count: number) {
 export function cableOrigin(index: number, count = 3) {
   return { x: -0.58, y: (count - 1) * 0.115 - index * 0.23, z: 0.1 };
 }
+
