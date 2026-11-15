@@ -55,4 +55,3 @@ export class SurfaceDust {
     this.geometry.attributes.life.needsUpdate = true;
   }
 }
-
